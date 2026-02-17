@@ -5,6 +5,7 @@ from constants import *
 
 
 # ---- AUTOCORRELATION TIME FUNCTION ----
+
 def compute_autocorrelation_time(x, max_lag=None, method='clamp'):
     
     """
@@ -78,6 +79,7 @@ def compute_autocorrelation_time(x, max_lag=None, method='clamp'):
 
 
 # ** Bayesian Autocorrelation Time Function ** (currently in use)
+
 def bayes_autocorrelation_time(x, prior_mean=0.0, prior_precision=1e-2, eps=1e-8):
     
     """
@@ -116,6 +118,8 @@ def bayes_autocorrelation_time(x, prior_mean=0.0, prior_precision=1e-2, eps=1e-8
     return tau.item()
 
 
+# Random indices
+# Made by: Adam
 def random_indices(N_max,N):
      full_idx = np.arange(N_max)
      r = np.sort(np.random.choice(full_idx, N, replace=False))
