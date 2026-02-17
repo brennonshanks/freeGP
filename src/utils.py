@@ -1,11 +1,20 @@
 """ UTILITY FUNCTIONS """
 
-from defaults import *
-from constants import *
+import torch
+import numpy as np
+import os
+import re
 
+torch.set_default_device('cpu')
+torch.set_default_dtype(torch.float64)
+torch.manual_seed(42)
+
+k_B_kcal = 1.987204e-3
+k_B      = 8.3144621e-3
+T        = 303.15
+beta     = 1/(k_B*T)
 
 # ---- AUTOCORRELATION TIME FUNCTION ----
-
 def compute_autocorrelation_time(x, max_lag=None, method='clamp'):
     
     """
@@ -79,7 +88,6 @@ def compute_autocorrelation_time(x, max_lag=None, method='clamp'):
 
 
 # ** Bayesian Autocorrelation Time Function ** (currently in use)
-
 def bayes_autocorrelation_time(x, prior_mean=0.0, prior_precision=1e-2, eps=1e-8):
     
     """
@@ -119,10 +127,37 @@ def bayes_autocorrelation_time(x, prior_mean=0.0, prior_precision=1e-2, eps=1e-8
 
 
 # Random indices
-# Made by: Adam
 def random_indices(N_max,N):
      full_idx = np.arange(N_max)
      r = np.sort(np.random.choice(full_idx, N, replace=False))
      return torch.tensor(r)
+
+# Unbiased free energy estimates from histogram data
+import torch
+
+def unbias_and_extract(
+    histograms,
+    bin_centers_list,
+    force_constants,
+    umbrella_centers,
+    beta,
+    n_samples,              # <-- pass explicitly
+    variances,
+    autocorr_times,
+    restoring_forces,
+):
+    F_list = []
+
+    for i in range(len(histograms)):
+        P = histograms[i] / torch.sum(histograms[i])
+        y = -(1 / beta) * torch.log(P)
+        w = 0.5 * force_constants[i] * (bin_centers_list[i] - umbrella_centers[i])**2
+        F_list.append(y - w)
+
+    effective_samples = n_samples / autocorr_times
+    noise_variances = (force_constants**2 * variances) / effective_samples
+    noise_std_per_obs = torch.sqrt(noise_variances)
+
+    return F_list, noise_std_per_obs, restoring_forces
 
 

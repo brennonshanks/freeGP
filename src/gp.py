@@ -1,8 +1,13 @@
 """ ALL THINGS GAUSSIAN PROCESS (GP) """
 
-from defaults import *
-from constants import *
+import torch
+import numpy as np
+import os
+import re
 
+torch.set_default_device('cpu')
+torch.set_default_dtype(torch.float64)
+torch.manual_seed(42)
 
 # ----- BUILD DISTANCE MATRICES -----
 def pairwise_differences(x1, x2):
@@ -16,7 +21,7 @@ def pairwise_differences(x1, x2):
 
 # ----- STATIONARY KERNEL FUNCTIONS -----
 
-# Squared Exponential (SE) Kernel (so-called RBF)
+# Squared Exponential (SE) Kernel
 def se_kernel(Xdd, ell, w):
     return w**2 * torch.exp(- Xdd / (2 * ell**2))
 
@@ -30,7 +35,7 @@ def ddse_kernel(Xd, Xdd, ell, w):
     return w**2 / ell**4 * exp_term * (ell**2 - Xdd)
 
 
-# Matern Kernel (ν=5/2) - WORKS HORRIBLY HERE (too noisy)
+# Matern Kernel (ν=5/2)
 def matern_kernel(Xdd, ell, w):
      eps = 1e-12
      r = torch.sqrt(torch.clamp(Xdd, min=0.0) + eps)
@@ -56,29 +61,6 @@ def ddmatern_kernel(Xd, Xdd, ell, w):
      return -(w**2 * (5.0 / (3.0 * ell**2)) * (z**2 - z - 1.0) * torch.exp(-z))
 
 
-# Rational Quadratic Kernel - DOESN'T WORK WELL EITHER
-def rq_kernel(Xdd, ell, w):
-     # Rational Quadratic kernel
-     alpha = 5.0  # you can change this, but keep fixed unless you re-tune everything
-     A = 1.0 + Xdd / (2.0 * alpha * ell**2)
-     return w**2 * A**(-alpha)
-
-def fdrq_kernel(Xd, Xdd, ell, w):
-     # ∂k/∂x
-     alpha = 5.0
-     A = 1.0 + Xdd / (2.0 * alpha * ell**2)
-     # ∂k/∂x = -w^2/ell^2 * (x-x') * A^(-alpha-1)
-     return -(w**2 / ell**2) * Xd * A**(-alpha - 1.0)
-
-def ddrq_kernel(Xd, Xdd, ell, w):
-     # ∂²k/∂x∂x'  (force–force mixed derivative, PD-safe)
-     alpha = 5.0
-     A = 1.0 + Xdd / (2.0 * alpha * ell**2)
-
-     term1 = (w**2 / ell**2) * A**(-alpha - 1.0)
-     term2 = (w**2 * (alpha + 1.0) / (alpha * ell**4)) * Xdd * A**(-alpha - 2.0)
-
-     return term1 - term2
 
 
 # ----- NON-STATIONARY KERNEL FUNCTIONS -----
