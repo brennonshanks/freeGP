@@ -9,6 +9,6 @@ torch.manual_seed(42)
 
 #hyperparameter functions
 
-
+#hyperpriors
 
 #emcee function
