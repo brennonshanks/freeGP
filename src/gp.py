@@ -556,24 +556,12 @@ def gpr_hd(x_func, y_func,                    # function (histogram) observation
       - Function observations are at x_func with values y_func and noise covariances noise_func_cov.
       - Derivative observations are at x_der with values dy_der and noise variances noise_deriv_diag.
       - H_func is the (n_f, p) basis for the function observations only. Derivative rows receive zeros for the basis.
-      - If there are no function observations (n_f==0) or no derivative observations (n_d==0),
-        this function delegates to your existing gpr_d / gpr_h routines for simplicity.
     """
 
     # quick guards: delegate to specialized routines if one type of observation is missing
     n_f = 0 if x_func is None else x_func.shape[0]
     n_d = 0 if x_der is None else x_der.shape[0]
     m = x_test.shape[0]
-
-    # If no function observations -> use derivative-only GP (existing)
-    #if n_f == 0:
-        # expects (x_obs, dy_obs, x_test, ell, w, noise_std_vec)
-    #    return gpr_d(x_der, dy_der, x_test, ell, w, noise_deriv_diag, jitter=jitter)
-
-    # If no derivative observations -> use histogram-only GP (existing)
-    #if n_d == 0:
-    #    return gpr_h_full(x_func, y_func, x_test, ell, w,
-    #                 noise_func_cov, H_func, H_test=H_test, jitter=jitter)
 
     # --- Build covariance blocks ------------------------------------------------
     # (1) function-function block (n_f, n_f)
@@ -601,11 +589,8 @@ def gpr_hd(x_func, y_func,                    # function (histogram) observation
     bot = torch.cat([K_df, K_dd], dim=1)                   # (n_d, n_f + n_d)
     K_joint = torch.cat([top, bot], dim=0)                 # (n, n)
 
-    # small extra jitter to the whole joint matrix (numerical safety)
     n_joint = n_f + n_d
     K_joint = 0.5 * (K_joint + K_joint.T)
-    K_joint = K_joint + jitter * torch.eye(n_joint)
-    # print(K_joint.size())
 
     # --- Build joint observation vector y_joint and H_full ---------------------
     # y_joint stacked: [y_func; dy_der]
@@ -621,7 +606,7 @@ def gpr_hd(x_func, y_func,                    # function (histogram) observation
     if H_test is None:
         H_test = torch.zeros((m, p), dtype=H_func.dtype, device=H_func.device)
 
-    # --- Cholesky solves (stable linear algebra) --------------------------------
+    # --- Cholesky solves --------
     L = torch.linalg.cholesky(K_joint)                     # L L^T = K_joint
 
     # K_joint^{-1} y and K_joint^{-1} H (via cholesky_solve)
