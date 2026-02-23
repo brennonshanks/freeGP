@@ -18,7 +18,6 @@ def pairwise_differences(x1, x2):
     Xdd = Xd**2
     return Xd, Xdd
 
-
 # ----- STATIONARY KERNEL FUNCTIONS -----
 
 # Squared Exponential (SE) Kernel
@@ -61,74 +60,189 @@ def ddmatern_kernel(Xd, Xdd, ell, w):
      return -(w**2 * (5.0 / (3.0 * ell**2)) * (z**2 - z - 1.0) * torch.exp(-z))
 
 
-
-
 # ----- NON-STATIONARY KERNEL FUNCTIONS -----
 
-# Gibbs kernel with error function w decay
-# ------------------------------------------------------------
-# width function definition (complimentary Gaussian cumulative distribution function)
-# ------------------------------------------------------------
-def width(r, s, u, w):
-    #return 0.5 * s * (1.0 + torch.erf(-(r - u) / w)) # Error function decay
-    return s * (1 + torch.tanh(-(r - u) / w))
+# ---------------------------------------------------------------------------------
+# complimentary Gaussian cumulative distribution function width/amplitude function
+# ---------------------------------------------------------------------------------
 
-def width_deriv(r, s, u, w):
+def width(r, s, u, w2):
+    #return 0.5 * s * (1.0 + torch.erf(-(r - u) / w)) # Error function decay
+    return s * (1 + torch.tanh(-(r - u) / w2))
+
+def width_deriv(r, s, u, w2):
     # d/dr [0.5*s*(1+erf(-(r-u)/w))]
     #return -(s / (torch.sqrt(torch.tensor(torch.pi)) * w)) * torch.exp(-((r - u) / w) ** 2)
-    return - (s / w) * (1 - torch.tanh(-(r - u) / w)**2)
+    return - (s / w2) * (1 - torch.tanh(-(r - u) / w2)**2)
 
-# ------------------------------------------------------------
-# Kernel: K(r, r') = sigma(r) sigma(r') * exp(-(r-r')^2 / (2 ell^2))
-# Inputs:
-#   Xd  = r - r'
-#   Xdd = (r - r')^2
-#   r, rp are the two argument locations (same broadcastable shape as Xd)
-# ------------------------------------------------------------
-def gibbs_kernel(Xdd, ell, s, u, w, r, rp):
-    sig  = width(r,  s, u, w)
-    sigp = width(rp, s, u, w)
-    return sig * sigp * torch.exp(-Xdd / (2.0 * ell**2))
+# ---------------------------------------------------------------------------------
+# sum of a linear function and some Gaussian bump functions
+# ---------------------------------------------------------------------------------
 
-# ------------------------------------------------------------
-# First derivative wrt FIRST argument r: ∂K/∂r
-# ------------------------------------------------------------
-def fdgibbs_kernel(Xd, Xdd, ell, s, u, w, r, rp):
-    sig   = width(r,  s, u, w)
-    sigp  = width(rp, s, u, w)
-    sig_d = width_deriv(r, s, u, w)
-    exp_term = torch.exp(-Xdd / (2.0 * ell**2))
-    return exp_term * sigp * (sig_d - sig * (Xd / (ell**2)))
+def length(r, a0, a1, b, c, w):
+    """
+    ℓ(r) = exp(a0 + a1*r + b*exp(-(r-c)^2/(2 w^2)))
+    All parameters are scalars.
+    r can be tensor of any shape.
+    """
+    bump = torch.exp(-0.5 * ((r - c) / w)**2)
+    g = a0 + a1 * r + b * bump
+    return torch.exp(g)
 
-# ------------------------------------------------------------
-# First derivative wrt SECOND argument r': ∂K/∂r'
-# ------------------------------------------------------------
-def sdgibbs_kernel(Xd, Xdd, ell, s, u, w, r, rp):
-    sig   = width(r,  s, u, w)
-    sigp  = width(rp, s, u, w)
-    sigp_d = width_deriv(rp, s, u, w)
-    exp_term = torch.exp(-Xdd / (2.0 * ell**2))
-    return exp_term * sig * (sigp_d + sigp * (Xd / (ell**2)))
+def length_deriv(r, a0, a1, b, c, w):
+    bump = torch.exp(-0.5 * ((r - c) / w)**2)
+    ell_val = torch.exp(a0 + a1 * r + b * bump)
+    dbump_dr = - (r - c) / (w**2) * bump
+    dg_dr = a1 + b * dbump_dr
+    return ell_val * dg_dr
 
-# ------------------------------------------------------------
-# Mixed second derivative: ∂²K/(∂r ∂r')
-# (this is the force–force block)
-# ------------------------------------------------------------
-def ddgibbs_kernel(Xd, Xdd, ell, s, u, w, r, rp):
-    sig    = width(r,  s, u, w)
-    sigp   = width(rp, s, u, w)
-    sig_d  = width_deriv(r,  s, u, w)
-    sigp_d = width_deriv(rp, s, u, w)
-    exp_term = torch.exp(-Xdd / (2.0 * ell**2))
-    term1 = sig_d * sigp_d
-    term2 = (Xd / (ell**2)) * (sig_d * sigp - sig * sigp_d)
-    term3 = sig * sigp * (1.0 / (ell**2) - Xdd / (ell**4))
-    return exp_term * (term1 + term2 + term3)
+# ---------------------------------------------------------------------------------
+# Gibbs kernel with nonstationary ell and sigma
+# ---------------------------------------------------------------------------------
 
+def gibbs_kernel(Xdd, a0, a1, b, c, w, s, u, w2, r, rp):
+    ell  = length(r, a0, a1, b, c, w)
+    ellp = length(rp, a0, a1, b, c, w)
+    sig  = width(r,  s, u, w2)
+    sigp = width(rp, s, u, w2)
+    return sig * sigp * torch.sqrt((2 * ell * ellp)/(ell**2 + ellp**2)) * torch.exp(-Xdd / (ell**2 + ellp**2))
 
+def fdgibbs_kernel(Xd, Xdd, a0, a1, b, c, w, s, u, w2, r, rp):
+    ell      = length(r, a0, a1, b, c, w)
+    ellp     = length(rp, a0, a1, b, c, w)
+    ell_d    = length_deriv(r, a0, a1, b, c, w)
+    sig      = width(r,  s, u, w2)
+    sigp     = width(rp, s, u, w2)
+    sig_d    = width_deriv(r, s, u, w2)
+    B        = ell**2 + ellp**2
+    exp_term = torch.exp(-Xdd / B)
+    L_term   = (2 * ell * ellp) / B
+    Omg_term = (ellp * ell_d) / B * (1 - 2*ell**2 / B)
+    Gam_term = -2*Xd/B + (2*Xdd*ell*ell_d)/(B**2)
+    return exp_term * sigp * (sig_d * L_term**(1/2) + sig * L_term**(-1/2) * Omg_term + sig * L_term**(1/2) * Gam_term)
+
+def sdgibbs_kernel(Xd, Xdd, a0, a1, b, c, w, s, u, w2, r, rp): #### sign change here
+    ell       = length(r, a0, a1, b, c, w)
+    ellp      = length(rp, a0, a1, b, c, w)
+    ellp_d    = length_deriv(rp, a0, a1, b, c, w)
+    sig       = width(r,  s, u, w2)
+    sigp      = width(rp, s, u, w2)
+    sigp_d    = width_deriv(rp, s, u, w2)
+    B         = ell**2 + ellp**2
+    exp_term  = torch.exp(-Xdd / B)
+    L_term    = (2 * ell * ellp) / B
+    Omg_term2 = (ell * ellp_d) / B * (1 - 2*ellp**2 / B)
+    Gam_term2 = 2*Xd/B + (2*Xdd*ellp*ellp_d)/(B**2) # sign change on the first term and ell term
+    return exp_term * sig * (sigp_d * L_term**(1/2) + sigp * L_term**(-1/2) * Omg_term2 + sigp * L_term**(1/2) * Gam_term2)
+
+# def ddgibbs_kernel(Xd, Xdd, a0, a1, b, c, w, s, u, w2, r, rp):
+#     ell       = length(r, a0, a1, b, c, w)
+#     ellp      = length(rp, a0, a1, b, c, w)
+#     ell_d     = length_deriv(r, a0, a1, b, c, w)
+#     ellp_d    = length_deriv(rp, a0, a1, b, c, w)
+#     sig       = width(r,  s, u, w2)
+#     sigp      = width(rp, s, u, w2)
+#     sig_d     = width_deriv(r, s, u, w2)
+#     sigp_d    = width_deriv(rp, s, u, w2)
+#     B         = ell**2 + ellp**2
+#     exp_term  = torch.exp(-Xdd / B)
+#     L_term    = (2 * ell * ellp) / B
+#     Omg_term  = (ellp * ell_d) / B * (1 - 2*ell**2 / B)
+#     Omg_term2 = (ell * ellp_d) / B * (1 - 2*ellp**2 / B)
+#     Omg_pder  = (ell_d*ellp_d/B)*(1-(2*ellp**2/B)) - (2*ell**2*ell_d*ellp_d/B**2)*(1-4*ellp**2/B)
+#     Gam_term  = -2*Xd/B + (2*Xdd*ell*ell_d)/(B**2)
+#     Gam_term2 = 2*Xd/B + (2*Xdd*ellp*ellp_d)/(B**2) # sign change on the first term and ell term
+#     Gam_pder  = (2/B)*(1+(2*Xd*ellp*ellp_d/B**2))-(4*ell*ell_d*Xd/B**2)*(1+(2*ellp*ellp_d*Xd/B))
+#     term1 = sig_d * (sigp_d*L_term**(1/2)*exp_term + sigp*exp_term*Gam_term2*L_term**(1/2) + (1/2)*sigp*exp_term*L_term**(-1/2)*Omg_term2)
+#     term2 = sig * (sigp_d*exp_term*L_term**(-1/2)*Omg_term + sigp*exp_term*Gam_term2*L_term**(-1/2)*Omg_term - (1/2)*sigp*exp_term*L_term**(-3/2)*Omg_term2*Omg_term + sigp*exp_term*L_term**(-1/2)*Omg_pder)
+#     term3 = sig * (sigp_d*exp_term*L_term**(1/2)*Gam_term + sigp*exp_term*Gam_term2*L_term**(1/2)*Gam_term + (1/2)*sigp*exp_term*L_term**(-1/2)*Omg_term2*Gam_term + sigp*exp_term*L_term**(1/2)*Gam_pder)
+#     return term1 + term2 + term3
+
+def ddgibbs_kernel(Xd, Xdd, a0, a1, b, c, w, s, u, w2, r, rp, eps=1e-12):
+    """
+    Mixed derivative ∂²/∂r∂r' of the 1D Gibbs kernel with
+      B = ell(r)^2 + ell(r')^2
+      L = sqrt( (2 ell ellp) / B )
+      E = - (r-r')^2 / B  = -Xdd / B
+      k = sig(r) sig(r') L exp(E)
+
+    Assumes:
+      Xd  = r - rp
+      Xdd = Xd**2
+    and uses only first derivatives of ell, sig.
+    """
+
+    # hyperfunctions + first derivatives
+    ell   = length(r,  a0, a1, b, c, w)
+    ellp  = length(rp, a0, a1, b, c, w)
+    ell_d  = length_deriv(r,  a0, a1, b, c, w)
+    ellp_d = length_deriv(rp, a0, a1, b, c, w)
+
+    sig    = width(r,  s, u, w2)
+    sigp   = width(rp, s, u, w2)
+    sig_d  = width_deriv(r,  s, u, w2)
+    sigp_d = width_deriv(rp, s, u, w2)
+
+    # core terms
+    B = ell**2 + ellp**2
+    B = B + eps  # avoid 0
+
+    L_term = (2.0 * ell * ellp) / B
+    L = torch.sqrt(L_term + eps)
+
+    exp_term = torch.exp(-Xdd / B)
+
+    # base kernel value k
+    k = sig * sigp * L * exp_term
+
+    # convenient ratios (avoid divide-by-zero)
+    inv_sig  = 1.0 / (sig  + eps)
+    inv_sigp = 1.0 / (sigp + eps)
+    inv_ell  = 1.0 / (ell  + eps)
+    inv_ellp = 1.0 / (ellp + eps)
+
+    # ----- A = d/dr log k -----
+    # d/dr log(sig) = sig_d/sig
+    A_sig = sig_d * inv_sig
+
+    # d/dr log L = 0.5*(ell_d/ell) - (ell*ell_d)/B
+    A_L = 0.5 * ell_d * inv_ell - (ell * ell_d) / B
+
+    # d/dr E, where E = -Xdd/B and Xdd = Xd^2, Xd=r-rp
+    A_E = -(2.0 * Xd) / B + (2.0 * Xdd * ell * ell_d) / (B**2)
+
+    A = A_sig + A_L + A_E
+
+    # ----- A' = d/dr' log k -----
+    Ap_sig = sigp_d * inv_sigp
+    Ap_L   = 0.5 * ellp_d * inv_ellp - (ellp * ellp_d) / B
+    Ap_E   = +(2.0 * Xd) / B + (2.0 * Xdd * ellp * ellp_d) / (B**2)
+
+    Ap = Ap_sig + Ap_L + Ap_E
+
+    # ----- d/dr' A -----
+    # Only A_L and A_E depend on r' (through B, Xd, Xdd); A_sig does not.
+    dB_drp = 2.0 * ellp * ellp_d
+
+    # d/dr' [d/dr log L] = d/dr' [ - (ell*ell_d)/B ]  (since 0.5*ell_d/ell has no r' dependence)
+    dA_L_drp = (ell * ell_d) * dB_drp / (B**2)
+
+    # d/dr' [d/dr E]
+    # A_E = -(2Xd)/B + (2 Xdd ell ell_d)/B^2
+    # with dXd/dr' = -1, dXdd/dr' = -2Xd
+    dA_E_drp = (
+        2.0 / B
+        + (2.0 * Xd * dB_drp) / (B**2)
+        - (4.0 * ell * ell_d * Xd) / (B**2)
+        - (4.0 * ell * ell_d * Xdd * dB_drp) / (B**3)
+    )
+
+    dA_drp = dA_L_drp + dA_E_drp
+
+    # mixed derivative
+    return k * (A * Ap + dA_drp)
 
 # ----- GPR(D): DERIVATIVE GP PREDICTION FUNCTIONS -----
-# Coded by: Brennon and Martin (cf. Csányi 2014)
 
 # ** Basic Derivative GP with Constant Noise ** (DEPRECATED - c'mon we need to model the noise)
 # ..very first attempt for toy problems
@@ -198,7 +312,6 @@ def gpr_d(x_obs, dy_obs, x_test, ell, w, noise_std_vec, jitter=1e-6):
     return pred_mean, pred_cov, K_dd, L, alpha
 
 
-# CAUTION WITH THIS ONE - DEBUGGING IN PROGRESS!!!
 def gpr_d_gibbs(x_obs, dy_obs, x_test, ell, s, u, w, noise_std_vec, jitter=1e-6):
     
     """
@@ -285,8 +398,6 @@ def gpr_d_gibbs(x_obs, dy_obs, x_test, ell, s, u, w, noise_std_vec, jitter=1e-6)
 
 
 # ----- GPR(H): HISTOGRAM GP PREDICTION FUNCTION -----
-# (i.e. GPR with linear basis, cf. Rasmussen §2.7)
-# Coded by: Martin
 
 def gpr_h(x_obs, y_obs, x_test,
                           ell, w,                # hyperparameters (so far fixed, i.e. part of the prior)
@@ -527,7 +638,6 @@ def gpr_h_gibbs(x_obs, y_obs, x_test,
 
 
 # ----- GPR(H+D): JOINED INFERENCE GP PREDICTION FUNCTION -----
-# Coded by: Martin
 
 def gpr_hd(x_func, y_func,                    # function (histogram) observations
            x_der, dy_der,                    # derivative observations (df/dx)
@@ -675,7 +785,7 @@ def gpr_hd(x_func, y_func,                    # function (histogram) observation
 def gpr_hd_gibbs(x_func, y_func,                   # function (histogram) observations
                  x_der, dy_der,                    # derivative observations (df/dx)
                  x_test,
-                 ell, s, u, w,                     # kernel hyperparameters (ell fixed; width params)
+                 a0, a1, b, c, w, s, u, w2,        # kernel hyperparameters (ell fixed; width params)
                  noise_func_cov,                   # (n_f,n_f) full cov for function obs
                  noise_deriv_diag,                 # (n_d,) variances for derivative obs
                  H_func,                           # (n_f, p) design matrix for function obs
@@ -718,14 +828,14 @@ def gpr_hd_gibbs(x_func, y_func,                   # function (histogram) observ
     # need r, rp grids for width terms
     r_ff  = x_func[:, None]   # (n_f, 1)
     rp_ff = x_func[None, :]   # (1, n_f)
-    K_ff = gibbs_kernel(Xdd_ff, ell, s, u, w, r_ff, rp_ff)
+    K_ff = gibbs_kernel(Xdd_ff, a0, a1, b, c, w, s, u, w2, r_ff, rp_ff)
     K_ff = K_ff + noise_func_cov + jitter * torch.eye(n_f, dtype=K_ff.dtype, device=K_ff.device)
 
     # (2) derivative-derivative block (n_d, n_d): mixed derivative ∂²/∂r∂r'
     Xd_dd, Xdd_dd = pairwise_differences(x_der, x_der)     # (n_d, n_d)
     r_dd  = x_der[:, None]
     rp_dd = x_der[None, :]
-    K_dd = ddgibbs_kernel(Xd_dd, Xdd_dd, ell, s, u, w, r_dd, rp_dd)
+    K_dd = ddgibbs_kernel(Xd_dd, Xdd_dd, a0, a1, b, c, w, s, u, w2, r_dd, rp_dd)
     K_dd = K_dd + torch.diag(noise_deriv_diag) + jitter * torch.eye(n_d, dtype=K_dd.dtype, device=K_dd.device)
 
     # (3) function-derivative cross blocks
@@ -733,7 +843,7 @@ def gpr_hd_gibbs(x_func, y_func,                   # function (histogram) observ
     Xd_fd, Xdd_fd = pairwise_differences(x_func, x_der)    # (n_f, n_d) : Xd = x_func - x_der
     r_fd  = x_func[:, None]  # first arg grid
     rp_fd = x_der[None, :]   # second arg grid
-    K_fd = sdgibbs_kernel(Xd_fd, Xdd_fd, ell, s, u, w, r_fd, rp_fd)  # (n_f, n_d)
+    K_fd = sdgibbs_kernel(Xd_fd, Xdd_fd, a0, a1, b, c, w, s, u, w2, r_fd, rp_fd)  # (n_f, n_d)
 
     # K_df = Cov[df/dx(x_der), f(x_func)] should be ∂/∂(first arg) evaluated at (x_der, x_func)
     # Instead of K_fd.T (which would miss the sign when width depends on the first arg),
@@ -741,7 +851,7 @@ def gpr_hd_gibbs(x_func, y_func,                   # function (histogram) observ
     Xd_df, Xdd_df = pairwise_differences(x_der, x_func)    # (n_d, n_f) : Xd = x_der - x_func
     r_df  = x_der[:, None]
     rp_df = x_func[None, :]
-    K_df = fdgibbs_kernel(Xd_df, Xdd_df, ell, s, u, w, r_df, rp_df)  # (n_d, n_f)
+    K_df = fdgibbs_kernel(Xd_df, Xdd_df, a0, a1, b, c, w, s, u, w2, r_df, rp_df)  # (n_d, n_f)
 
     # (4) assemble joint K (n = n_f + n_d)
     top = torch.cat([K_ff, K_fd], dim=1)                   # (n_f, n_f + n_d)
@@ -781,13 +891,13 @@ def gpr_hd_gibbs(x_func, y_func,                   # function (histogram) observ
     Xd_xf, Xdd_xf = pairwise_differences(x_test, x_func)   # (m, n_f)
     r_xf  = x_test[:, None]
     rp_xf = x_func[None, :]
-    K_xf = gibbs_kernel(Xdd_xf, ell, s, u, w, r_xf, rp_xf)  # (m, n_f)
+    K_xf = gibbs_kernel(Xdd_xf, a0, a1, b, c, w, s, u, w2, r_xf, rp_xf)  # (m, n_f)
 
     # K_xd: Cov[f(x_test), df/dx(x_der)]
     Xd_xd, Xdd_xd = pairwise_differences(x_test, x_der)    # (m, n_d)
     r_xd  = x_test[:, None]
     rp_xd = x_der[None, :]
-    K_xd = sdgibbs_kernel(Xd_xd, Xdd_xd, ell, s, u, w, r_xd, rp_xd)  # (m, n_d)
+    K_xd = sdgibbs_kernel(Xd_xd, Xdd_xd, a0, a1, b, c, w, s, u, w2, r_xd, rp_xd)  # (m, n_d)
 
     K_xY = torch.cat([K_xf, K_xd], dim=1)                  # (m, n)
 
@@ -797,7 +907,7 @@ def gpr_hd_gibbs(x_func, y_func,                   # function (histogram) observ
     Xd_dx, Xdd_dx = pairwise_differences(x_der, x_test)    # (m, n_d)
     r_dx  = x_der[:, None]
     rp_dx = x_test[None, :]
-    K_dx = fdgibbs_kernel(Xd_dx, Xdd_dx, ell, s, u, w, r_dx, rp_dx)  # (n_d, m)
+    K_dx = fdgibbs_kernel(Xd_dx, Xdd_dx, a0, a1, b, c, w, s, u, w2, r_dx, rp_dx)  # (n_d, m)
     K_Yx = torch.cat([K_xf.T, K_dx], dim=0)                          # (n, m)  
 
     pred_mean = (K_xY @ alpha).squeeze(-1) + (H_test @ beta_hat).squeeze(-1)
@@ -810,7 +920,7 @@ def gpr_hd_gibbs(x_func, y_func,                   # function (histogram) observ
     Xd_xx, Xdd_xx = pairwise_differences(x_test, x_test)    # (m, m)
     r_xx  = x_test[:, None]
     rp_xx = x_test[None, :]
-    K_xx = gibbs_kernel(Xdd_xx, ell, s, u, w, r_xx, rp_xx)
+    K_xx = gibbs_kernel(Xdd_xx, a0, a1, b, c, w, s, u, w2, r_xx, rp_xx)
     K_xx = K_xx + jitter * torch.eye(m, dtype=K_xx.dtype, device=K_xx.device)
 
     term1 = K_xx - v.T @ v
@@ -830,173 +940,3 @@ def gpr_hd_gibbs(x_func, y_func,                   # function (histogram) observ
     y_joint = y_joint_col.squeeze(-1)             # (n,)
 
     return pred_mean, pred_cov, K_joint, L, y_joint, m_joint, alpha_vec
-
-
-
-# ----- TESTING ONLY ------
-# This is getting buggy and I'm getting tired of this..
-
-# MERGED GPR CODE FOR STATIONARY KERNELS ONLY
-def gpr(x_func, y_func,                    # function (histogram) observations
-        x_der, dy_der,                    # derivative observations (df/dx)
-        x_test,
-        ell, w,                           # kernel hyperparameters
-        noise_func_cov=None,              # (n_f,n_f) covariances for function obs
-        noise_deriv_diag=None,            # (n_d,) variances for derivative obs
-        H_func=None,                      # (n_f, p) design matrix for function obs
-        H_test=None,                      # (m, p) design matrix at test points
-        jitter=1e-8):
-    """
-    Unified GP using function observations, derivative observations, or both.
-    Stationary SE kernel with derivative support.
-
-    Works for:
-      - histogram only        (x_der is None)
-      - derivative only       (x_func is None)
-      - joint histogram+grad  (both provided)
-    """
-
-    device = x_test.device
-    dtype  = x_test.dtype
-
-    n_f = 0 if x_func is None else x_func.shape[0]
-    n_d = 0 if x_der  is None else x_der.shape[0]
-    m   = x_test.shape[0]
-
-    use_f = n_f > 0
-    use_d = n_d > 0
-
-    if not use_f and not use_d:
-        raise ValueError("At least one of x_func or x_der must be provided.")
-
-    # -----------------------------
-    # Defaults
-    # -----------------------------
-    if use_f:
-        if H_func is None:
-            H_func = torch.zeros((n_f, 1), dtype=dtype, device=device)
-        p = H_func.shape[1]
-        if noise_func_cov is None:
-            noise_func_cov = torch.zeros((n_f, n_f), dtype=dtype, device=device)
-    else:
-        p = 0
-
-    if use_d and noise_deriv_diag is None:
-        noise_deriv_diag = torch.zeros(n_d, dtype=dtype, device=device)
-
-    if H_test is None:
-        H_test = torch.zeros((m, p), dtype=dtype, device=device)
-
-    # -----------------------------
-    # Build covariance blocks
-    # -----------------------------
-    blocks = []
-
-    if use_f:
-        Xd_ff, Xdd_ff = pairwise_differences(x_func, x_func)
-        K_ff = se_kernel(Xdd_ff, ell, w)
-        K_ff = K_ff + noise_func_cov + jitter * torch.eye(n_f, device=device)
-        blocks.append(K_ff)
-
-    if use_f and use_d:
-        Xd_fd, Xdd_fd = pairwise_differences(x_func, x_der)
-        K_fd = fdse_kernel(Xd_fd, Xdd_fd, ell, w)
-        K_df = K_fd.T
-
-    if use_d:
-        Xd_dd, Xdd_dd = pairwise_differences(x_der, x_der)
-        K_dd = ddse_kernel(Xd_dd, Xdd_dd, ell, w)
-        K_dd = K_dd + torch.diag(noise_deriv_diag) + jitter * torch.eye(n_d, device=device)
-
-    if use_f and use_d:
-        top = torch.cat([K_ff, K_fd], dim=1)
-        bot = torch.cat([K_df, K_dd], dim=1)
-        K_joint = torch.cat([top, bot], dim=0)
-    elif use_f:
-        K_joint = K_ff
-    else:
-        K_joint = K_dd
-
-    n_joint = K_joint.shape[0]
-    K_joint = 0.5 * (K_joint + K_joint.T) + jitter * torch.eye(n_joint, device=device)
-
-    # -----------------------------
-    # Build y_joint and H_full
-    # -----------------------------
-    ys = []
-    Hs = []
-
-    if use_f:
-        ys.append(y_func.reshape(-1, 1))
-        Hs.append(H_func)
-
-    if use_d:
-        ys.append(dy_der.reshape(-1, 1))
-        Hs.append(torch.zeros((n_d, p), dtype=dtype, device=device))
-
-    y_joint = torch.cat(ys, dim=0)
-    H_full  = torch.cat(Hs, dim=0) if p > 0 else torch.zeros((n_joint, 0), device=device)
-
-    # -----------------------------
-    # Cholesky solves
-    # -----------------------------
-    L = torch.linalg.cholesky(K_joint)
-
-    Kinv_y = torch.cholesky_solve(y_joint, L)
-    Kinv_H = torch.cholesky_solve(H_full, L) if p > 0 else None
-
-    if p > 0:
-        S = H_full.T @ Kinv_H
-        S = 0.5 * (S + S.T)
-        rhs = H_full.T @ Kinv_y
-        beta_hat = torch.linalg.solve(S, rhs)
-        alpha = Kinv_y - Kinv_H @ beta_hat
-    else:
-        beta_hat = None
-        alpha = Kinv_y
-
-    # -----------------------------
-    # Prediction mean
-    # -----------------------------
-    Kx_parts = []
-
-    if use_f:
-        Xd_xf, Xdd_xf = pairwise_differences(x_test, x_func)
-        K_xf = se_kernel(Xdd_xf, ell, w)
-        Kx_parts.append(K_xf)
-
-    if use_d:
-        Xd_xd, Xdd_xd = pairwise_differences(x_test, x_der)
-        K_xd = fdse_kernel(Xd_xd, Xdd_xd, ell, w)
-        Kx_parts.append(K_xd)
-
-    K_xY = torch.cat(Kx_parts, dim=1)
-
-    pred_mean = (K_xY @ alpha).squeeze(-1)
-    if p > 0:
-        pred_mean += (H_test @ beta_hat).squeeze(-1)
-
-    # -----------------------------
-    # Prediction covariance
-    # -----------------------------
-    K_Yx = K_xY.T
-    v = torch.linalg.solve_triangular(L, K_Yx, upper=False)
-
-    Xd_xx, Xdd_xx = pairwise_differences(x_test, x_test)
-    K_xx = se_kernel(Xdd_xx, ell, w) + jitter * torch.eye(m, device=device)
-
-    term1 = K_xx - v.T @ v
-
-    if p > 0:
-        M = K_xY @ Kinv_H
-        D = H_test - M
-        S_inv = torch.linalg.inv(S)
-        term2 = D @ (S_inv @ D.T)
-        pred_cov = term1 + term2
-    else:
-        pred_cov = term1
-
-    alpha_vec = alpha.squeeze(-1)
-    m_joint = (H_full @ beta_hat).squeeze(-1) if p > 0 else torch.zeros(n_joint, device=device)
-
-    return pred_mean, pred_cov, K_joint, L, y_joint.squeeze(-1), m_joint, alpha_vec
