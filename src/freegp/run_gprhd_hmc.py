@@ -19,22 +19,26 @@ if __package__ in (None, ""):
     package_root = Path(__file__).resolve().parents[1]
     if str(package_root) not in sys.path:
         sys.path.insert(0, str(package_root))
-    from freegp.gp import gpr_hd
+    from freegp.gp import GibbsKernelConfig, gpr_hd, gpr_hd_gibbs
     from freegp.hmc import (
         NUTSConfig,
+        display_samples_for_diagnostics,
         maximum_a_posteriori_prediction,
         run_hmc_nuts,
         sample_posterior_functions,
     )
+    from freegp.posterior import summarize_hyperposterior_predictive
     from freegp.workflow import prepare_gprhd_hmc_inputs
 else:
-    from .gp import gpr_hd
+    from .gp import GibbsKernelConfig, gpr_hd, gpr_hd_gibbs
     from .hmc import (
         NUTSConfig,
+        display_samples_for_diagnostics,
         maximum_a_posteriori_prediction,
         run_hmc_nuts,
         sample_posterior_functions,
     )
+    from .posterior import summarize_hyperposterior_predictive
     from .workflow import prepare_gprhd_hmc_inputs
 
 
@@ -72,12 +76,48 @@ def build_parser() -> argparse.ArgumentParser:
         default="gp",
         help="Run a deterministic GP prediction or the HMC-NUTS hyperparameter sampler.",
     )
+    parser.add_argument(
+        "--kernel",
+        choices=("stationary", "gibbs"),
+        default="stationary",
+        help="Kernel family used in GP mode or inside NUTS.",
+    )
+    parser.add_argument(
+        "--length-model",
+        choices=("exp_linear_bump", "constant"),
+        default="exp_linear_bump",
+        help="Length-scale function used by the Gibbs kernel.",
+    )
+    parser.add_argument(
+        "--width-model",
+        choices=("tanh_decay", "constant"),
+        default="tanh_decay",
+        help="Amplitude/width envelope used by the Gibbs kernel.",
+    )
     parser.add_argument("--ell", type=float, default=4.0, help="Initial/test GP length scale.")
     parser.add_argument("--w", type=float, default=3.3, help="Initial/test GP amplitude.")
+    parser.add_argument("--a0", type=float, default=np.log(4.0), help="Gibbs log-length baseline.")
+    parser.add_argument("--a1", type=float, default=0.0, help="Gibbs linear trend in log length.")
+    parser.add_argument("--b", type=float, default=0.0, help="Gibbs bump amplitude in log length.")
+    parser.add_argument("--c", type=float, default=None, help="Gibbs bump center. Defaults to data midpoint.")
+    parser.add_argument(
+        "--length-w",
+        type=float,
+        default=0.5,
+        help="Gibbs bump width parameter for the length function.",
+    )
+    parser.add_argument("--s", type=float, default=1.65, help="Gibbs width/amplitude scale.")
+    parser.add_argument("--u", type=float, default=None, help="Gibbs width-envelope center. Defaults to data midpoint.")
+    parser.add_argument(
+        "--w2",
+        type=float,
+        default=0.5,
+        help="Gibbs width-envelope width parameter.",
+    )
     parser.add_argument("--jitter", type=float, default=1e-6)
     parser.add_argument("--num-samples", type=int, default=1000)
     parser.add_argument("--warmup-steps", type=int, default=2000)
-    parser.add_argument("--num-chains", type=int, default=1)
+    parser.add_argument("--num-chains", type=int, default=4)
     parser.add_argument("--target-accept-prob", type=float, default=0.8)
     parser.add_argument(
         "--objective",
@@ -90,6 +130,12 @@ def build_parser() -> argparse.ArgumentParser:
         type=int,
         default=50,
         help="If > 0 in nuts mode, draw this many posterior functions on the test grid.",
+    )
+    parser.add_argument(
+        "--predictive-samples",
+        type=int,
+        default=100,
+        help="Maximum retained hyperposterior samples used in the total-variance predictive summary.",
     )
     parser.add_argument(
         "--output",
@@ -117,10 +163,14 @@ def _to_numpy(value):
     return np.asarray(value)
 
 
-def prepare_figure_dir(path: str | None, mode: str) -> Path:
+def prepare_figure_dir(path: str | None, mode: str, *, project_root: str | None = None) -> Path:
     if path is None:
         stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-        root = Path.cwd() / "figures" / f"gprhd-{mode}-{stamp}"
+        if project_root is None:
+            repo_root = Path(__file__).resolve().parents[2]
+        else:
+            repo_root = Path(project_root).expanduser().resolve()
+        root = repo_root / "figures" / f"gprhd-{mode}-{stamp}"
     else:
         root = Path(path).expanduser().resolve()
     root.mkdir(parents=True, exist_ok=True)
@@ -225,31 +275,24 @@ def plot_nuts_traces(samples: dict[str, torch.Tensor], figure_dir: Path) -> None
     plt.close(fig)
 
 
-def plot_corner(samples: dict[str, torch.Tensor], figure_dir: Path) -> bool:
+def plot_corner(samples: dict[str, torch.Tensor], figure_dir: Path, *, config: NUTSConfig) -> bool:
     try:
         import corner
     except ImportError:
         print("corner is not installed; skipping corner plot.")
         return False
 
-    chain = torch.stack(
-        [
-            samples["theta_ell"],
-            samples["theta_w"],
-            samples["theta_sf"],
-            samples["theta_sd"],
-        ],
-        dim=-1,
-    )
-    chain = torch.exp(chain).detach().cpu().numpy()
+    chain, labels = display_samples_for_diagnostics(samples, config=config)
+    chain = chain.detach().cpu().numpy()
+    if chain.ndim != 2 or chain.shape[0] <= chain.shape[1]:
+        print(
+            "Skipping corner plot because there are too few retained samples "
+            f"({chain.shape[0]}) for the number of plotted parameters ({chain.shape[1]})."
+        )
+        return False
     figure = corner.corner(
         chain,
-        labels=[
-            r"$\ell$",
-            r"$w$",
-            r"$\sigma_f$",
-            r"$\sigma_d$",
-        ],
+        labels=labels,
         quantiles=[0.16, 0.5, 0.84],
         show_titles=True,
         title_kwargs={"fontsize": 12},
@@ -288,28 +331,111 @@ def plot_posterior_draws(bundle, pred_means, function_draws, figure_dir: Path) -
     plt.close()
 
 
+def plot_variance_decomposition(bundle, summary, figure_dir: Path) -> None:
+    x_test = _to_numpy(bundle.x_test).ravel()
+    total_var = _to_numpy(summary.total_variance).ravel()
+    within_var = _to_numpy(summary.within_variance).ravel()
+    between_var = _to_numpy(summary.between_variance).ravel()
+
+    plt.figure(figsize=(10, 6))
+    plt.plot(x_test, total_var, lw=2, color="black", label="Total variance")
+    plt.plot(x_test, within_var, lw=2, color="royalblue", label="E_theta[Var(f|D,theta)]")
+    plt.plot(x_test, between_var, lw=2, color="crimson", label="Var_theta(E[f|D,theta])")
+    plt.xlabel("Position [nm]")
+    plt.ylabel("Predictive variance")
+    plt.title("Hyperposterior Variance Decomposition")
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(figure_dir / "nuts_variance_decomposition.png", dpi=200)
+    plt.close()
+
+
 def write_run_summary(figure_dir: Path, lines: list[str]) -> None:
     (figure_dir / "run_summary.txt").write_text("\n".join(lines) + "\n")
 
 
+def _data_midpoint(bundle) -> float:
+    x_all = torch.cat([bundle.observations.x_obs.reshape(-1), bundle.observations.x_der.reshape(-1)])
+    return float(0.5 * (x_all.min().item() + x_all.max().item()))
+
+
+def _format_param_mapping(params: dict[str, torch.Tensor]) -> dict[str, float]:
+    return {key: float(value.detach().cpu().item()) for key, value in params.items()}
+
+
+def _kernel_summary_lines(args: argparse.Namespace) -> list[str]:
+    lines = [f"kernel: {args.kernel}"]
+    if args.kernel == "stationary":
+        lines.extend(
+            [
+                f"ell: {args.ell}",
+                f"w: {args.w}",
+            ]
+        )
+    else:
+        lines.extend(
+            [
+                f"length_model: {args.length_model}",
+                f"width_model: {args.width_model}",
+                f"a0: {args.a0}",
+                f"a1: {args.a1}",
+                f"b: {args.b}",
+                f"c: {args.c}",
+                f"length_w: {args.length_w}",
+                f"s: {args.s}",
+                f"u: {args.u}",
+                f"w2: {args.w2}",
+            ]
+        )
+    return lines
+
+
 def run_gp_mode(args: argparse.Namespace, bundle, figure_dir: Path):
     obs = bundle.observations
-    pred_mean, pred_cov, K_joint, L, y_joint, m_joint, alpha = gpr_hd(
-        x_func=obs.x_obs,
-        y_func=obs.y_obs,
-        x_der=obs.x_der,
-        dy_der=obs.dy_der,
-        x_test=bundle.x_test,
-        ell=torch.tensor(args.ell, dtype=torch.float64),
-        w=torch.tensor(args.w, dtype=torch.float64),
-        noise_func_cov=obs.noise_func_cov,
-        noise_deriv_diag=obs.noise_deriv_diag,
-        H_func=obs.H_obs,
-        H_test=None,
-        jitter=args.jitter,
-    )
+    if args.kernel == "stationary":
+        pred_mean, pred_cov, K_joint, L, y_joint, m_joint, alpha = gpr_hd(
+            x_func=obs.x_obs,
+            y_func=obs.y_obs,
+            x_der=obs.x_der,
+            dy_der=obs.dy_der,
+            x_test=bundle.x_test,
+            ell=torch.tensor(args.ell, dtype=torch.float64),
+            w=torch.tensor(args.w, dtype=torch.float64),
+            noise_func_cov=obs.noise_func_cov,
+            noise_deriv_diag=obs.noise_deriv_diag,
+            H_func=obs.H_obs,
+            H_test=None,
+            jitter=args.jitter,
+        )
+    else:
+        midpoint = _data_midpoint(bundle)
+        pred_mean, pred_cov, K_joint, L, y_joint, m_joint, alpha = gpr_hd_gibbs(
+            x_func=obs.x_obs,
+            y_func=obs.y_obs,
+            x_der=obs.x_der,
+            dy_der=obs.dy_der,
+            x_test=bundle.x_test,
+            a0=torch.tensor(args.a0, dtype=torch.float64),
+            a1=torch.tensor(args.a1, dtype=torch.float64),
+            b=torch.tensor(args.b, dtype=torch.float64),
+            c=torch.tensor(args.c if args.c is not None else midpoint, dtype=torch.float64),
+            length_w=torch.tensor(args.length_w, dtype=torch.float64),
+            s=torch.tensor(args.s, dtype=torch.float64),
+            u=torch.tensor(args.u if args.u is not None else midpoint, dtype=torch.float64),
+            width_w=torch.tensor(args.w2, dtype=torch.float64),
+            noise_func_cov=obs.noise_func_cov,
+            noise_deriv_diag=obs.noise_deriv_diag,
+            H_func=obs.H_obs,
+            H_test=None,
+            config=GibbsKernelConfig(
+                length_model=args.length_model,
+                width_model=args.width_model,
+            ),
+            jitter=args.jitter,
+        )
     result = {
         "mode": "gp",
+        "kernel": args.kernel,
         "dataset_root": str(bundle.dataset_root),
         "x_test": bundle.x_test,
         "pred_mean": pred_mean,
@@ -330,10 +456,12 @@ def run_gp_mode(args: argparse.Namespace, bundle, figure_dir: Path):
         figure_dir,
         [
             "mode: gp",
+            *_kernel_summary_lines(args),
             f"dataset_root: {bundle.dataset_root}",
             f"x_obs shape: {tuple(obs.x_obs.shape)}",
             f"x_der shape: {tuple(obs.x_der.shape)}",
             f"x_test shape: {tuple(bundle.x_test.shape)}",
+            f"x_test range: ({bundle.x_test.min().item():.6g}, {bundle.x_test.max().item():.6g})",
             f"pred_mean shape: {tuple(pred_mean.shape)}",
             f"pred_cov shape: {tuple(pred_cov.shape)}",
             f"predictive variance min: {torch.diagonal(pred_cov).min().item():.6g}",
@@ -359,13 +487,23 @@ def run_nuts_mode(args: argparse.Namespace, bundle, figure_dir: Path):
         target_accept_prob=args.target_accept_prob,
         jitter=args.jitter,
         objective=args.objective,
+        kernel=args.kernel,
+        length_model=args.length_model,
+        width_model=args.width_model,
     )
     mcmc, samples = run_hmc_nuts(bundle.observations, config=config)
+    try:
+        summary = mcmc.summary(prob=0.9)
+        summary_note = "pyro summary computed"
+    except AssertionError as exc:
+        summary = None
+        summary_note = f"pyro summary skipped: {exc}"
     result = {
         "mode": "nuts",
+        "kernel": args.kernel,
         "dataset_root": str(bundle.dataset_root),
         "samples": samples,
-        "summary": mcmc.summary(prob=0.9),
+        "summary": summary,
         "figure_dir": str(figure_dir),
     }
     plot_histograms(bundle, figure_dir)
@@ -373,15 +511,18 @@ def run_nuts_mode(args: argparse.Namespace, bundle, figure_dir: Path):
     plot_nuts_traces(samples, figure_dir)
     corner_written = False
     if not args.no_corner:
-        corner_written = plot_corner(samples, figure_dir)
+        corner_written = plot_corner(samples, figure_dir, config=config)
     summary_lines = [
         "mode: nuts",
         f"dataset_root: {bundle.dataset_root}",
         f"figure_dir: {figure_dir}",
         f"objective: {args.objective}",
+        *_kernel_summary_lines(args),
         f"num_samples: {args.num_samples}",
         f"warmup_steps: {args.warmup_steps}",
         f"num_chains: {args.num_chains}",
+        f"x_test range: ({bundle.x_test.min().item():.6g}, {bundle.x_test.max().item():.6g})",
+        summary_note,
     ]
     print("Finished NUTS run")
     print(f"dataset_root: {bundle.dataset_root}")
@@ -391,13 +532,42 @@ def run_nuts_mode(args: argparse.Namespace, bundle, figure_dir: Path):
         summary_lines.append(f"{key}: {tuple(value.shape)}")
     summary_lines.append(f"corner plot written: {corner_written}")
 
+    predictive_summary = summarize_hyperposterior_predictive(
+        bundle.observations,
+        samples,
+        bundle.x_test,
+        config=config,
+        max_samples=args.predictive_samples,
+    )
+    plot_gp_posterior(
+        bundle,
+        predictive_summary.mean,
+        predictive_summary.total_cov,
+        figure_dir,
+        filename="nuts_hyperposterior_predictive.png",
+    )
+    plot_variance_decomposition(bundle, predictive_summary, figure_dir)
+    result["hyperposterior_predictive"] = predictive_summary
+    summary_lines.append(
+        f"predictive samples used: {int(predictive_summary.selected_indices.numel())}"
+    )
+    summary_lines.append(
+        f"average total predictive variance: {float(predictive_summary.total_variance.mean().item()):.6g}"
+    )
+    summary_lines.append(
+        f"average within predictive variance: {float(predictive_summary.within_variance.mean().item()):.6g}"
+    )
+    summary_lines.append(
+        f"average between predictive variance: {float(predictive_summary.between_variance.mean().item()):.6g}"
+    )
+
     if args.posterior_draws > 0:
         pred_means, function_draws = sample_posterior_functions(
             bundle.observations,
             samples,
             bundle.x_test,
             n_draws=args.posterior_draws,
-            jitter=args.jitter,
+            config=config,
         )
         result["x_test"] = bundle.x_test
         result["pred_means"] = pred_means
@@ -422,7 +592,7 @@ def run_nuts_mode(args: argparse.Namespace, bundle, figure_dir: Path):
         print(f"posterior function draws: {tuple(function_draws.shape)}")
         summary_lines.append(f"posterior function draws: {tuple(function_draws.shape)}")
         summary_lines.append(f"map sample index: {map_idx}")
-        summary_lines.append(f"map theta (ell, w, sigma_f, sigma_d): {map_theta.detach().cpu().tolist()}")
+        summary_lines.append(f"map parameters: {_format_param_mapping(map_theta)}")
         summary_lines.append(f"map log posterior: {float(map_score.detach().cpu().item()):.6g}")
 
     write_run_summary(figure_dir, summary_lines)
@@ -443,7 +613,7 @@ def maybe_save_output(output_path: str | None, payload) -> None:
 def main() -> None:
     parser = build_parser()
     args = parser.parse_args()
-    figure_dir = prepare_figure_dir(args.figure_dir, args.mode)
+    figure_dir = prepare_figure_dir(args.figure_dir, args.mode, project_root=args.project_root)
 
     bundle = prepare_gprhd_hmc_inputs(
         dataset_root=args.dataset_root,

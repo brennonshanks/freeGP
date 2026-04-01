@@ -9,14 +9,26 @@ from .data import (
     resolve_dataset_root,
 )
 from .gp import (
+    GibbsKernelConfig,
     JointGPPosterior,
     build_joint_gp,
+    build_joint_gp_gibbs,
     gpr_hd,
+    gpr_hd_gibbs,
     joint_log_marginal_likelihood,
     joint_loo_loglik,
     predict_function,
 )
-from .hmc import HyperPriorConfig, NUTSConfig, run_hmc_nuts, sample_posterior_functions
+from .hmc import (
+    HMCChainDiagnostics,
+    HyperPriorConfig,
+    NUTSConfig,
+    display_samples_for_diagnostics,
+    run_hmc_nuts,
+    sample_posterior_functions,
+    summarize_chain_diagnostics,
+)
+from .metrics import ReferenceComparison, compare_to_reference_curves
 from .preprocess import (
     JointObservations,
     ProcessedUmbrellaData,
@@ -24,24 +36,49 @@ from .preprocess import (
     build_test_grid,
     process_umbrella_windows,
 )
+from .posterior import (
+    HyperposteriorPredictiveSummary,
+    summarize_fixed_posterior_predictive,
+    summarize_hyperposterior_predictive,
+)
+from .studies import (
+    AblationCell,
+    AblationCellResult,
+    AblationStudyResult,
+    StudyModelConfig,
+    run_ablation_study,
+    save_ablation_summary,
+)
 from .workflow import WorkflowBundle, prepare_gprhd_hmc_inputs
 
 __all__ = [
+    "AblationCell",
+    "AblationCellResult",
+    "AblationStudyResult",
     "DEFAULT_DTYPE",
     "DEFAULT_SEED",
+    "GibbsKernelConfig",
+    "HMCChainDiagnostics",
     "HyperPriorConfig",
+    "HyperposteriorPredictiveSummary",
     "JointGPPosterior",
     "JointObservations",
     "NUTSConfig",
     "ProcessedUmbrellaData",
+    "ReferenceComparison",
     "ReferenceCurves",
+    "StudyModelConfig",
     "UmbrellaWindow",
     "WorkflowBundle",
     "build_joint_gp",
+    "build_joint_gp_gibbs",
     "build_joint_observations",
     "build_test_grid",
+    "compare_to_reference_curves",
     "configure_torch",
+    "display_samples_for_diagnostics",
     "gpr_hd",
+    "gpr_hd_gibbs",
     "joint_log_marginal_likelihood",
     "joint_loo_loglik",
     "load_reference_curves",
@@ -50,6 +87,11 @@ __all__ = [
     "prepare_gprhd_hmc_inputs",
     "process_umbrella_windows",
     "resolve_dataset_root",
+    "run_ablation_study",
     "run_hmc_nuts",
+    "save_ablation_summary",
+    "summarize_fixed_posterior_predictive",
+    "summarize_chain_diagnostics",
+    "summarize_hyperposterior_predictive",
     "sample_posterior_functions",
 ]

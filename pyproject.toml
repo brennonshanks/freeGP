@@ -16,6 +16,7 @@ dependencies = [
 
 [project.scripts]
 freegp-gprhd-hmc = "freegp.run_gprhd_hmc:main"
+freegp-ablation-grid = "freegp.run_ablation_grid:main"
 
 [project.optional-dependencies]
 mcmc = [
