@@ -1,0 +1,16 @@
+mode: nuts
+dataset_root: /home/bshanks/freeGP-datasets/membranes/katka
+figure_dir: /home/bshanks/freeGP-dev/src/freegp/figures/gprhd-nuts-20260401-112309
+objective: lml
+num_samples: 500
+warmup_steps: 500
+num_chains: 1
+theta_ell: (500,)
+theta_sd: (500,)
+theta_sf: (500,)
+theta_w: (500,)
+corner plot written: True
+posterior function draws: (100, 150)
+map sample index: 200
+map theta (ell, w, sigma_f, sigma_d): [0.5368642902576757, 12.513936836798491, 2.0999713480879993, 4.951844772424979]
+map log posterior: -1210.64

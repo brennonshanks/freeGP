@@ -14,6 +14,9 @@ dependencies = [
   "tqdm>=4.66",
 ]
 
+[project.scripts]
+freegp-gprhd-hmc = "freegp.run_gprhd_hmc:main"
+
 [project.optional-dependencies]
 mcmc = [
   "emcee>=3.1.6",
@@ -37,4 +40,8 @@ all = [
 ]
 
 [tool.setuptools]
-py-modules = ["freegp", "defaults", "constants", "utility", "gp", "reference"]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["freegp*"]
