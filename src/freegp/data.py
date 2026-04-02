@@ -138,7 +138,19 @@ def load_reference_curves(
     """Load the reference WHAM and UI curves from the tracked project files."""
     if project_root is None:
         project_root = Path(__file__).resolve().parents[2]
-    root = Path(project_root).resolve() / "freeGP_updated"
+    project_path = Path(project_root).resolve()
+
+    candidate_roots = [
+        project_path / "reference_data",
+        project_path / "freeGP_updated",
+    ]
+
+    root = next((path for path in candidate_roots if path.exists()), None)
+    if root is None:
+        raise FileNotFoundError(
+            "Reference curves not found. Expected either "
+            f"{project_path / 'reference_data'} or {project_path / 'freeGP_updated'}."
+        )
 
     umbrella_x, umbrella_f, umbrella_e = np.loadtxt(root / "UI-Semen" / "pmf.dat", unpack=True)
     wham_x, wham_f, wham_e = np.loadtxt(root / "wham.dat", unpack=True)
