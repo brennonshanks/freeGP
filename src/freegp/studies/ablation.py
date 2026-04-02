@@ -75,8 +75,12 @@ class AblationCellResult:
     dataset_root: Path
     x_test: torch.Tensor
     predictive_summary: HyperposteriorPredictiveSummary
+    canonical_predictive_summary: HyperposteriorPredictiveSummary | None = None
+    canonical_metrics: ReferenceComparison | None = None
     chain_diagnostics: HMCChainDiagnostics | None = None
     nuts_samples: dict[str, torch.Tensor] | None = None
+    canonical_chain_diagnostics: HMCChainDiagnostics | None = None
+    canonical_nuts_samples: dict[str, torch.Tensor] | None = None
     artifact_payload: dict[str, object] | None = None
 
 
@@ -217,6 +221,46 @@ def _prepare_ablation_bundle(
         references=references,
         dataset_root=dataset_root,
     )
+
+
+def _replicate_plan(
+    *,
+    effective_replicates: int,
+    window_selection_mode: str,
+    trajectory_selection_mode: str,
+) -> list[dict[str, object]]:
+    random_modes_active = (
+        window_selection_mode == "random_subset"
+        or trajectory_selection_mode == "random_subsample"
+    )
+    if not random_modes_active:
+        return [
+            {
+                "replicate_index": 0,
+                "is_canonical": True,
+                "window_selection_mode": window_selection_mode,
+                "trajectory_selection_mode": trajectory_selection_mode,
+            }
+        ]
+
+    plan = [
+        {
+            "replicate_index": 0,
+            "is_canonical": True,
+            "window_selection_mode": "evenly_spaced",
+            "trajectory_selection_mode": "contiguous",
+        }
+    ]
+    for rep in range(1, effective_replicates):
+        plan.append(
+            {
+                "replicate_index": rep,
+                "is_canonical": False,
+                "window_selection_mode": window_selection_mode,
+                "trajectory_selection_mode": trajectory_selection_mode,
+            }
+        )
+    return plan
 
 
 def _bundle_artifact_payload(bundle: WorkflowBundle) -> dict[str, object]:
@@ -390,6 +434,33 @@ def _predictive_summary_payload(summary: HyperposteriorPredictiveSummary) -> dic
     }
 
 
+def _replicate_result_payload(
+    *,
+    replicate_index: int,
+    is_canonical: bool,
+    window_selection_mode: str,
+    trajectory_selection_mode: str,
+    random_seed: int,
+    bundle: WorkflowBundle,
+    summary: HyperposteriorPredictiveSummary,
+    metrics: ReferenceComparison,
+    diagnostics: HMCChainDiagnostics | None,
+    nuts_samples: dict[str, torch.Tensor] | None,
+) -> dict[str, object]:
+    return {
+        "replicate_index": replicate_index,
+        "is_canonical": is_canonical,
+        "window_selection_mode": window_selection_mode,
+        "trajectory_selection_mode": trajectory_selection_mode,
+        "random_seed": random_seed,
+        "bundle": _bundle_artifact_payload(bundle),
+        "predictive_summary": _predictive_summary_payload(summary),
+        "metrics": asdict(metrics),
+        "chain_diagnostics": None if diagnostics is None else asdict(diagnostics),
+        "nuts_samples": nuts_samples,
+    }
+
+
 def run_ablation_study(
     *,
     dataset_root: str,
@@ -448,7 +519,17 @@ def run_ablation_study(
             replicate_diagnostics: list[HMCChainDiagnostics] = []
             replicate_nuts_samples: list[dict[str, torch.Tensor]] = []
             replicate_artifacts: list[dict[str, object]] = []
-            for rep in range(effective_replicates):
+            canonical_summary: HyperposteriorPredictiveSummary | None = None
+            canonical_metrics: ReferenceComparison | None = None
+            canonical_diagnostics: HMCChainDiagnostics | None = None
+            canonical_nuts_samples: dict[str, torch.Tensor] | None = None
+            replicate_plan = _replicate_plan(
+                effective_replicates=effective_replicates,
+                window_selection_mode=window_selection_mode,
+                trajectory_selection_mode=trajectory_selection_mode,
+            )
+            for rep_spec in replicate_plan:
+                rep = int(rep_spec["replicate_index"])
                 cell_seed = int(random_seed + 1009 * i + 9173 * j + 7919 * window_count + 101 * rep)
                 cell_rng = np.random.default_rng(cell_seed)
                 bundle = _prepare_ablation_bundle(
@@ -463,8 +544,8 @@ def run_ablation_study(
                     x_max=x_max,
                     n_equilibration=n_equilibration,
                     common_x_test=common_x_test,
-                    window_selection_mode=window_selection_mode,
-                    trajectory_selection_mode=trajectory_selection_mode,
+                    window_selection_mode=str(rep_spec["window_selection_mode"]),
+                    trajectory_selection_mode=str(rep_spec["trajectory_selection_mode"]),
                     rng=cell_rng,
                 )
                 if model.method == "fixed_gp":
@@ -476,9 +557,28 @@ def run_ablation_study(
                 else:
                     raise ValueError(f"Unsupported ablation method: {model.method}")
 
+                metrics = compare_to_reference_curves(summary, references)
                 replicate_summaries.append(summary)
-                replicate_metrics.append(compare_to_reference_curves(summary, references))
-                replicate_artifacts.append(_bundle_artifact_payload(bundle))
+                replicate_metrics.append(metrics)
+                replicate_artifacts.append(
+                    _replicate_result_payload(
+                        replicate_index=rep,
+                        is_canonical=bool(rep_spec["is_canonical"]),
+                        window_selection_mode=str(rep_spec["window_selection_mode"]),
+                        trajectory_selection_mode=str(rep_spec["trajectory_selection_mode"]),
+                        random_seed=cell_seed,
+                        bundle=bundle,
+                        summary=summary,
+                        metrics=metrics,
+                        diagnostics=diagnostics,
+                        nuts_samples=nuts_samples,
+                    )
+                )
+                if bool(rep_spec["is_canonical"]):
+                    canonical_summary = summary
+                    canonical_metrics = metrics
+                    canonical_diagnostics = diagnostics
+                    canonical_nuts_samples = nuts_samples
                 if diagnostics is not None:
                     replicate_diagnostics.append(diagnostics)
                 if nuts_samples is not None:
@@ -499,11 +599,16 @@ def run_ablation_study(
                     dataset_root=dataset_root_path,
                     x_test=summary.x_test,
                     predictive_summary=summary,
+                    canonical_predictive_summary=canonical_summary,
+                    canonical_metrics=canonical_metrics,
                     chain_diagnostics=diagnostics,
-                    nuts_samples=nuts_samples,
+                    nuts_samples=canonical_nuts_samples if canonical_nuts_samples is not None else nuts_samples,
+                    canonical_chain_diagnostics=canonical_diagnostics,
+                    canonical_nuts_samples=canonical_nuts_samples,
                     artifact_payload={
                         "selection_replicates": effective_replicates,
-                        "replicate_bundles": replicate_artifacts,
+                        "canonical_replicate_index": 0 if random_modes_active else 0,
+                        "replicates": replicate_artifacts,
                     },
                 )
             )
@@ -542,12 +647,15 @@ def _cell_slug(cell: AblationCell) -> str:
     return f"w{cell.window_count:02d}_f{frac}"
 
 
-def _plot_predictive_cell(
+def _plot_predictive_summary(
     ax,
-    cell_result: AblationCellResult,
+    *,
+    cell: AblationCell,
+    summary: HyperposteriorPredictiveSummary,
+    metrics: ReferenceComparison,
     references: ReferenceCurves,
+    title_suffix: str = "",
 ) -> None:
-    summary = cell_result.predictive_summary
     x_test = summary.x_test.detach().cpu().numpy().reshape(-1)
     pred_mean = summary.mean.detach().cpu().numpy().reshape(-1)
     pred_std = np.sqrt(np.clip(summary.total_variance.detach().cpu().numpy().reshape(-1), a_min=0.0, a_max=None))
@@ -567,11 +675,43 @@ def _plot_predictive_cell(
     ax.plot(references.wham_x, wham_shift, color="crimson", alpha=0.7, lw=1.2)
     ax.plot(references.umbrella_x, ui_shift, color="steelblue", alpha=0.7, lw=1.2)
     ax.set_title(
-        f"{cell_result.cell.window_count} windows, {cell_result.cell.trajectory_fraction:.2f} traj\n"
-        f"RMSE(WHAM)={cell_result.metrics.rmse_wham:.2f}, avg std={cell_result.metrics.avg_total_std:.2f}",
+        f"{cell.window_count} windows, {cell.trajectory_fraction:.2f} traj{title_suffix}\n"
+        f"RMSE(WHAM)={metrics.rmse_wham:.2f}, avg std={metrics.avg_total_std:.2f}",
         fontsize=10,
     )
     ax.grid(True, alpha=0.15)
+
+
+def _plot_predictive_cell(
+    ax,
+    cell_result: AblationCellResult,
+    references: ReferenceCurves,
+) -> None:
+    _plot_predictive_summary(
+        ax,
+        cell=cell_result.cell,
+        summary=cell_result.predictive_summary,
+        metrics=cell_result.metrics,
+        references=references,
+    )
+
+
+def _plot_canonical_predictive_cell(
+    ax,
+    cell_result: AblationCellResult,
+    references: ReferenceCurves,
+) -> None:
+    if cell_result.canonical_predictive_summary is None or cell_result.canonical_metrics is None:
+        _plot_predictive_cell(ax, cell_result, references)
+        return
+    _plot_predictive_summary(
+        ax,
+        cell=cell_result.cell,
+        summary=cell_result.canonical_predictive_summary,
+        metrics=cell_result.canonical_metrics,
+        references=references,
+        title_suffix=" canonical",
+    )
 
 
 def _save_predictive_figures(
@@ -619,6 +759,51 @@ def _save_predictive_figures(
     )
     fig.tight_layout()
     fig.savefig(figure_dir / "ablation_predictive_grid.png", dpi=200)
+    plt.close(fig)
+
+    random_modes_active = (
+        result.window_selection_mode == "random_subset"
+        or result.trajectory_selection_mode == "random_subsample"
+    )
+    has_canonical = any(cell.canonical_predictive_summary is not None for cell in result.cells)
+    if not random_modes_active or not has_canonical:
+        return
+
+    canonical_dir = figure_dir / "predictive_cells_canonical"
+    canonical_dir.mkdir(parents=True, exist_ok=True)
+
+    for cell_result in result.cells:
+        fig, ax = plt.subplots(figsize=(8, 5))
+        _plot_canonical_predictive_cell(ax, cell_result, result.references)
+        ax.set_xlabel("Position [nm]")
+        ax.set_ylabel("Shifted free energy [kJ/mol]")
+        fig.tight_layout()
+        fig.savefig(canonical_dir / f"{_cell_slug(cell_result.cell)}.png", dpi=200)
+        plt.close(fig)
+
+    fig, axes = plt.subplots(
+        n_rows,
+        n_cols,
+        figsize=(5 * n_cols, 3.8 * n_rows),
+        squeeze=False,
+        sharex=False,
+        sharey=False,
+    )
+    for i, window_count in enumerate(result.window_counts):
+        for j, trajectory_fraction in enumerate(result.trajectory_fractions):
+            ax = axes[i, j]
+            cell_result = lookup[(window_count, trajectory_fraction)]
+            _plot_canonical_predictive_cell(ax, cell_result, result.references)
+            if i == n_rows - 1:
+                ax.set_xlabel("Position [nm]")
+            if j == 0:
+                ax.set_ylabel("Shifted free energy [kJ/mol]")
+    fig.suptitle(
+        f"Ablation Predictive Curves ({result.model.method}, {result.model.kernel}, canonical replicate)",
+        fontsize=14,
+    )
+    fig.tight_layout()
+    fig.savefig(figure_dir / "ablation_predictive_grid_canonical.png", dpi=200)
     plt.close(fig)
 
 
@@ -941,10 +1126,16 @@ def _save_result_artifacts(
             },
             "model": asdict(result.model),
             "metrics": asdict(cell_result.metrics),
+            "canonical_metrics": None if cell_result.canonical_metrics is None else asdict(cell_result.canonical_metrics),
             "chain_diagnostics": None if cell_result.chain_diagnostics is None else asdict(cell_result.chain_diagnostics),
+            "canonical_chain_diagnostics": None if cell_result.canonical_chain_diagnostics is None else asdict(cell_result.canonical_chain_diagnostics),
             "bundle": cell_result.artifact_payload,
             "predictive_summary": _predictive_summary_payload(cell_result.predictive_summary),
+            "canonical_predictive_summary": None
+            if cell_result.canonical_predictive_summary is None
+            else _predictive_summary_payload(cell_result.canonical_predictive_summary),
             "nuts_samples": cell_result.nuts_samples,
+            "canonical_nuts_samples": cell_result.canonical_nuts_samples,
         }
         torch.save(payload, cell_dir / f"{slug}.pt")
         manifest["cells"].append(
@@ -953,6 +1144,7 @@ def _save_result_artifacts(
                 "window_count": cell_result.cell.window_count,
                 "trajectory_fraction": cell_result.cell.trajectory_fraction,
                 "replicate_count": cell_result.replicate_count,
+                "has_canonical_replicate": cell_result.canonical_predictive_summary is not None,
                 "window_selection_mode": result.window_selection_mode,
                 "trajectory_selection_mode": result.trajectory_selection_mode,
                 "artifact_path": str((cell_dir / f"{slug}.pt").relative_to(figure_dir)),
