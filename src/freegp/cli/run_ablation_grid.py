@@ -59,7 +59,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--objective", choices=("lml", "loo"), default="lml")
     parser.add_argument("--warmup-steps", type=int, default=10)
     parser.add_argument("--num-samples", type=int, default=10)
-    parser.add_argument("--num-chains", type=int, default=4)
+    parser.add_argument("--num-chains", type=int, default=1)
     parser.add_argument("--target-accept-prob", type=float, default=0.8)
     parser.add_argument("--predictive-samples", type=int, default=10)
     parser.add_argument("--figure-dir", type=str, default=None)

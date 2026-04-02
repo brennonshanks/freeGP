@@ -55,7 +55,7 @@ class StudyModelConfig:
     objective: str = "lml"
     warmup_steps: int = 20
     num_samples: int = 20
-    num_chains: int = 4
+    num_chains: int = 1
     target_accept_prob: float = 0.8
     predictive_samples: int = 20
 

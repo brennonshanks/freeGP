@@ -55,7 +55,7 @@ class HyperPriorConfig:
 class NUTSConfig:
     num_samples: int = 1000
     warmup_steps: int = 2000
-    num_chains: int = 4
+    num_chains: int = 1
     target_accept_prob: float = 0.8
     jitter: float = 1e-6
     objective: str = "lml"
