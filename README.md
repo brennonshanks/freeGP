@@ -1,4 +1,4 @@
-# freeGP
+# Bayesian Free Energy Reconstruction with Gaussian Process Regression
 
 Gaussian-process free-energy reconstruction tools for umbrella-sampling analysis, with support for:
 
