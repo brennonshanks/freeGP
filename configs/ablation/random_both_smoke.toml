@@ -6,16 +6,16 @@ objective = "both"
 include_fixed = true
 
 window_counts = [25,13,7]
-trajectory_fractions = [1.0, 0.67, 0.33]
+trajectory_fractions = [1.0,0.67,0.33]
 
 window_selection_mode = "random_subset"
-trajectory_selection_mode = "random_subsample"
+trajectory_selection_mode = "contiguous"
 random_seed = 42
 
 num_bins = 20
 num_test_points = 50
-warmup_steps = 100
-num_samples = 100
+warmup_steps = 50
+num_samples = 50
 predictive_samples = 10
 barrier_bins = 20
 

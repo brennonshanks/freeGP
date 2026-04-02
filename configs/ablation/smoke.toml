@@ -15,8 +15,8 @@ random_seed = 42
 num_bins = 20
 num_test_points = 50
 warmup_steps = 100
-num_samples = 100
-predictive_samples = 10
-barrier_bins = 20
+num_samples = 1000
+predictive_samples = 50
+barrier_bins = 30
 
 results_dir = "/home/bshanks/freeGP-dev/results/ablation-grid-smoke"
