@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from pathlib import Path
 import csv
+import json
 
+from matplotlib import colors
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
@@ -28,6 +30,9 @@ from ..posterior import (
 from ..preprocess import build_joint_observations, build_test_grid, process_umbrella_windows
 from ..workflow import WorkflowBundle
 
+CSANYI_FIXED_ELL = float(np.pi / 2.0)
+CSANYI_FIXED_W = float(4.184 * np.sqrt(10.0))
+
 
 @dataclass(frozen=True)
 class AblationCell:
@@ -41,8 +46,8 @@ class StudyModelConfig:
     kernel: str = "stationary"
     length_model: str = "exp_linear_bump"
     width_model: str = "tanh_decay"
-    ell: float = 4.0
-    w: float = 3.3
+    ell: float = CSANYI_FIXED_ELL
+    w: float = CSANYI_FIXED_W
     a0: float = float(np.log(4.0))
     a1: float = 0.0
     b: float = 0.0
@@ -58,17 +63,21 @@ class StudyModelConfig:
     num_chains: int = 1
     target_accept_prob: float = 0.8
     predictive_samples: int = 20
+    barrier_bins: int = 30
+    selection_replicates: int | None = None
 
 
 @dataclass(frozen=True)
 class AblationCellResult:
     cell: AblationCell
+    replicate_count: int
     metrics: ReferenceComparison
     dataset_root: Path
     x_test: torch.Tensor
     predictive_summary: HyperposteriorPredictiveSummary
     chain_diagnostics: HMCChainDiagnostics | None = None
     nuts_samples: dict[str, torch.Tensor] | None = None
+    artifact_payload: dict[str, object] | None = None
 
 
 @dataclass(frozen=True)
@@ -79,6 +88,9 @@ class AblationStudyResult:
     cells: list[AblationCellResult]
     references: ReferenceCurves
     test_grid_mode: str
+    window_selection_mode: str
+    trajectory_selection_mode: str
+    random_seed: int
 
 
 def _select_evenly_spaced_windows(windows: list[UmbrellaWindow], keep_count: int) -> list[UmbrellaWindow]:
@@ -91,11 +103,41 @@ def _select_evenly_spaced_windows(windows: list[UmbrellaWindow], keep_count: int
     return [windows[idx] for idx in indices.tolist()]
 
 
+def _select_random_windows(
+    windows: list[UmbrellaWindow],
+    keep_count: int,
+    *,
+    rng: np.random.Generator,
+) -> list[UmbrellaWindow]:
+    if keep_count <= 0:
+        raise ValueError("keep_count must be positive.")
+    if keep_count >= len(windows):
+        return list(windows)
+    indices = np.sort(rng.choice(len(windows), size=keep_count, replace=False))
+    return [windows[int(idx)] for idx in indices.tolist()]
+
+
+def _select_windows(
+    windows: list[UmbrellaWindow],
+    keep_count: int,
+    *,
+    mode: str,
+    rng: np.random.Generator,
+) -> list[UmbrellaWindow]:
+    if mode == "evenly_spaced":
+        return _select_evenly_spaced_windows(windows, keep_count)
+    if mode == "random_subset":
+        return _select_random_windows(windows, keep_count, rng=rng)
+    raise ValueError(f"Unsupported window_selection_mode: {mode}")
+
+
 def _truncate_window(
     window: UmbrellaWindow,
     *,
     retain_fraction: float,
     n_equilibration: int,
+    mode: str,
+    rng: np.random.Generator,
 ) -> UmbrellaWindow:
     if not (0.0 < retain_fraction <= 1.0):
         raise ValueError("retain_fraction must be in (0, 1].")
@@ -105,11 +147,18 @@ def _truncate_window(
         raise ValueError(f"Window {window.folder} has no usable data after equilibration.")
     n_keep = max(2, int(np.floor(position_eq.numel() * retain_fraction)))
     n_keep = min(int(position_eq.numel()), n_keep)
+    if mode == "contiguous":
+        keep_indices = torch.arange(n_keep, dtype=torch.long)
+    elif mode == "random_subsample":
+        chosen = np.sort(rng.choice(int(position_eq.numel()), size=n_keep, replace=False))
+        keep_indices = torch.as_tensor(chosen, dtype=torch.long)
+    else:
+        raise ValueError(f"Unsupported trajectory_selection_mode: {mode}")
     return UmbrellaWindow(
         folder=window.folder,
         folder_number=window.folder_number,
-        time=time_eq[:n_keep].clone(),
-        position=position_eq[:n_keep].clone(),
+        time=time_eq[keep_indices].clone(),
+        position=position_eq[keep_indices].clone(),
         mdp_last_key=window.mdp_last_key,
         mdp_last_value=window.mdp_last_value,
     )
@@ -128,10 +177,25 @@ def _prepare_ablation_bundle(
     x_max: float | None,
     n_equilibration: int,
     common_x_test: torch.Tensor | None = None,
+    window_selection_mode: str = "evenly_spaced",
+    trajectory_selection_mode: str = "contiguous",
+    rng: np.random.Generator | None = None,
 ) -> WorkflowBundle:
-    selected = _select_evenly_spaced_windows(windows, cell.window_count)
+    rng = rng or np.random.default_rng()
+    selected = _select_windows(
+        windows,
+        cell.window_count,
+        mode=window_selection_mode,
+        rng=rng,
+    )
     truncated = [
-        _truncate_window(window, retain_fraction=cell.trajectory_fraction, n_equilibration=n_equilibration)
+        _truncate_window(
+            window,
+            retain_fraction=cell.trajectory_fraction,
+            n_equilibration=n_equilibration,
+            mode=trajectory_selection_mode,
+            rng=rng,
+        )
         for window in selected
     ]
     processed = process_umbrella_windows(truncated, n_equilibration=0, num_bins=num_bins)
@@ -152,6 +216,99 @@ def _prepare_ablation_bundle(
         x_test=x_test,
         references=references,
         dataset_root=dataset_root,
+    )
+
+
+def _bundle_artifact_payload(bundle: WorkflowBundle) -> dict[str, object]:
+    processed = bundle.processed
+    observations = bundle.observations
+    return {
+        "dataset_root": str(bundle.dataset_root),
+        "processed": {
+            "folder_numbers": processed.folder_numbers.clone(),
+            "force_constants": processed.force_constants.clone(),
+            "modes": processed.modes.clone(),
+            "variances": processed.variances.clone(),
+            "autocorr_times": processed.autocorr_times.clone(),
+            "n_samples": processed.n_samples.clone(),
+            "restoring_forces": processed.restoring_forces.clone(),
+            "histogram_counts": [value.clone() for value in processed.histogram_counts],
+            "histogram_probs": [value.clone() for value in processed.histogram_probs],
+            "histogram_densities": [value.clone() for value in processed.histogram_densities],
+            "bin_centers_list": [value.clone() for value in processed.bin_centers_list],
+        },
+        "observations": {
+            "x_obs": observations.x_obs.clone(),
+            "y_obs": observations.y_obs.clone(),
+            "H_obs": observations.H_obs.clone(),
+            "x_der": observations.x_der.clone(),
+            "dy_der": observations.dy_der.clone(),
+            "noise_func_cov": observations.noise_func_cov.clone(),
+            "noise_deriv_diag": observations.noise_deriv_diag.clone(),
+            "F_list": [value.clone() for value in observations.F_list],
+        },
+        "x_test": bundle.x_test.clone(),
+    }
+
+
+def _average_metrics(metrics_list: list[ReferenceComparison]) -> ReferenceComparison:
+    return ReferenceComparison(
+        rmse_wham=float(np.mean([m.rmse_wham for m in metrics_list])),
+        rmse_ui=float(np.mean([m.rmse_ui for m in metrics_list])),
+        avg_total_std=float(np.mean([m.avg_total_std for m in metrics_list])),
+        avg_within_std=float(np.mean([m.avg_within_std for m in metrics_list])),
+        avg_between_std=float(np.mean([m.avg_between_std for m in metrics_list])),
+        avg_total_variance=float(np.mean([m.avg_total_variance for m in metrics_list])),
+        avg_within_variance=float(np.mean([m.avg_within_variance for m in metrics_list])),
+        avg_between_variance=float(np.mean([m.avg_between_variance for m in metrics_list])),
+    )
+
+
+def _aggregate_predictive_summaries(
+    summaries: list[HyperposteriorPredictiveSummary],
+) -> HyperposteriorPredictiveSummary:
+    conditional_means = torch.cat([summary.conditional_means for summary in summaries], dim=0)
+    conditional_covariances = torch.cat([summary.conditional_covariances for summary in summaries], dim=0)
+    mean = conditional_means.mean(dim=0)
+    within_cov = conditional_covariances.mean(dim=0)
+    centered = conditional_means - mean
+    between_cov = centered.T @ centered / conditional_means.shape[0]
+    total_cov = within_cov + between_cov
+    total_cov = 0.5 * (total_cov + total_cov.T)
+    within_cov = 0.5 * (within_cov + within_cov.T)
+    between_cov = 0.5 * (between_cov + between_cov.T)
+    selected_indices = torch.arange(conditional_means.shape[0], dtype=torch.long)
+    return HyperposteriorPredictiveSummary(
+        x_test=summaries[0].x_test.clone(),
+        mean=mean,
+        total_cov=total_cov,
+        within_cov=within_cov,
+        between_cov=between_cov,
+        conditional_means=conditional_means,
+        conditional_covariances=conditional_covariances,
+        selected_indices=selected_indices,
+    )
+
+
+def _aggregate_chain_diagnostics(
+    diagnostics_list: list[HMCChainDiagnostics],
+) -> HMCChainDiagnostics:
+    labels = diagnostics_list[0].sample_std_by_name.keys()
+    sample_std_by_name = {
+        label: float(np.mean([diag.sample_std_by_name[label] for diag in diagnostics_list]))
+        for label in labels
+    }
+    return HMCChainDiagnostics(
+        step_size=float(np.mean([diag.step_size for diag in diagnostics_list])),
+        mean_accept_prob=float(np.mean([diag.mean_accept_prob for diag in diagnostics_list])),
+        accept_count=int(np.mean([diag.accept_count for diag in diagnostics_list])),
+        divergence_count=int(np.mean([diag.divergence_count for diag in diagnostics_list])),
+        sample_std_by_name=sample_std_by_name,
+        mean_sample_std=float(np.mean([diag.mean_sample_std for diag in diagnostics_list])),
+        max_sample_std=float(np.mean([diag.max_sample_std for diag in diagnostics_list])),
+        min_sample_std=float(np.mean([diag.min_sample_std for diag in diagnostics_list])),
+        poor_acceptance=bool(any(diag.poor_acceptance for diag in diagnostics_list)),
+        looks_stuck=bool(any(diag.looks_stuck for diag in diagnostics_list)),
     )
 
 
@@ -221,6 +378,18 @@ def _nuts_summary(bundle: WorkflowBundle, model: StudyModelConfig):
     return summary, diagnostics, samples
 
 
+def _predictive_summary_payload(summary: HyperposteriorPredictiveSummary) -> dict[str, object]:
+    return {
+        "x_test": summary.x_test.clone(),
+        "mean": summary.mean.clone(),
+        "total_variance": summary.total_variance.clone(),
+        "within_variance": summary.within_variance.clone(),
+        "between_variance": summary.between_variance.clone(),
+        "conditional_means": summary.conditional_means.clone(),
+        "selected_indices": summary.selected_indices.clone(),
+    }
+
+
 def run_ablation_study(
     *,
     dataset_root: str,
@@ -235,6 +404,9 @@ def run_ablation_study(
     x_min: float | None = None,
     x_max: float | None = None,
     test_grid_mode: str = "full_dataset",
+    window_selection_mode: str = "evenly_spaced",
+    trajectory_selection_mode: str = "contiguous",
+    random_seed: int = 0,
 ) -> AblationStudyResult:
     model = model or StudyModelConfig()
     dataset_root_path = Path(dataset_root).expanduser().resolve()
@@ -258,42 +430,81 @@ def run_ablation_study(
     elif test_grid_mode != "per_cell":
         raise ValueError(f"Unsupported test_grid_mode: {test_grid_mode}")
 
-    cells: list[AblationCellResult] = []
-    for window_count in window_counts:
-        for trajectory_fraction in trajectory_fractions:
-            cell = AblationCell(window_count=window_count, trajectory_fraction=trajectory_fraction)
-            bundle = _prepare_ablation_bundle(
-                windows,
-                references,
-                dataset_root_path,
-                cell=cell,
-                num_bins=num_bins,
-                num_test_points=num_test_points,
-                test_grid_source=test_grid_source,
-                x_min=x_min,
-                x_max=x_max,
-                n_equilibration=n_equilibration,
-                common_x_test=common_x_test,
-            )
-            if model.method == "fixed_gp":
-                summary = _fixed_summary(bundle, model)
-                diagnostics = None
-                nuts_samples = None
-            elif model.method == "nuts":
-                summary, diagnostics, nuts_samples = _nuts_summary(bundle, model)
-            else:
-                raise ValueError(f"Unsupported ablation method: {model.method}")
+    random_modes_active = (
+        window_selection_mode == "random_subset"
+        or trajectory_selection_mode == "random_subsample"
+    )
+    effective_replicates = model.selection_replicates
+    if effective_replicates is None:
+        effective_replicates = 5 if random_modes_active else 1
+    effective_replicates = max(1, int(effective_replicates))
 
-            metrics = compare_to_reference_curves(summary, references)
+    cells: list[AblationCellResult] = []
+    for i, window_count in enumerate(window_counts):
+        for j, trajectory_fraction in enumerate(trajectory_fractions):
+            cell = AblationCell(window_count=window_count, trajectory_fraction=trajectory_fraction)
+            replicate_summaries: list[HyperposteriorPredictiveSummary] = []
+            replicate_metrics: list[ReferenceComparison] = []
+            replicate_diagnostics: list[HMCChainDiagnostics] = []
+            replicate_nuts_samples: list[dict[str, torch.Tensor]] = []
+            replicate_artifacts: list[dict[str, object]] = []
+            for rep in range(effective_replicates):
+                cell_seed = int(random_seed + 1009 * i + 9173 * j + 7919 * window_count + 101 * rep)
+                cell_rng = np.random.default_rng(cell_seed)
+                bundle = _prepare_ablation_bundle(
+                    windows,
+                    references,
+                    dataset_root_path,
+                    cell=cell,
+                    num_bins=num_bins,
+                    num_test_points=num_test_points,
+                    test_grid_source=test_grid_source,
+                    x_min=x_min,
+                    x_max=x_max,
+                    n_equilibration=n_equilibration,
+                    common_x_test=common_x_test,
+                    window_selection_mode=window_selection_mode,
+                    trajectory_selection_mode=trajectory_selection_mode,
+                    rng=cell_rng,
+                )
+                if model.method == "fixed_gp":
+                    summary = _fixed_summary(bundle, model)
+                    diagnostics = None
+                    nuts_samples = None
+                elif model.method == "nuts":
+                    summary, diagnostics, nuts_samples = _nuts_summary(bundle, model)
+                else:
+                    raise ValueError(f"Unsupported ablation method: {model.method}")
+
+                replicate_summaries.append(summary)
+                replicate_metrics.append(compare_to_reference_curves(summary, references))
+                replicate_artifacts.append(_bundle_artifact_payload(bundle))
+                if diagnostics is not None:
+                    replicate_diagnostics.append(diagnostics)
+                if nuts_samples is not None:
+                    replicate_nuts_samples.append(nuts_samples)
+
+            summary = _aggregate_predictive_summaries(replicate_summaries)
+            metrics = _average_metrics(replicate_metrics)
+            diagnostics = (
+                _aggregate_chain_diagnostics(replicate_diagnostics)
+                if replicate_diagnostics else None
+            )
+            nuts_samples = replicate_nuts_samples[0] if replicate_nuts_samples else None
             cells.append(
                 AblationCellResult(
                     cell=cell,
+                    replicate_count=effective_replicates,
                     metrics=metrics,
                     dataset_root=dataset_root_path,
-                    x_test=bundle.x_test,
+                    x_test=summary.x_test,
                     predictive_summary=summary,
                     chain_diagnostics=diagnostics,
                     nuts_samples=nuts_samples,
+                    artifact_payload={
+                        "selection_replicates": effective_replicates,
+                        "replicate_bundles": replicate_artifacts,
+                    },
                 )
             )
 
@@ -304,6 +515,9 @@ def run_ablation_study(
         cells=cells,
         references=references,
         test_grid_mode=test_grid_mode,
+        window_selection_mode=window_selection_mode,
+        trajectory_selection_mode=trajectory_selection_mode,
+        random_seed=random_seed,
     )
 
 
@@ -488,23 +702,287 @@ def _save_nuts_diagnostics(
         )
 
 
+def _parameter_display_summary(
+    cell_result: AblationCellResult,
+    *,
+    model: StudyModelConfig,
+) -> tuple[list[str], np.ndarray] | None:
+    if cell_result.nuts_samples is None:
+        return None
+    chain, labels = display_samples_for_diagnostics(
+        cell_result.nuts_samples,
+        config=_nuts_config_from_model(model),
+    )
+    values = chain.detach().cpu().numpy()
+    return labels, np.median(values, axis=0)
+
+
+def _save_hyperparameter_heatmaps(
+    result: AblationStudyResult,
+    figure_dir: Path,
+) -> None:
+    if result.model.method != "nuts":
+        return
+
+    summaries = []
+    labels: list[str] | None = None
+    for cell_result in result.cells:
+        display_summary = _parameter_display_summary(cell_result, model=result.model)
+        if display_summary is None:
+            continue
+        cell_labels, medians = display_summary
+        labels = cell_labels
+        summaries.append((cell_result.cell.window_count, cell_result.cell.trajectory_fraction, medians))
+    if not summaries or labels is None:
+        return
+
+    n_params = len(labels)
+    n_cols = 2 if n_params <= 4 else 3
+    n_rows = int(np.ceil(n_params / n_cols))
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(5.2 * n_cols, 4.0 * n_rows), squeeze=False)
+    axes_flat = axes.ravel()
+
+    for param_index, label in enumerate(labels):
+        ax = axes_flat[param_index]
+        grid = np.full((len(result.window_counts), len(result.trajectory_fractions)), np.nan, dtype=float)
+        lookup = {
+            (window_count, trajectory_fraction): medians[param_index]
+            for window_count, trajectory_fraction, medians in summaries
+        }
+        for i, window_count in enumerate(result.window_counts):
+            for j, trajectory_fraction in enumerate(result.trajectory_fractions):
+                grid[i, j] = lookup[(window_count, trajectory_fraction)]
+
+        image = ax.imshow(grid, aspect="auto", origin="lower", cmap="magma")
+        ax.set_xticks(range(len(result.trajectory_fractions)))
+        ax.set_xticklabels([f"{value:.2f}" for value in result.trajectory_fractions])
+        ax.set_yticks(range(len(result.window_counts)))
+        ax.set_yticklabels([str(value) for value in result.window_counts])
+        ax.set_xlabel("Trajectory fraction retained")
+        ax.set_ylabel("Windows retained")
+        ax.set_title(f"{label} posterior median")
+        ax.invert_xaxis()
+        fig.colorbar(image, ax=ax, shrink=0.85)
+
+    for ax in axes_flat[n_params:]:
+        ax.axis("off")
+
+    fig.suptitle(
+        f"Hyperparameter Heatmaps ({result.model.objective}, {result.model.kernel})",
+        fontsize=14,
+    )
+    fig.tight_layout()
+    fig.savefig(figure_dir / "hyperparameter_heatmaps.png", dpi=200)
+    plt.close(fig)
+
+
+def _barrier_height_samples(cell_result: AblationCellResult) -> np.ndarray:
+    means = cell_result.predictive_summary.conditional_means.detach().cpu().numpy()
+    return means.max(axis=1) - means.min(axis=1)
+
+
+def _reference_barrier_heights(references: ReferenceCurves) -> tuple[float, float]:
+    wham_barrier = float(np.max(references.wham_f) - np.min(references.wham_f))
+    umbrella_barrier = float(np.max(references.umbrella_f) - np.min(references.umbrella_f))
+    return wham_barrier, umbrella_barrier
+
+
+def _relative_data_retained(result: AblationStudyResult, cell: AblationCell) -> float:
+    max_windows = max(result.window_counts) if result.window_counts else 1
+    max_trajectory = max(result.trajectory_fractions) if result.trajectory_fractions else 1.0
+    return float((cell.window_count / max_windows) * (cell.trajectory_fraction / max_trajectory))
+
+
+def _global_barrier_bin_edges(result: AblationStudyResult) -> np.ndarray | None:
+    all_barriers = []
+    for cell_result in result.cells:
+        barriers = _barrier_height_samples(cell_result)
+        if barriers.size > 0:
+            all_barriers.append(barriers)
+    if not all_barriers:
+        return None
+    combined = np.concatenate(all_barriers)
+    lo = float(combined.min())
+    hi = float(combined.max())
+    if np.isclose(lo, hi):
+        pad = max(1e-6, 0.05 * max(abs(lo), 1.0))
+        lo -= pad
+        hi += pad
+    return np.linspace(lo, hi, result.model.barrier_bins + 1)
+
+
+def _save_barrier_histograms(
+    result: AblationStudyResult,
+    figure_dir: Path,
+) -> None:
+    if result.model.method != "nuts":
+        return
+
+    bin_edges = _global_barrier_bin_edges(result)
+    if bin_edges is None:
+        return
+
+    cmap = plt.get_cmap("plasma")
+    norm = colors.Normalize(vmin=0.0, vmax=1.0)
+    lookup = {
+        (cell.cell.window_count, cell.cell.trajectory_fraction): cell
+        for cell in result.cells
+    }
+    wham_barrier, umbrella_barrier = _reference_barrier_heights(result.references)
+
+    def save_family(
+        *,
+        outer_values: list[float | int],
+        inner_values: list[float | int],
+        outer_label: str,
+        inner_label: str,
+        path: Path,
+        pick_cell,
+    ) -> None:
+        n_panels = len(outer_values)
+        n_cols = min(3, n_panels)
+        n_rows = int(np.ceil(n_panels / n_cols))
+        fig, axes = plt.subplots(n_rows, n_cols, figsize=(5.2 * n_cols, 3.8 * n_rows), squeeze=False)
+        axes_flat = axes.ravel()
+
+        for ax, outer_value in zip(axes_flat, outer_values):
+            for inner_value in inner_values:
+                cell_result = pick_cell(outer_value, inner_value)
+                barriers = _barrier_height_samples(cell_result)
+                retained = _relative_data_retained(result, cell_result.cell)
+                color = cmap(norm(retained))
+                ax.hist(
+                    barriers,
+                    bins=bin_edges,
+                    histtype="step",
+                    alpha=0.95,
+                    color=color,
+                    edgecolor=color,
+                    linewidth=2.0,
+                    label=f"{inner_label}={inner_value:.2f}" if isinstance(inner_value, float) else f"{inner_label}={inner_value}",
+                )
+            ax.axvline(wham_barrier, color="black", linestyle="--", linewidth=1.6, label="WHAM barrier")
+            ax.axvline(umbrella_barrier, color="dimgray", linestyle=":", linewidth=1.8, label="UI barrier")
+            ax.set_title(f"{outer_label}={outer_value}")
+            ax.set_xlabel("Barrier height from GP mean [kJ/mol]")
+            ax.set_ylabel("Count")
+            ax.grid(True, alpha=0.15)
+            ax.legend(fontsize=8)
+
+        for ax in axes_flat[n_panels:]:
+            ax.axis("off")
+
+        fig.suptitle(
+            f"Barrier Height Histograms ({result.model.objective}, {result.model.kernel})",
+            fontsize=14,
+        )
+        fig.subplots_adjust(top=0.88, hspace=0.35, wspace=0.25)
+        fig.savefig(path, dpi=200)
+        plt.close(fig)
+
+    save_family(
+        outer_values=result.window_counts,
+        inner_values=result.trajectory_fractions,
+        outer_label="windows",
+        inner_label="traj",
+        path=figure_dir / "barrier_histograms_by_windows.png",
+        pick_cell=lambda window_count, trajectory_fraction: lookup[(window_count, trajectory_fraction)],
+    )
+    save_family(
+        outer_values=result.trajectory_fractions,
+        inner_values=result.window_counts,
+        outer_label="traj",
+        inner_label="windows",
+        path=figure_dir / "barrier_histograms_by_trajectory.png",
+        pick_cell=lambda trajectory_fraction, window_count: lookup[(window_count, trajectory_fraction)],
+    )
+
+
+def _save_result_artifacts(
+    result: AblationStudyResult,
+    figure_dir: Path,
+) -> None:
+    artifacts_dir = figure_dir / "artifacts"
+    cell_dir = artifacts_dir / "cells"
+    cell_dir.mkdir(parents=True, exist_ok=True)
+
+    np.savez(
+        artifacts_dir / "references.npz",
+        umbrella_x=result.references.umbrella_x,
+        umbrella_f=result.references.umbrella_f,
+        umbrella_e=result.references.umbrella_e,
+        wham_x=result.references.wham_x,
+        wham_f=result.references.wham_f,
+        wham_e=result.references.wham_e,
+    )
+
+    manifest = {
+        "model": asdict(result.model),
+        "window_counts": result.window_counts,
+        "trajectory_fractions": result.trajectory_fractions,
+        "test_grid_mode": result.test_grid_mode,
+        "window_selection_mode": result.window_selection_mode,
+        "trajectory_selection_mode": result.trajectory_selection_mode,
+        "random_seed": result.random_seed,
+        "dataset_root": str(result.cells[0].dataset_root) if result.cells else "",
+        "reference_barriers": {
+            "wham": _reference_barrier_heights(result.references)[0],
+            "ui": _reference_barrier_heights(result.references)[1],
+        },
+        "cells": [],
+    }
+
+    for cell_result in result.cells:
+        slug = _cell_slug(cell_result.cell)
+        payload = {
+            "cell": {
+                "window_count": cell_result.cell.window_count,
+                "trajectory_fraction": cell_result.cell.trajectory_fraction,
+            },
+            "model": asdict(result.model),
+            "metrics": asdict(cell_result.metrics),
+            "chain_diagnostics": None if cell_result.chain_diagnostics is None else asdict(cell_result.chain_diagnostics),
+            "bundle": cell_result.artifact_payload,
+            "predictive_summary": _predictive_summary_payload(cell_result.predictive_summary),
+            "nuts_samples": cell_result.nuts_samples,
+        }
+        torch.save(payload, cell_dir / f"{slug}.pt")
+        manifest["cells"].append(
+            {
+                "slug": slug,
+                "window_count": cell_result.cell.window_count,
+                "trajectory_fraction": cell_result.cell.trajectory_fraction,
+                "replicate_count": cell_result.replicate_count,
+                "window_selection_mode": result.window_selection_mode,
+                "trajectory_selection_mode": result.trajectory_selection_mode,
+                "artifact_path": str((cell_dir / f"{slug}.pt").relative_to(figure_dir)),
+            }
+        )
+
+    (artifacts_dir / "study_manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
+
+
 def save_ablation_summary(
     result: AblationStudyResult,
     figure_dir: Path,
 ) -> None:
     figure_dir.mkdir(parents=True, exist_ok=True)
+    _save_result_artifacts(result, figure_dir)
     _save_predictive_figures(result, figure_dir)
     _save_nuts_diagnostics(result, figure_dir)
+    _save_hyperparameter_heatmaps(result, figure_dir)
+    _save_barrier_histograms(result, figure_dir)
 
     metric_specs = [
         ("rmse_wham", "RMSE vs WHAM"),
         ("rmse_ui", "RMSE vs UI"),
         ("avg_total_std", "Average total std (common grid)"),
-        ("avg_between_std", "Average between std"),
     ]
 
-    fig, axes = plt.subplots(2, 2, figsize=(12, 10))
-    for ax, (metric_name, title) in zip(axes.flat, metric_specs):
+    fig, axes = plt.subplots(1, len(metric_specs), figsize=(5.5 * len(metric_specs), 4.8))
+    if len(metric_specs) == 1:
+        axes = [axes]
+    for ax, (metric_name, title) in zip(axes, metric_specs):
         grid = _metric_grid(result, metric_name)
         image = ax.imshow(grid, aspect="auto", origin="lower", cmap="viridis")
         ax.set_xticks(range(len(result.trajectory_fractions)))
@@ -517,7 +995,7 @@ def save_ablation_summary(
         ax.invert_xaxis()
         fig.colorbar(image, ax=ax, shrink=0.85)
     fig.suptitle(
-        f"Ablation Summary ({result.model.method}, {result.model.kernel})",
+        f"Ablation Summary ({result.model.method}, {result.model.kernel}, {result.model.objective})",
         fontsize=14,
     )
     fig.tight_layout()
@@ -530,6 +1008,7 @@ def save_ablation_summary(
             [
                 "window_count",
                 "trajectory_fraction",
+                "replicate_count",
                 "rmse_wham",
                 "rmse_ui",
                 "avg_total_std",
@@ -538,6 +1017,8 @@ def save_ablation_summary(
                 "avg_total_variance",
                 "avg_within_variance",
                 "avg_between_variance",
+                "barrier_height_mean",
+                "barrier_height_std",
                 "hmc_step_size",
                 "hmc_mean_accept_prob",
                 "hmc_accept_count",
@@ -551,10 +1032,12 @@ def save_ablation_summary(
         )
         for cell in result.cells:
             diagnostics = cell.chain_diagnostics
+            barrier_heights = _barrier_height_samples(cell)
             writer.writerow(
                 [
                     cell.cell.window_count,
                     cell.cell.trajectory_fraction,
+                    cell.replicate_count,
                     cell.metrics.rmse_wham,
                     cell.metrics.rmse_ui,
                     cell.metrics.avg_total_std,
@@ -563,6 +1046,8 @@ def save_ablation_summary(
                     cell.metrics.avg_total_variance,
                     cell.metrics.avg_within_variance,
                     cell.metrics.avg_between_variance,
+                    float(np.mean(barrier_heights)),
+                    float(np.std(barrier_heights)),
                     "" if diagnostics is None else diagnostics.step_size,
                     "" if diagnostics is None else diagnostics.mean_accept_prob,
                     "" if diagnostics is None else diagnostics.accept_count,
@@ -578,6 +1063,7 @@ def save_ablation_summary(
     lines = [
         f"method: {result.model.method}",
         f"kernel: {result.model.kernel}",
+        f"objective: {result.model.objective}",
     ]
     if result.model.kernel == "stationary":
         lines.extend(
@@ -606,8 +1092,13 @@ def save_ablation_summary(
             f"window_counts: {result.window_counts}",
             f"trajectory_fractions: {result.trajectory_fractions}",
             f"test_grid_mode: {result.test_grid_mode}",
+            f"window_selection_mode: {result.window_selection_mode}",
+            f"trajectory_selection_mode: {result.trajectory_selection_mode}",
+            f"random_seed: {result.random_seed}",
+            f"default_selection_replicates: {result.cells[0].replicate_count if result.cells else 0}",
             "uncertainty_summary: average total standard deviation on the prediction grid",
             f"predictive_cell_dir: {figure_dir / 'predictive_cells'}",
+            f"artifacts_dir: {figure_dir / 'artifacts'}",
         ]
     )
     if result.model.method == "nuts":
@@ -617,4 +1108,7 @@ def save_ablation_summary(
         )
         lines.append(f"stuck_cells: {stuck_count}")
         lines.append(f"nuts_diagnostics_dir: {figure_dir / 'nuts_diagnostics'}")
+        lines.append(f"hyperparameter_heatmaps: {figure_dir / 'hyperparameter_heatmaps.png'}")
+        lines.append(f"barrier_histograms_by_windows: {figure_dir / 'barrier_histograms_by_windows.png'}")
+        lines.append(f"barrier_histograms_by_trajectory: {figure_dir / 'barrier_histograms_by_trajectory.png'}")
     (figure_dir / "run_summary.txt").write_text("\n".join(lines) + "\n")

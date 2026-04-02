@@ -1,8 +1,0 @@
-LICENSE
-README.md
-pyproject.toml
-freegp_updated.egg-info/PKG-INFO
-freegp_updated.egg-info/SOURCES.txt
-freegp_updated.egg-info/dependency_links.txt
-freegp_updated.egg-info/requires.txt
-freegp_updated.egg-info/top_level.txt

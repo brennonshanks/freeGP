@@ -1,2 +1,0 @@
-[console_scripts]
-freegp-gprhd-hmc = freegp.run_gprhd_hmc:main

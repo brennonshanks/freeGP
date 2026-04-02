@@ -94,8 +94,18 @@ def build_parser() -> argparse.ArgumentParser:
         default="tanh_decay",
         help="Amplitude/width envelope used by the Gibbs kernel.",
     )
-    parser.add_argument("--ell", type=float, default=4.0, help="Initial/test GP length scale.")
-    parser.add_argument("--w", type=float, default=3.3, help="Initial/test GP amplitude.")
+    parser.add_argument(
+        "--ell",
+        type=float,
+        default=float(np.pi / 2.0),
+        help="Initial/test GP length scale. Defaults to the fixed Csanyi-style baseline.",
+    )
+    parser.add_argument(
+        "--w",
+        type=float,
+        default=float(4.184 * np.sqrt(10.0)),
+        help="Initial/test GP amplitude. Defaults to the fixed Csanyi-style baseline in kJ/mol.",
+    )
     parser.add_argument("--a0", type=float, default=np.log(4.0), help="Gibbs log-length baseline.")
     parser.add_argument("--a1", type=float, default=0.0, help="Gibbs linear trend in log length.")
     parser.add_argument("--b", type=float, default=0.0, help="Gibbs bump amplitude in log length.")
@@ -144,10 +154,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="Optional pickle output path for results.",
     )
     parser.add_argument(
+        "--results-dir",
         "--figure-dir",
+        dest="figure_dir",
         type=str,
         default=None,
-        help="Directory for diagnostic plots. Defaults to ./figures/<timestamped-run>/",
+        help="Directory for diagnostic outputs. Defaults to ./results/<timestamped-run>/",
     )
     parser.add_argument(
         "--no-corner",
@@ -170,7 +182,7 @@ def prepare_figure_dir(path: str | None, mode: str, *, project_root: str | None 
             repo_root = Path(__file__).resolve().parents[2]
         else:
             repo_root = Path(project_root).expanduser().resolve()
-        root = repo_root / "figures" / f"gprhd-{mode}-{stamp}"
+        root = repo_root / "results" / f"gprhd-{mode}-{stamp}"
     else:
         root = Path(path).expanduser().resolve()
     root.mkdir(parents=True, exist_ok=True)
