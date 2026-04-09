@@ -15,7 +15,7 @@ random_seed = 42
 num_bins = 20
 num_test_points = 100
 warmup_steps = 1000
-num_samples = 10000
+num_samples = 2000
 predictive_samples = 100
 barrier_bins = 30
 
