@@ -95,6 +95,7 @@ class AblationStudyResult:
     window_selection_mode: str
     trajectory_selection_mode: str
     random_seed: int
+    pmf_alignment: str = "max"
 
 
 def _select_evenly_spaced_windows(windows: list[UmbrellaWindow], keep_count: int) -> list[UmbrellaWindow]:
@@ -465,6 +466,10 @@ def run_ablation_study(
     *,
     dataset_root: str,
     project_root: str | None = None,
+    reference_wham_path: str | None = None,
+    reference_wham_x_units: str = "nm",
+    reference_ui_path: str | None = None,
+    reference_ui_x_units: str = "nm",
     window_counts: list[int],
     trajectory_fractions: list[float],
     model: StudyModelConfig | None = None,
@@ -478,11 +483,30 @@ def run_ablation_study(
     window_selection_mode: str = "evenly_spaced",
     trajectory_selection_mode: str = "contiguous",
     random_seed: int = 0,
+    pmf_alignment: str = "max",
 ) -> AblationStudyResult:
     model = model or StudyModelConfig()
     dataset_root_path = Path(dataset_root).expanduser().resolve()
     windows = load_umbrella_windows(dataset_root_path)
-    references = load_reference_curves(project_root)
+    references = load_reference_curves(
+        project_root,
+        wham_path=reference_wham_path,
+        wham_x_units=reference_wham_x_units,
+        ui_path=reference_ui_path,
+        ui_x_units=reference_ui_x_units,
+    )
+
+    # Align test grid to reference PMF x-range when not explicitly overridden
+    if x_min is None and (references.has_wham or references.has_ui):
+        x_min = float(min(
+            references.wham_x.min() if references.has_wham else float("inf"),
+            references.umbrella_x.min() if references.has_ui else float("inf"),
+        ))
+    if x_max is None and (references.has_wham or references.has_ui):
+        x_max = float(max(
+            references.wham_x.max() if references.has_wham else float("-inf"),
+            references.umbrella_x.max() if references.has_ui else float("-inf"),
+        ))
 
     common_x_test = None
     if test_grid_mode == "full_dataset":
@@ -557,7 +581,7 @@ def run_ablation_study(
                 else:
                     raise ValueError(f"Unsupported ablation method: {model.method}")
 
-                metrics = compare_to_reference_curves(summary, references)
+                metrics = compare_to_reference_curves(summary, references, alignment=pmf_alignment)
                 replicate_summaries.append(summary)
                 replicate_metrics.append(metrics)
                 replicate_artifacts.append(
@@ -623,6 +647,7 @@ def run_ablation_study(
         window_selection_mode=window_selection_mode,
         trajectory_selection_mode=trajectory_selection_mode,
         random_seed=random_seed,
+        pmf_alignment=pmf_alignment,
     )
 
 
@@ -638,8 +663,8 @@ def _metric_grid(result: AblationStudyResult, metric_name: str) -> np.ndarray:
     return grid
 
 
-def _shift_curve(y: np.ndarray) -> np.ndarray:
-    return y - np.max(y)
+def _shift_curve(y: np.ndarray, alignment: str = "max") -> np.ndarray:
+    return y - (np.max(y) if alignment == "max" else np.min(y))
 
 
 def _cell_slug(cell: AblationCell) -> str:
@@ -655,14 +680,12 @@ def _plot_predictive_summary(
     metrics: ReferenceComparison,
     references: ReferenceCurves,
     title_suffix: str = "",
+    alignment: str = "max",
 ) -> None:
     x_test = summary.x_test.detach().cpu().numpy().reshape(-1)
     pred_mean = summary.mean.detach().cpu().numpy().reshape(-1)
     pred_std = np.sqrt(np.clip(summary.total_variance.detach().cpu().numpy().reshape(-1), a_min=0.0, a_max=None))
-    shifted_mean = _shift_curve(pred_mean)
-
-    wham_shift = _shift_curve(references.wham_f)
-    ui_shift = _shift_curve(references.umbrella_f)
+    shifted_mean = _shift_curve(pred_mean, alignment)
 
     ax.plot(x_test, shifted_mean, lw=2, color="royalblue")
     ax.fill_between(
@@ -672,11 +695,18 @@ def _plot_predictive_summary(
         color="royalblue",
         alpha=0.2,
     )
-    ax.plot(references.wham_x, wham_shift, color="crimson", alpha=0.7, lw=1.2)
-    ax.plot(references.umbrella_x, ui_shift, color="steelblue", alpha=0.7, lw=1.2)
+    if references.has_wham:
+        ax.plot(references.wham_x, _shift_curve(references.wham_f, alignment), color="crimson", alpha=0.7, lw=1.2)
+    if references.has_ui:
+        ax.plot(references.umbrella_x, _shift_curve(references.umbrella_f, alignment), color="steelblue", alpha=0.7, lw=1.2)
+    rmse_parts = []
+    if references.has_wham:
+        rmse_parts.append(f"RMSE(WHAM)={metrics.rmse_wham:.2f}")
+    if references.has_ui:
+        rmse_parts.append(f"RMSE(UI)={metrics.rmse_ui:.2f}")
+    stats_str = (", ".join(rmse_parts) + ", " if rmse_parts else "") + f"avg std={metrics.avg_total_std:.2f}"
     ax.set_title(
-        f"{cell.window_count} windows, {cell.trajectory_fraction:.2f} traj{title_suffix}\n"
-        f"RMSE(WHAM)={metrics.rmse_wham:.2f}, avg std={metrics.avg_total_std:.2f}",
+        f"{cell.window_count} windows, {cell.trajectory_fraction:.2f} traj{title_suffix}\n{stats_str}",
         fontsize=10,
     )
     ax.grid(True, alpha=0.15)
@@ -686,6 +716,7 @@ def _plot_predictive_cell(
     ax,
     cell_result: AblationCellResult,
     references: ReferenceCurves,
+    alignment: str = "max",
 ) -> None:
     _plot_predictive_summary(
         ax,
@@ -693,6 +724,7 @@ def _plot_predictive_cell(
         summary=cell_result.predictive_summary,
         metrics=cell_result.metrics,
         references=references,
+        alignment=alignment,
     )
 
 
@@ -700,9 +732,10 @@ def _plot_canonical_predictive_cell(
     ax,
     cell_result: AblationCellResult,
     references: ReferenceCurves,
+    alignment: str = "max",
 ) -> None:
     if cell_result.canonical_predictive_summary is None or cell_result.canonical_metrics is None:
-        _plot_predictive_cell(ax, cell_result, references)
+        _plot_predictive_cell(ax, cell_result, references, alignment=alignment)
         return
     _plot_predictive_summary(
         ax,
@@ -711,21 +744,26 @@ def _plot_canonical_predictive_cell(
         metrics=cell_result.canonical_metrics,
         references=references,
         title_suffix=" canonical",
+        alignment=alignment,
     )
 
 
 def _save_predictive_figures(
     result: AblationStudyResult,
     figure_dir: Path,
+    *,
+    y_lim: tuple[float, float] | None = None,
 ) -> None:
     predictive_dir = figure_dir / "predictive_cells"
     predictive_dir.mkdir(parents=True, exist_ok=True)
 
     for cell_result in result.cells:
         fig, ax = plt.subplots(figsize=(8, 5))
-        _plot_predictive_cell(ax, cell_result, result.references)
+        _plot_predictive_cell(ax, cell_result, result.references, alignment=result.pmf_alignment)
         ax.set_xlabel("Position [nm]")
         ax.set_ylabel("Shifted free energy [kJ/mol]")
+        if y_lim is not None:
+            ax.set_ylim(y_lim)
         fig.tight_layout()
         fig.savefig(predictive_dir / f"{_cell_slug(cell_result.cell)}.png", dpi=200)
         plt.close(fig)
@@ -737,8 +775,8 @@ def _save_predictive_figures(
         n_cols,
         figsize=(5 * n_cols, 3.8 * n_rows),
         squeeze=False,
-        sharex=False,
-        sharey=False,
+        sharex=True,
+        sharey=True,
     )
     lookup = {
         (cell.cell.window_count, cell.cell.trajectory_fraction): cell
@@ -748,7 +786,7 @@ def _save_predictive_figures(
         for j, trajectory_fraction in enumerate(result.trajectory_fractions):
             ax = axes[i, j]
             cell_result = lookup[(window_count, trajectory_fraction)]
-            _plot_predictive_cell(ax, cell_result, result.references)
+            _plot_predictive_cell(ax, cell_result, result.references, alignment=result.pmf_alignment)
             if i == n_rows - 1:
                 ax.set_xlabel("Position [nm]")
             if j == 0:
@@ -757,6 +795,8 @@ def _save_predictive_figures(
         f"Ablation Predictive Curves ({result.model.method}, {result.model.kernel})",
         fontsize=14,
     )
+    if y_lim is not None:
+        axes.flat[0].set_ylim(y_lim)
     fig.tight_layout()
     fig.savefig(figure_dir / "ablation_predictive_grid.png", dpi=200)
     plt.close(fig)
@@ -774,9 +814,11 @@ def _save_predictive_figures(
 
     for cell_result in result.cells:
         fig, ax = plt.subplots(figsize=(8, 5))
-        _plot_canonical_predictive_cell(ax, cell_result, result.references)
+        _plot_canonical_predictive_cell(ax, cell_result, result.references, alignment=result.pmf_alignment)
         ax.set_xlabel("Position [nm]")
         ax.set_ylabel("Shifted free energy [kJ/mol]")
+        if y_lim is not None:
+            ax.set_ylim(y_lim)
         fig.tight_layout()
         fig.savefig(canonical_dir / f"{_cell_slug(cell_result.cell)}.png", dpi=200)
         plt.close(fig)
@@ -786,14 +828,14 @@ def _save_predictive_figures(
         n_cols,
         figsize=(5 * n_cols, 3.8 * n_rows),
         squeeze=False,
-        sharex=False,
-        sharey=False,
+        sharex=True,
+        sharey=True,
     )
     for i, window_count in enumerate(result.window_counts):
         for j, trajectory_fraction in enumerate(result.trajectory_fractions):
             ax = axes[i, j]
             cell_result = lookup[(window_count, trajectory_fraction)]
-            _plot_canonical_predictive_cell(ax, cell_result, result.references)
+            _plot_canonical_predictive_cell(ax, cell_result, result.references, alignment=result.pmf_alignment)
             if i == n_rows - 1:
                 ax.set_xlabel("Position [nm]")
             if j == 0:
@@ -802,6 +844,8 @@ def _save_predictive_figures(
         f"Ablation Predictive Curves ({result.model.method}, {result.model.kernel}, canonical replicate)",
         fontsize=14,
     )
+    if y_lim is not None:
+        axes.flat[0].set_ylim(y_lim)
     fig.tight_layout()
     fig.savefig(figure_dir / "ablation_predictive_grid_canonical.png", dpi=200)
     plt.close(fig)
@@ -905,6 +949,8 @@ def _parameter_display_summary(
 def _save_hyperparameter_heatmaps(
     result: AblationStudyResult,
     figure_dir: Path,
+    *,
+    param_clims: dict | None = None,
 ) -> None:
     if result.model.method != "nuts":
         return
@@ -938,7 +984,8 @@ def _save_hyperparameter_heatmaps(
             for j, trajectory_fraction in enumerate(result.trajectory_fractions):
                 grid[i, j] = lookup[(window_count, trajectory_fraction)]
 
-        image = ax.imshow(grid, aspect="auto", origin="lower", cmap="magma")
+        _vmin, _vmax = (param_clims or {}).get(label, (None, None))
+        image = ax.imshow(grid, aspect="auto", origin="lower", cmap="magma", vmin=_vmin, vmax=_vmax)
         ax.set_xticks(range(len(result.trajectory_fractions)))
         ax.set_xticklabels([f"{value:.2f}" for value in result.trajectory_fractions])
         ax.set_yticks(range(len(result.window_counts)))
@@ -966,9 +1013,9 @@ def _barrier_height_samples(cell_result: AblationCellResult) -> np.ndarray:
     return means.max(axis=1) - means.min(axis=1)
 
 
-def _reference_barrier_heights(references: ReferenceCurves) -> tuple[float, float]:
-    wham_barrier = float(np.max(references.wham_f) - np.min(references.wham_f))
-    umbrella_barrier = float(np.max(references.umbrella_f) - np.min(references.umbrella_f))
+def _reference_barrier_heights(references: ReferenceCurves) -> tuple[float | None, float | None]:
+    wham_barrier = float(np.max(references.wham_f) - np.min(references.wham_f)) if references.has_wham else None
+    umbrella_barrier = float(np.max(references.umbrella_f) - np.min(references.umbrella_f)) if references.has_ui else None
     return wham_barrier, umbrella_barrier
 
 
@@ -1046,8 +1093,10 @@ def _save_barrier_histograms(
                     linewidth=2.0,
                     label=f"{inner_label}={inner_value:.2f}" if isinstance(inner_value, float) else f"{inner_label}={inner_value}",
                 )
-            ax.axvline(wham_barrier, color="black", linestyle="--", linewidth=1.6, label="WHAM barrier")
-            ax.axvline(umbrella_barrier, color="dimgray", linestyle=":", linewidth=1.8, label="UI barrier")
+            if wham_barrier is not None:
+                ax.axvline(wham_barrier, color="black", linestyle="--", linewidth=1.6, label="WHAM barrier")
+            if umbrella_barrier is not None:
+                ax.axvline(umbrella_barrier, color="dimgray", linestyle=":", linewidth=1.8, label="UI barrier")
             ax.set_title(f"{outer_label}={outer_value}")
             ax.set_xlabel("Barrier height from GP mean [kJ/mol]")
             ax.set_ylabel("Count")
@@ -1091,16 +1140,19 @@ def _save_result_artifacts(
     cell_dir = artifacts_dir / "cells"
     cell_dir.mkdir(parents=True, exist_ok=True)
 
-    np.savez(
-        artifacts_dir / "references.npz",
-        umbrella_x=result.references.umbrella_x,
-        umbrella_f=result.references.umbrella_f,
-        umbrella_e=result.references.umbrella_e,
-        wham_x=result.references.wham_x,
-        wham_f=result.references.wham_f,
-        wham_e=result.references.wham_e,
-    )
+    if result.references.has_wham or result.references.has_ui:
+        save_kwargs: dict[str, object] = {}
+        if result.references.has_wham:
+            save_kwargs.update(wham_x=result.references.wham_x, wham_f=result.references.wham_f)
+            if result.references.wham_e is not None:
+                save_kwargs["wham_e"] = result.references.wham_e
+        if result.references.has_ui:
+            save_kwargs.update(umbrella_x=result.references.umbrella_x, umbrella_f=result.references.umbrella_f)
+            if result.references.umbrella_e is not None:
+                save_kwargs["umbrella_e"] = result.references.umbrella_e
+        np.savez(artifacts_dir / "references.npz", **save_kwargs)
 
+    wham_b, ui_b = _reference_barrier_heights(result.references)
     manifest = {
         "model": asdict(result.model),
         "window_counts": result.window_counts,
@@ -1111,9 +1163,8 @@ def _save_result_artifacts(
         "random_seed": result.random_seed,
         "dataset_root": str(result.cells[0].dataset_root) if result.cells else "",
         "reference_barriers": {
-            "wham": _reference_barrier_heights(result.references)[0],
-            "ui": _reference_barrier_heights(result.references)[1],
-        },
+            k: v for k, v in [("wham", wham_b), ("ui", ui_b)] if v is not None
+        } or None,
         "cells": [],
     }
 
@@ -1154,15 +1205,65 @@ def _save_result_artifacts(
     (artifacts_dir / "study_manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
 
 
+def compute_predictive_y_lim(result: AblationStudyResult) -> tuple[float, float]:
+    """Y-axis range covering all cells' shifted mean ± 2σ and any reference curves."""
+    ymin, ymax = float("inf"), float("-inf")
+    for cell_result in result.cells:
+        mean = cell_result.predictive_summary.mean.detach().cpu().numpy().reshape(-1)
+        std = np.sqrt(np.clip(cell_result.predictive_summary.total_variance.detach().cpu().numpy().reshape(-1), 0.0, None))
+        shifted = _shift_curve(mean, result.pmf_alignment)
+        ymin = min(ymin, float((shifted - 2.0 * std).min()))
+        ymax = max(ymax, float((shifted + 2.0 * std).max()))
+    for arr, has in [(result.references.wham_f, result.references.has_wham),
+                     (result.references.umbrella_f, result.references.has_ui)]:
+        if has:
+            sv = _shift_curve(arr, result.pmf_alignment)
+            ymin = min(ymin, float(sv.min()))
+            ymax = max(ymax, float(sv.max()))
+    pad = 0.05 * max(ymax - ymin, 1.0)
+    return ymin - pad, ymax + pad
+
+
+def compute_metric_clims(result: AblationStudyResult) -> dict[str, tuple[float, float]]:
+    """Color limits for each metric heatmap from this result."""
+    clims: dict[str, tuple[float, float]] = {}
+    for name in ["rmse_wham", "rmse_ui", "avg_total_std"]:
+        finite = _metric_grid(result, name)
+        finite = finite[np.isfinite(finite)]
+        if finite.size > 0:
+            clims[name] = (float(finite.min()), float(finite.max()))
+    return clims
+
+
+def compute_param_clims(result: AblationStudyResult) -> dict[str, tuple[float, float]]:
+    """Color limits for each hyperparameter heatmap from this result."""
+    clims: dict[str, tuple[float, float]] = {}
+    if result.model.method != "nuts":
+        return clims
+    for cell_result in result.cells:
+        out = _parameter_display_summary(cell_result, model=result.model)
+        if out is None:
+            continue
+        labels, medians = out
+        for label, val in zip(labels, medians):
+            v = float(val)
+            clims[label] = (min(clims[label][0], v), max(clims[label][1], v)) if label in clims else (v, v)
+    return clims
+
+
 def save_ablation_summary(
     result: AblationStudyResult,
     figure_dir: Path,
+    *,
+    predictive_y_lim: tuple[float, float] | None = None,
+    metric_clims: dict[str, tuple[float, float]] | None = None,
+    param_clims: dict[str, tuple[float, float]] | None = None,
 ) -> None:
     figure_dir.mkdir(parents=True, exist_ok=True)
     _save_result_artifacts(result, figure_dir)
-    _save_predictive_figures(result, figure_dir)
+    _save_predictive_figures(result, figure_dir, y_lim=predictive_y_lim)
     _save_nuts_diagnostics(result, figure_dir)
-    _save_hyperparameter_heatmaps(result, figure_dir)
+    _save_hyperparameter_heatmaps(result, figure_dir, param_clims=param_clims)
     _save_barrier_histograms(result, figure_dir)
 
     metric_specs = [
@@ -1170,13 +1271,18 @@ def save_ablation_summary(
         ("rmse_ui", "RMSE vs UI"),
         ("avg_total_std", "Average total std (common grid)"),
     ]
+    if not result.references.has_wham:
+        metric_specs = [(k, v) for k, v in metric_specs if k != "rmse_wham"]
+    if not result.references.has_ui:
+        metric_specs = [(k, v) for k, v in metric_specs if k != "rmse_ui"]
 
     fig, axes = plt.subplots(1, len(metric_specs), figsize=(5.5 * len(metric_specs), 4.8))
     if len(metric_specs) == 1:
         axes = [axes]
     for ax, (metric_name, title) in zip(axes, metric_specs):
         grid = _metric_grid(result, metric_name)
-        image = ax.imshow(grid, aspect="auto", origin="lower", cmap="viridis")
+        _vmin, _vmax = (metric_clims or {}).get(metric_name, (None, None))
+        image = ax.imshow(grid, aspect="auto", origin="lower", cmap="viridis", vmin=_vmin, vmax=_vmax)
         ax.set_xticks(range(len(result.trajectory_fractions)))
         ax.set_xticklabels([f"{value:.2f}" for value in result.trajectory_fractions])
         ax.set_yticks(range(len(result.window_counts)))

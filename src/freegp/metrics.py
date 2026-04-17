@@ -23,8 +23,8 @@ class ReferenceComparison:
     avg_between_variance: float
 
 
-def _shift_curve(y: np.ndarray) -> np.ndarray:
-    return y - np.max(y)
+def _shift_curve(y: np.ndarray, alignment: str = "max") -> np.ndarray:
+    return y - (np.max(y) if alignment == "max" else np.min(y))
 
 
 def _rmse(y_true: np.ndarray, y_pred: np.ndarray) -> float:
@@ -34,20 +34,27 @@ def _rmse(y_true: np.ndarray, y_pred: np.ndarray) -> float:
 def compare_to_reference_curves(
     summary: HyperposteriorPredictiveSummary,
     references: ReferenceCurves,
+    alignment: str = "max",
 ) -> ReferenceComparison:
     x_test = summary.x_test.detach().cpu().numpy().reshape(-1)
-    pred = _shift_curve(summary.mean.detach().cpu().numpy().reshape(-1))
+    pred = _shift_curve(summary.mean.detach().cpu().numpy().reshape(-1), alignment)
 
-    wham_ref = np.interp(x_test, references.wham_x, _shift_curve(references.wham_f))
-    ui_ref = np.interp(x_test, references.umbrella_x, _shift_curve(references.umbrella_f))
+    rmse_wham = (
+        _rmse(np.interp(x_test, references.wham_x, _shift_curve(references.wham_f, alignment)), pred)
+        if references.has_wham else float("nan")
+    )
+    rmse_ui = (
+        _rmse(np.interp(x_test, references.umbrella_x, _shift_curve(references.umbrella_f, alignment)), pred)
+        if references.has_ui else float("nan")
+    )
 
     total_var = summary.total_variance.detach().cpu().numpy().reshape(-1)
     within_var = summary.within_variance.detach().cpu().numpy().reshape(-1)
     between_var = summary.between_variance.detach().cpu().numpy().reshape(-1)
 
     return ReferenceComparison(
-        rmse_wham=_rmse(wham_ref, pred),
-        rmse_ui=_rmse(ui_ref, pred),
+        rmse_wham=rmse_wham,
+        rmse_ui=rmse_ui,
         avg_total_std=float(np.sqrt(np.clip(total_var, a_min=0.0, a_max=None)).mean()),
         avg_within_std=float(np.sqrt(np.clip(within_var, a_min=0.0, a_max=None)).mean()),
         avg_between_std=float(np.sqrt(np.clip(between_var, a_min=0.0, a_max=None)).mean()),

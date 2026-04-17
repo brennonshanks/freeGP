@@ -7,6 +7,9 @@ from .ablation import (
     CSANYI_FIXED_ELL,
     CSANYI_FIXED_W,
     StudyModelConfig,
+    compute_metric_clims,
+    compute_param_clims,
+    compute_predictive_y_lim,
     run_ablation_study,
     save_ablation_summary,
 )
@@ -18,6 +21,9 @@ __all__ = [
     "CSANYI_FIXED_ELL",
     "CSANYI_FIXED_W",
     "StudyModelConfig",
+    "compute_metric_clims",
+    "compute_param_clims",
+    "compute_predictive_y_lim",
     "run_ablation_study",
     "save_ablation_summary",
 ]

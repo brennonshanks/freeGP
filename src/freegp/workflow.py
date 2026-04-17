@@ -35,6 +35,10 @@ def prepare_gprhd_hmc_inputs(
     *,
     dataset_root: str | None = None,
     project_root: str | None = None,
+    reference_wham_path: str | None = None,
+    reference_wham_x_units: str = "nm",
+    reference_ui_path: str | None = None,
+    reference_ui_x_units: str = "nm",
     n_equilibration: int = 40_000,
     num_bins: int = 20,
     num_test_points: int = 400,
@@ -58,7 +62,13 @@ def prepare_gprhd_hmc_inputs(
         x_max=x_max,
         source=test_grid_source,
     )
-    references = load_reference_curves(project_root)
+    references = load_reference_curves(
+        project_root,
+        wham_path=reference_wham_path,
+        wham_x_units=reference_wham_x_units,
+        ui_path=reference_ui_path,
+        ui_x_units=reference_ui_x_units,
+    )
     return WorkflowBundle(
         processed=processed,
         observations=observations,

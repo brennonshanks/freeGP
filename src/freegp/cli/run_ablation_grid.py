@@ -21,6 +21,9 @@ if __package__ in (None, ""):
         CSANYI_FIXED_ELL,
         CSANYI_FIXED_W,
         StudyModelConfig,
+        compute_metric_clims,
+        compute_param_clims,
+        compute_predictive_y_lim,
         run_ablation_study,
         save_ablation_summary,
     )
@@ -29,6 +32,9 @@ else:
         CSANYI_FIXED_ELL,
         CSANYI_FIXED_W,
         StudyModelConfig,
+        compute_metric_clims,
+        compute_param_clims,
+        compute_predictive_y_lim,
         run_ablation_study,
         save_ablation_summary,
     )
@@ -82,6 +88,16 @@ def build_parser(*, defaults: dict[str, object] | None = None) -> argparse.Argum
     )
     parser.add_argument("--dataset-root", default=None, type=str)
     parser.add_argument("--project-root", default=None, type=str)
+    parser.add_argument("--reference-wham-path", default=None, type=str)
+    parser.add_argument("--reference-wham-x-units", default="nm", type=str)
+    parser.add_argument("--reference-ui-path", default=None, type=str)
+    parser.add_argument("--reference-ui-x-units", default="nm", type=str)
+    parser.add_argument(
+        "--pmf-alignment",
+        choices=("max", "min"),
+        default="max",
+        help="Align shifted PMF curves at their maximum ('max', default) or minimum ('min').",
+    )
     parser.add_argument("--window-counts", default="25,13", type=str)
     parser.add_argument("--trajectory-fractions", default="1.0,0.5", type=str)
     parser.add_argument("--method", choices=("fixed_gp", "nuts"), default="fixed_gp")
@@ -175,6 +191,26 @@ def prepare_figure_dir(
     return root
 
 
+def _compute_global_scales(results: list) -> dict:
+    """Compute unified axis/color scales across all AblationStudyResult objects."""
+    y_lims = [compute_predictive_y_lim(r) for r in results]
+    y_lim = (min(lo for lo, _ in y_lims), max(hi for _, hi in y_lims))
+
+    all_mc = [compute_metric_clims(r) for r in results]
+    metric_clims: dict = {}
+    for name in {k for d in all_mc for k in d}:
+        vals = [d[name] for d in all_mc if name in d]
+        metric_clims[name] = (min(lo for lo, _ in vals), max(hi for _, hi in vals))
+
+    all_pc = [compute_param_clims(r) for r in results]
+    param_clims: dict = {}
+    for name in {k for d in all_pc for k in d}:
+        vals = [d[name] for d in all_pc if name in d]
+        param_clims[name] = (min(lo for lo, _ in vals), max(hi for _, hi in vals))
+
+    return {"predictive_y_lim": y_lim, "metric_clims": metric_clims, "param_clims": param_clims}
+
+
 def main() -> None:
     pre_parser = argparse.ArgumentParser(add_help=False)
     pre_parser.add_argument("--config", type=str, default=None)
@@ -227,14 +263,18 @@ def main() -> None:
         compare_objectives=compare_objectives,
     )
 
-    for objective in objectives:
-        objective_model = replace(model, objective=objective)
-        result = run_ablation_study(
+    def _run(model_cfg) -> object:
+        return run_ablation_study(
             dataset_root=args.dataset_root,
             project_root=args.project_root,
+            reference_wham_path=args.reference_wham_path,
+            reference_wham_x_units=args.reference_wham_x_units,
+            reference_ui_path=args.reference_ui_path,
+            reference_ui_x_units=args.reference_ui_x_units,
+            pmf_alignment=args.pmf_alignment,
             window_counts=window_counts,
             trajectory_fractions=trajectory_fractions,
-            model=objective_model,
+            model=model_cfg,
             n_equilibration=args.n_equilibration,
             num_bins=args.num_bins,
             num_test_points=args.num_test_points,
@@ -247,39 +287,20 @@ def main() -> None:
             random_seed=args.random_seed,
         )
 
+    result_plan = []
+    for objective in objectives:
         figure_dir = root_dir / objective if compare_objectives else root_dir
-        save_ablation_summary(result, figure_dir)
-        print(f"figure_dir ({objective}): {figure_dir}")
-        print(f"cells completed ({objective}): {len(result.cells)}")
+        result_plan.append((_run(replace(model, objective=objective)), figure_dir, objective))
 
     if args.include_fixed:
-        fixed_model = replace(
-            model,
-            method="fixed_gp",
-            kernel="stationary",
-            objective="fixed",
-        )
-        fixed_result = run_ablation_study(
-            dataset_root=args.dataset_root,
-            project_root=args.project_root,
-            window_counts=window_counts,
-            trajectory_fractions=trajectory_fractions,
-            model=fixed_model,
-            n_equilibration=args.n_equilibration,
-            num_bins=args.num_bins,
-            num_test_points=args.num_test_points,
-            test_grid_source=args.test_grid_source,
-            x_min=args.x_min,
-            x_max=args.x_max,
-            test_grid_mode=args.test_grid_mode,
-            window_selection_mode=args.window_selection_mode,
-            trajectory_selection_mode=args.trajectory_selection_mode,
-            random_seed=args.random_seed,
-        )
         fixed_dir = root_dir / "fixed" if compare_objectives or args.include_fixed else root_dir
-        save_ablation_summary(fixed_result, fixed_dir)
-        print(f"figure_dir (fixed): {fixed_dir}")
-        print(f"cells completed (fixed): {len(fixed_result.cells)}")
+        result_plan.append((_run(replace(model, method="fixed_gp", kernel="stationary", objective="fixed")), fixed_dir, "fixed"))
+
+    scale_kwargs = _compute_global_scales([r for r, _, _ in result_plan])
+    for result, figure_dir, label in result_plan:
+        save_ablation_summary(result, figure_dir, **scale_kwargs)
+        print(f"figure_dir ({label}): {figure_dir}")
+        print(f"cells completed ({label}): {len(result.cells)}")
 
 
 if __name__ == "__main__":
