@@ -6,6 +6,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 import csv
 import json
+import math
 
 from matplotlib import colors
 import matplotlib.pyplot as plt
@@ -79,9 +80,13 @@ class AblationCellResult:
     canonical_predictive_summary: HyperposteriorPredictiveSummary | None = None
     canonical_metrics: ReferenceComparison | None = None
     chain_diagnostics: HMCChainDiagnostics | None = None
+    multi_chain_diagnostics: dict[str, object] | None = None
     nuts_samples: dict[str, torch.Tensor] | None = None
+    nuts_grouped_samples: dict[str, torch.Tensor] | None = None
     canonical_chain_diagnostics: HMCChainDiagnostics | None = None
+    canonical_multi_chain_diagnostics: dict[str, object] | None = None
     canonical_nuts_samples: dict[str, torch.Tensor] | None = None
+    canonical_nuts_grouped_samples: dict[str, torch.Tensor] | None = None
     artifact_payload: dict[str, object] | None = None
 
 
@@ -369,6 +374,73 @@ def _aggregate_chain_diagnostics(
     )
 
 
+def _diagnostic_value_to_python(value):
+    if isinstance(value, torch.Tensor):
+        if value.numel() == 1:
+            scalar = float(value.detach().cpu().item())
+            return None if not math.isfinite(scalar) else scalar
+        return _diagnostic_value_to_python(value.detach().cpu().tolist())
+    if isinstance(value, np.ndarray):
+        return _diagnostic_value_to_python(value.tolist())
+    if isinstance(value, dict):
+        return {str(key): _diagnostic_value_to_python(val) for key, val in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_diagnostic_value_to_python(item) for item in value]
+    if isinstance(value, (np.floating, float)):
+        scalar = float(value)
+        return None if not math.isfinite(scalar) else scalar
+    if isinstance(value, (np.integer, int)):
+        return int(value)
+    return value
+
+
+def _flatten_numeric_values(value) -> list[float]:
+    if value is None:
+        return []
+    if isinstance(value, dict):
+        out: list[float] = []
+        for item in value.values():
+            out.extend(_flatten_numeric_values(item))
+        return out
+    if isinstance(value, list):
+        out: list[float] = []
+        for item in value:
+            out.extend(_flatten_numeric_values(item))
+        return out
+    if isinstance(value, (int, float)):
+        scalar = float(value)
+        return [scalar] if math.isfinite(scalar) else []
+    return []
+
+
+def _extract_multi_chain_diagnostics(mcmc) -> dict[str, object]:
+    diagnostics = _diagnostic_value_to_python(mcmc.diagnostics())
+    parameter_diags = {
+        key: value for key, value in diagnostics.items()
+        if isinstance(value, dict) and "r_hat" in value and "n_eff" in value
+    }
+    r_hats: list[float] = []
+    n_effs: list[float] = []
+    for value in parameter_diags.values():
+        r_hats.extend(_flatten_numeric_values(value.get("r_hat")))
+        n_effs.extend(_flatten_numeric_values(value.get("n_eff")))
+    divergence_map = diagnostics.get("divergences", {})
+    divergence_total = 0
+    if isinstance(divergence_map, dict):
+        divergence_total = int(sum(int(v or 0) for v in divergence_map.values()))
+    return {
+        "raw": diagnostics,
+        "summary": {
+            "max_r_hat": max(r_hats) if r_hats else None,
+            "min_r_hat": min(r_hats) if r_hats else None,
+            "min_n_eff": min(n_effs) if n_effs else None,
+            "max_n_eff": max(n_effs) if n_effs else None,
+            "divergence_total": divergence_total,
+            "num_diagnostic_parameters": len(parameter_diags),
+        },
+    }
+
+
 def _fixed_summary(bundle: WorkflowBundle, model: StudyModelConfig):
     obs = bundle.observations
     if model.kernel == "stationary":
@@ -424,6 +496,7 @@ def _nuts_summary(bundle: WorkflowBundle, model: StudyModelConfig):
         width_model=model.width_model,
     )
     mcmc, samples = run_hmc_nuts(bundle.observations, config=config)
+    grouped_samples = mcmc.get_samples(group_by_chain=True)
     summary = summarize_hyperposterior_predictive(
         bundle.observations,
         samples,
@@ -432,7 +505,8 @@ def _nuts_summary(bundle: WorkflowBundle, model: StudyModelConfig):
         max_samples=model.predictive_samples,
     )
     diagnostics = summarize_chain_diagnostics(mcmc, samples, config=config)
-    return summary, diagnostics, samples
+    multi_chain_diagnostics = _extract_multi_chain_diagnostics(mcmc)
+    return summary, diagnostics, multi_chain_diagnostics, samples, grouped_samples
 
 
 def _predictive_summary_payload(summary: HyperposteriorPredictiveSummary) -> dict[str, object]:
@@ -458,7 +532,9 @@ def _replicate_result_payload(
     summary: HyperposteriorPredictiveSummary,
     metrics: ReferenceComparison,
     diagnostics: HMCChainDiagnostics | None,
+    multi_chain_diagnostics: dict[str, object] | None,
     nuts_samples: dict[str, torch.Tensor] | None,
+    nuts_grouped_samples: dict[str, torch.Tensor] | None,
 ) -> dict[str, object]:
     return {
         "replicate_index": replicate_index,
@@ -470,7 +546,9 @@ def _replicate_result_payload(
         "predictive_summary": _predictive_summary_payload(summary),
         "metrics": asdict(metrics),
         "chain_diagnostics": None if diagnostics is None else asdict(diagnostics),
+        "multi_chain_diagnostics": multi_chain_diagnostics,
         "nuts_samples": _cpu_clone(nuts_samples),
+        "nuts_grouped_samples": _cpu_clone(nuts_grouped_samples),
     }
 
 
@@ -556,11 +634,14 @@ def run_ablation_study(
             replicate_metrics: list[ReferenceComparison] = []
             replicate_diagnostics: list[HMCChainDiagnostics] = []
             replicate_nuts_samples: list[dict[str, torch.Tensor]] = []
+            replicate_nuts_grouped_samples: list[dict[str, torch.Tensor]] = []
             replicate_artifacts: list[dict[str, object]] = []
             canonical_summary: HyperposteriorPredictiveSummary | None = None
             canonical_metrics: ReferenceComparison | None = None
             canonical_diagnostics: HMCChainDiagnostics | None = None
+            canonical_multi_chain_diagnostics: dict[str, object] | None = None
             canonical_nuts_samples: dict[str, torch.Tensor] | None = None
+            canonical_nuts_grouped_samples: dict[str, torch.Tensor] | None = None
             replicate_plan = _replicate_plan(
                 effective_replicates=effective_replicates,
                 window_selection_mode=window_selection_mode,
@@ -590,9 +671,11 @@ def run_ablation_study(
                 if model.method == "fixed_gp":
                     summary = _fixed_summary(bundle, model)
                     diagnostics = None
+                    multi_chain_diagnostics = None
                     nuts_samples = None
+                    nuts_grouped_samples = None
                 elif model.method == "nuts":
-                    summary, diagnostics, nuts_samples = _nuts_summary(bundle, model)
+                    summary, diagnostics, multi_chain_diagnostics, nuts_samples, nuts_grouped_samples = _nuts_summary(bundle, model)
                 else:
                     raise ValueError(f"Unsupported ablation method: {model.method}")
 
@@ -610,18 +693,24 @@ def run_ablation_study(
                         summary=summary,
                         metrics=metrics,
                         diagnostics=diagnostics,
+                        multi_chain_diagnostics=multi_chain_diagnostics,
                         nuts_samples=nuts_samples,
+                        nuts_grouped_samples=nuts_grouped_samples,
                     )
                 )
                 if bool(rep_spec["is_canonical"]):
                     canonical_summary = summary
                     canonical_metrics = metrics
                     canonical_diagnostics = diagnostics
+                    canonical_multi_chain_diagnostics = multi_chain_diagnostics
                     canonical_nuts_samples = nuts_samples
+                    canonical_nuts_grouped_samples = nuts_grouped_samples
                 if diagnostics is not None:
                     replicate_diagnostics.append(diagnostics)
                 if nuts_samples is not None:
                     replicate_nuts_samples.append(nuts_samples)
+                if nuts_grouped_samples is not None:
+                    replicate_nuts_grouped_samples.append(nuts_grouped_samples)
 
             summary = _aggregate_predictive_summaries(replicate_summaries)
             metrics = _average_metrics(replicate_metrics)
@@ -641,9 +730,13 @@ def run_ablation_study(
                     canonical_predictive_summary=canonical_summary,
                     canonical_metrics=canonical_metrics,
                     chain_diagnostics=diagnostics,
+                    multi_chain_diagnostics=canonical_multi_chain_diagnostics,
                     nuts_samples=canonical_nuts_samples if canonical_nuts_samples is not None else nuts_samples,
+                    nuts_grouped_samples=canonical_nuts_grouped_samples if canonical_nuts_grouped_samples is not None else (replicate_nuts_grouped_samples[0] if replicate_nuts_grouped_samples else None),
                     canonical_chain_diagnostics=canonical_diagnostics,
+                    canonical_multi_chain_diagnostics=canonical_multi_chain_diagnostics,
                     canonical_nuts_samples=canonical_nuts_samples,
+                    canonical_nuts_grouped_samples=canonical_nuts_grouped_samples,
                     artifact_payload={
                         "selection_replicates": effective_replicates,
                         "canonical_replicate_index": 0 if random_modes_active else 0,
@@ -885,11 +978,27 @@ def _plot_trace_panel(samples: dict[str, torch.Tensor], output_path: Path) -> No
     names = list(samples.keys())
     fig, axes = plt.subplots(len(names), 2, figsize=(10, 3 * len(names)), squeeze=False)
     for row, name in enumerate(names):
-        values = samples[name].detach().cpu().numpy().ravel()
-        axes[row, 0].plot(values, lw=1.0)
+        values = samples[name].detach().cpu().numpy()
+        if values.ndim == 1:
+            chains = values.reshape(1, -1)
+        else:
+            chains = values.reshape(values.shape[0], values.shape[1], -1)[:, :, 0]
+        for chain_idx, chain_values in enumerate(chains):
+            label = f"chain {chain_idx}" if chains.shape[0] > 1 else None
+            axes[row, 0].plot(chain_values, lw=1.0, alpha=0.9, label=label)
         axes[row, 0].set_title(f"{name} trace")
-        axes[row, 1].hist(values, bins=min(20, max(5, len(values))), color="gray", alpha=0.8)
+        for chain_idx, chain_values in enumerate(chains):
+            label = f"chain {chain_idx}" if chains.shape[0] > 1 else None
+            axes[row, 1].hist(
+                chain_values,
+                bins=min(20, max(5, len(chain_values))),
+                alpha=0.45,
+                label=label,
+            )
         axes[row, 1].set_title(f"{name} histogram")
+        if chains.shape[0] > 1:
+            axes[row, 0].legend(fontsize=8)
+            axes[row, 1].legend(fontsize=8)
     plt.tight_layout()
     plt.savefig(output_path, dpi=200)
     plt.close(fig)
@@ -939,12 +1048,17 @@ def _save_nuts_diagnostics(
             continue
         cell_dir = diagnostics_dir / _cell_slug(cell_result.cell)
         cell_dir.mkdir(parents=True, exist_ok=True)
-        _plot_trace_panel(cell_result.nuts_samples, cell_dir / "nuts_traces.png")
+        trace_samples = cell_result.nuts_grouped_samples or cell_result.nuts_samples
+        _plot_trace_panel(trace_samples, cell_dir / "nuts_traces.png")
         _plot_corner_panel(
             cell_result.nuts_samples,
             cell_dir / "corner.png",
             config=config,
         )
+        if cell_result.multi_chain_diagnostics is not None:
+            (cell_dir / "chain_diagnostics.json").write_text(
+                json.dumps(cell_result.multi_chain_diagnostics, indent=2) + "\n"
+            )
 
 
 def _parameter_display_summary(
@@ -1196,7 +1310,9 @@ def _save_result_artifacts(
             "metrics": asdict(cell_result.metrics),
             "canonical_metrics": None if cell_result.canonical_metrics is None else asdict(cell_result.canonical_metrics),
             "chain_diagnostics": None if cell_result.chain_diagnostics is None else asdict(cell_result.chain_diagnostics),
+            "multi_chain_diagnostics": cell_result.multi_chain_diagnostics,
             "canonical_chain_diagnostics": None if cell_result.canonical_chain_diagnostics is None else asdict(cell_result.canonical_chain_diagnostics),
+            "canonical_multi_chain_diagnostics": cell_result.canonical_multi_chain_diagnostics,
             "bundle": cell_result.artifact_payload,
             "predictive_summary": _predictive_summary_payload(cell_result.predictive_summary),
             "canonical_predictive_summary": None
@@ -1343,10 +1459,15 @@ def save_ablation_summary(
                 "hmc_min_sample_std",
                 "hmc_poor_acceptance",
                 "hmc_looks_stuck",
+                "mcmc_max_r_hat",
+                "mcmc_min_n_eff",
+                "mcmc_divergence_total",
             ]
         )
         for cell in result.cells:
             diagnostics = cell.chain_diagnostics
+            multi_chain_diagnostics = cell.multi_chain_diagnostics or {}
+            multi_chain_summary = multi_chain_diagnostics.get("summary", {})
             barrier_heights = _barrier_height_samples(cell)
             writer.writerow(
                 [
@@ -1372,6 +1493,9 @@ def save_ablation_summary(
                     "" if diagnostics is None else diagnostics.min_sample_std,
                     "" if diagnostics is None else diagnostics.poor_acceptance,
                     "" if diagnostics is None else diagnostics.looks_stuck,
+                    multi_chain_summary.get("max_r_hat", ""),
+                    multi_chain_summary.get("min_n_eff", ""),
+                    multi_chain_summary.get("divergence_total", ""),
                 ]
             )
 
@@ -1427,4 +1551,20 @@ def save_ablation_summary(
         lines.append(f"hyperparameter_heatmaps: {figure_dir / 'hyperparameter_heatmaps.png'}")
         lines.append(f"barrier_histograms_by_windows: {figure_dir / 'barrier_histograms_by_windows.png'}")
         lines.append(f"barrier_histograms_by_trajectory: {figure_dir / 'barrier_histograms_by_trajectory.png'}")
+        r_hats = [
+            cell.multi_chain_diagnostics.get("summary", {}).get("max_r_hat")
+            for cell in result.cells
+            if cell.multi_chain_diagnostics is not None
+        ]
+        n_effs = [
+            cell.multi_chain_diagnostics.get("summary", {}).get("min_n_eff")
+            for cell in result.cells
+            if cell.multi_chain_diagnostics is not None
+        ]
+        r_hats = [float(v) for v in r_hats if v is not None]
+        n_effs = [float(v) for v in n_effs if v is not None]
+        if r_hats:
+            lines.append(f"worst_cell_max_r_hat: {max(r_hats)}")
+        if n_effs:
+            lines.append(f"worst_cell_min_n_eff: {min(n_effs)}")
     (figure_dir / "run_summary.txt").write_text("\n".join(lines) + "\n")
