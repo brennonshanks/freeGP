@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 import torch
@@ -18,6 +18,8 @@ from .preprocess import (
     ProcessedUmbrellaData,
     build_joint_observations,
     build_test_grid,
+    move_joint_observations,
+    move_processed_umbrella_data,
     process_umbrella_windows,
 )
 
@@ -29,6 +31,20 @@ class WorkflowBundle:
     x_test: torch.Tensor
     references: ReferenceCurves
     dataset_root: Path
+
+
+def move_workflow_bundle(
+    bundle: WorkflowBundle,
+    *,
+    device: torch.device | str,
+) -> WorkflowBundle:
+    """Return a copy of ``bundle`` with tensor-valued fields moved onto ``device``."""
+    return replace(
+        bundle,
+        processed=move_processed_umbrella_data(bundle.processed, device=device),
+        observations=move_joint_observations(bundle.observations, device=device),
+        x_test=bundle.x_test.to(device=device),
+    )
 
 
 def prepare_gprhd_hmc_inputs(

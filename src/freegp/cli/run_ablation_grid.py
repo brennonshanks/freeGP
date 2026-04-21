@@ -137,6 +137,12 @@ def build_parser(*, defaults: dict[str, object] | None = None) -> argparse.Argum
     parser.add_argument("--warmup-steps", type=int, default=10)
     parser.add_argument("--num-samples", type=int, default=10)
     parser.add_argument("--num-chains", type=int, default=1)
+    parser.add_argument(
+        "--device",
+        choices=("cpu", "cuda"),
+        default="cpu",
+        help="Device used for GP and NUTS tensor computations.",
+    )
     parser.add_argument("--target-accept-prob", type=float, default=0.8)
     parser.add_argument("--predictive-samples", type=int, default=10)
     parser.add_argument("--barrier-bins", type=int, default=30)
@@ -285,6 +291,7 @@ def main() -> None:
             window_selection_mode=args.window_selection_mode,
             trajectory_selection_mode=args.trajectory_selection_mode,
             random_seed=args.random_seed,
+            device=args.device,
         )
 
     result_plan = []

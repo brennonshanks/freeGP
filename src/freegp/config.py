@@ -21,4 +21,16 @@ def configure_torch(
     torch.manual_seed(seed)
 
 
+def resolve_device(device: str) -> str:
+    """Validate and normalize a requested torch device string."""
+    normalized = str(device).strip().lower()
+    if normalized == "cuda":
+        if not torch.cuda.is_available():
+            raise RuntimeError("Requested device 'cuda' but torch.cuda.is_available() is False.")
+        return "cuda"
+    if normalized == "cpu":
+        return "cpu"
+    raise ValueError(f"Unsupported device '{device}'. Expected 'cpu' or 'cuda'.")
+
+
 configure_torch()

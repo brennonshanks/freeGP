@@ -4,10 +4,14 @@
 from __future__ import annotations
 
 import argparse
+import json
+import math
 from datetime import datetime
 from pathlib import Path
 import pickle
 import sys
+import time
+import tomllib
 
 import matplotlib
 matplotlib.use("Agg")
@@ -19,6 +23,7 @@ if __package__ in (None, ""):
     package_root = Path(__file__).resolve().parents[1]
     if str(package_root) not in sys.path:
         sys.path.insert(0, str(package_root))
+    from freegp.config import resolve_device
     from freegp.gp import GibbsKernelConfig, gpr_hd, gpr_hd_gibbs
     from freegp.hmc import (
         NUTSConfig,
@@ -26,10 +31,12 @@ if __package__ in (None, ""):
         maximum_a_posteriori_prediction,
         run_hmc_nuts,
         sample_posterior_functions,
+        summarize_chain_diagnostics,
     )
     from freegp.posterior import summarize_hyperposterior_predictive
-    from freegp.workflow import prepare_gprhd_hmc_inputs
+    from freegp.workflow import move_workflow_bundle, prepare_gprhd_hmc_inputs
 else:
+    from .config import resolve_device
     from .gp import GibbsKernelConfig, gpr_hd, gpr_hd_gibbs
     from .hmc import (
         NUTSConfig,
@@ -37,14 +44,54 @@ else:
         maximum_a_posteriori_prediction,
         run_hmc_nuts,
         sample_posterior_functions,
+        summarize_chain_diagnostics,
     )
     from .posterior import summarize_hyperposterior_predictive
-    from .workflow import prepare_gprhd_hmc_inputs
+    from .workflow import move_workflow_bundle, prepare_gprhd_hmc_inputs
 
 
-def build_parser() -> argparse.ArgumentParser:
+def _parse_device_list(value: str) -> list[str]:
+    return [piece.strip() for piece in value.split(",") if piece.strip()]
+
+
+def _normalize_config_value(key: str, value):
+    if key == "compare_devices" and isinstance(value, list):
+        return ",".join(str(piece) for piece in value)
+    return value
+
+
+def _load_config_defaults(path: str | None) -> dict[str, object]:
+    if path is None:
+        return {}
+    config_path = Path(path).expanduser().resolve()
+    with config_path.open("rb") as handle:
+        loaded = tomllib.load(handle)
+
+    if "single_run" in loaded and isinstance(loaded["single_run"], dict):
+        loaded = loaded["single_run"]
+
+    key_aliases = {
+        "results_dir": "figure_dir",
+        "figure_dir": "figure_dir",
+    }
+    defaults = {
+        key_aliases.get(key.replace("-", "_"), key.replace("-", "_")):
+        _normalize_config_value(key_aliases.get(key.replace("-", "_"), key.replace("-", "_")), value)
+        for key, value in loaded.items()
+    }
+    defaults["config"] = str(config_path)
+    return defaults
+
+
+def build_parser(*, defaults: dict[str, object] | None = None) -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Run the extracted GPR(H+D) workflow from the old HMC-NUTS notebook."
+    )
+    parser.add_argument(
+        "--config",
+        type=str,
+        default=None,
+        help="Path to a TOML config file. CLI flags override config values.",
     )
     parser.add_argument(
         "--dataset-root",
@@ -128,6 +175,13 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--num-samples", type=int, default=1000)
     parser.add_argument("--warmup-steps", type=int, default=2000)
     parser.add_argument("--num-chains", type=int, default=1)
+    parser.add_argument("--seed", type=int, default=42, help="Random seed for torch/Pyro sampling.")
+    parser.add_argument(
+        "--device",
+        choices=("cpu", "cuda"),
+        default="cpu",
+        help="Device used for GP and NUTS tensor computations.",
+    )
     parser.add_argument("--target-accept-prob", type=float, default=0.8)
     parser.add_argument(
         "--objective",
@@ -162,10 +216,34 @@ def build_parser() -> argparse.ArgumentParser:
         help="Directory for diagnostic outputs. Defaults to ./results/<timestamped-run>/",
     )
     parser.add_argument(
+        "--compare-devices",
+        type=str,
+        default=None,
+        help="Comma-separated devices to benchmark with the same run configuration, e.g. cpu,cuda.",
+    )
+    parser.add_argument(
+        "--benchmark-cpu-num-chains",
+        type=int,
+        default=None,
+        help="If set during --compare-devices, override CPU runs to use this many Pyro chains.",
+    )
+    parser.add_argument(
+        "--benchmark-gpu-runs",
+        type=int,
+        default=1,
+        help="If set during --compare-devices, run this many sequential single-chain GPU runs.",
+    )
+    parser.add_argument(
         "--no-corner",
         action="store_true",
         help="Disable the corner plot in NUTS mode.",
     )
+    if defaults:
+        known_dests = {action.dest for action in parser._actions}
+        unknown = sorted(set(defaults) - known_dests)
+        if unknown:
+            raise ValueError(f"Unsupported config keys: {unknown}")
+        parser.set_defaults(**defaults)
     return parser
 
 
@@ -277,11 +355,22 @@ def plot_nuts_traces(samples: dict[str, torch.Tensor], figure_dir: Path) -> None
     names = list(samples.keys())
     fig, axes = plt.subplots(len(names), 2, figsize=(10, 3 * len(names)), squeeze=False)
     for row, name in enumerate(names):
-        values = _to_numpy(samples[name]).ravel()
-        axes[row, 0].plot(values, lw=1.0)
+        values = _to_numpy(samples[name])
+        if values.ndim == 1:
+            chains = values.reshape(1, -1)
+        else:
+            chains = values.reshape(values.shape[0], values.shape[1], -1)[:, :, 0]
+        for chain_idx, chain_values in enumerate(chains):
+            label = f"chain {chain_idx}" if chains.shape[0] > 1 else None
+            axes[row, 0].plot(chain_values, lw=1.0, alpha=0.9, label=label)
         axes[row, 0].set_title(f"{name} trace")
-        axes[row, 1].hist(values, bins=30, color="gray", alpha=0.8)
+        for chain_idx, chain_values in enumerate(chains):
+            label = f"chain {chain_idx}" if chains.shape[0] > 1 else None
+            axes[row, 1].hist(chain_values, bins=30, alpha=0.45, label=label)
         axes[row, 1].set_title(f"{name} histogram")
+        if chains.shape[0] > 1:
+            axes[row, 0].legend(fontsize=8)
+            axes[row, 1].legend(fontsize=8)
     plt.tight_layout()
     plt.savefig(figure_dir / "nuts_traces.png", dpi=200)
     plt.close(fig)
@@ -364,6 +453,80 @@ def plot_variance_decomposition(bundle, summary, figure_dir: Path) -> None:
 
 def write_run_summary(figure_dir: Path, lines: list[str]) -> None:
     (figure_dir / "run_summary.txt").write_text("\n".join(lines) + "\n")
+
+
+def _diagnostic_value_to_python(value):
+    if isinstance(value, torch.Tensor):
+        if value.numel() == 1:
+            scalar = float(value.detach().cpu().item())
+            return None if not math.isfinite(scalar) else scalar
+        return _diagnostic_value_to_python(value.detach().cpu().tolist())
+    if isinstance(value, np.ndarray):
+        return _diagnostic_value_to_python(value.tolist())
+    if isinstance(value, dict):
+        return {str(key): _diagnostic_value_to_python(val) for key, val in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_diagnostic_value_to_python(item) for item in value]
+    if isinstance(value, (np.floating, float)):
+        scalar = float(value)
+        return None if not math.isfinite(scalar) else scalar
+    if isinstance(value, (np.integer, int)):
+        return int(value)
+    return value
+
+
+def _flatten_numeric_values(value) -> list[float]:
+    if value is None:
+        return []
+    if isinstance(value, dict):
+        flattened: list[float] = []
+        for item in value.values():
+            flattened.extend(_flatten_numeric_values(item))
+        return flattened
+    if isinstance(value, list):
+        flattened: list[float] = []
+        for item in value:
+            flattened.extend(_flatten_numeric_values(item))
+        return flattened
+    if isinstance(value, (int, float)):
+        scalar = float(value)
+        return [scalar] if math.isfinite(scalar) else []
+    return []
+
+
+def extract_multi_chain_diagnostics(mcmc) -> dict[str, object]:
+    diagnostics = _diagnostic_value_to_python(mcmc.diagnostics())
+    parameter_diags = {
+        key: value for key, value in diagnostics.items()
+        if isinstance(value, dict) and "r_hat" in value and "n_eff" in value
+    }
+    r_hats = []
+    n_effs = []
+    for value in parameter_diags.values():
+        r_hats.extend(_flatten_numeric_values(value.get("r_hat")))
+        n_effs.extend(_flatten_numeric_values(value.get("n_eff")))
+
+    divergence_map = diagnostics.get("divergences", {})
+    divergence_total = 0
+    if isinstance(divergence_map, dict):
+        divergence_total = int(sum(int(v or 0) for v in divergence_map.values()))
+
+    summary = {
+        "max_r_hat": max(r_hats) if r_hats else None,
+        "min_r_hat": min(r_hats) if r_hats else None,
+        "min_n_eff": min(n_effs) if n_effs else None,
+        "max_n_eff": max(n_effs) if n_effs else None,
+        "divergence_total": divergence_total,
+        "num_diagnostic_parameters": len(parameter_diags),
+    }
+    return {
+        "raw": diagnostics,
+        "summary": summary,
+    }
+
+
+def write_chain_diagnostics(figure_dir: Path, diagnostics: dict[str, object]) -> None:
+    (figure_dir / "chain_diagnostics.json").write_text(json.dumps(diagnostics, indent=2) + "\n")
 
 
 def _data_midpoint(bundle) -> float:
@@ -468,6 +631,9 @@ def run_gp_mode(args: argparse.Namespace, bundle, figure_dir: Path):
         figure_dir,
         [
             "mode: gp",
+            f"device: {args.device}",
+            f"seed: {args.seed}",
+            f"num_chains: {args.num_chains}",
             *_kernel_summary_lines(args),
             f"dataset_root: {bundle.dataset_root}",
             f"x_obs shape: {tuple(obs.x_obs.shape)}",
@@ -504,28 +670,48 @@ def run_nuts_mode(args: argparse.Namespace, bundle, figure_dir: Path):
         width_model=args.width_model,
     )
     mcmc, samples = run_hmc_nuts(bundle.observations, config=config)
+    grouped_samples = mcmc.get_samples(group_by_chain=True)
     try:
         summary = mcmc.summary(prob=0.9)
         summary_note = "pyro summary computed"
     except AssertionError as exc:
         summary = None
         summary_note = f"pyro summary skipped: {exc}"
+    chain_diagnostics = extract_multi_chain_diagnostics(mcmc)
+    single_chain_diagnostics = summarize_chain_diagnostics(mcmc, samples, config=config)
     result = {
         "mode": "nuts",
         "kernel": args.kernel,
         "dataset_root": str(bundle.dataset_root),
         "samples": samples,
+        "grouped_samples": grouped_samples,
         "summary": summary,
+        "chain_diagnostics": chain_diagnostics,
+        "single_chain_diagnostics": {
+            "step_size": single_chain_diagnostics.step_size,
+            "mean_accept_prob": single_chain_diagnostics.mean_accept_prob,
+            "accept_count": single_chain_diagnostics.accept_count,
+            "divergence_count": single_chain_diagnostics.divergence_count,
+            "sample_std_by_name": single_chain_diagnostics.sample_std_by_name,
+            "mean_sample_std": single_chain_diagnostics.mean_sample_std,
+            "max_sample_std": single_chain_diagnostics.max_sample_std,
+            "min_sample_std": single_chain_diagnostics.min_sample_std,
+            "poor_acceptance": single_chain_diagnostics.poor_acceptance,
+            "looks_stuck": single_chain_diagnostics.looks_stuck,
+        },
         "figure_dir": str(figure_dir),
     }
     plot_histograms(bundle, figure_dir)
     plot_unbiased_windows(bundle, figure_dir)
-    plot_nuts_traces(samples, figure_dir)
+    plot_nuts_traces(grouped_samples, figure_dir)
     corner_written = False
     if not args.no_corner:
         corner_written = plot_corner(samples, figure_dir, config=config)
+    write_chain_diagnostics(figure_dir, chain_diagnostics)
     summary_lines = [
         "mode: nuts",
+        f"device: {args.device}",
+        f"seed: {args.seed}",
         f"dataset_root: {bundle.dataset_root}",
         f"figure_dir: {figure_dir}",
         f"objective: {args.objective}",
@@ -535,6 +721,14 @@ def run_nuts_mode(args: argparse.Namespace, bundle, figure_dir: Path):
         f"num_chains: {args.num_chains}",
         f"x_test range: ({bundle.x_test.min().item():.6g}, {bundle.x_test.max().item():.6g})",
         summary_note,
+        f"chain diagnostics file: {figure_dir / 'chain_diagnostics.json'}",
+        f"max r_hat: {chain_diagnostics['summary']['max_r_hat']}",
+        f"min n_eff: {chain_diagnostics['summary']['min_n_eff']}",
+        f"total divergences: {chain_diagnostics['summary']['divergence_total']}",
+        f"step_size: {single_chain_diagnostics.step_size}",
+        f"mean_accept_prob: {single_chain_diagnostics.mean_accept_prob}",
+        f"mean_sample_std: {single_chain_diagnostics.mean_sample_std}",
+        f"looks_stuck: {single_chain_diagnostics.looks_stuck}",
     ]
     print("Finished NUTS run")
     print(f"dataset_root: {bundle.dataset_root}")
@@ -542,6 +736,8 @@ def run_nuts_mode(args: argparse.Namespace, bundle, figure_dir: Path):
     for key, value in samples.items():
         print(f"{key}: {tuple(value.shape)}")
         summary_lines.append(f"{key}: {tuple(value.shape)}")
+    for key, value in grouped_samples.items():
+        summary_lines.append(f"{key} grouped: {tuple(value.shape)}")
     summary_lines.append(f"corner plot written: {corner_written}")
 
     predictive_summary = summarize_hyperposterior_predictive(
@@ -622,12 +818,133 @@ def maybe_save_output(output_path: str | None, payload) -> None:
     print(f"saved results to: {path}")
 
 
+def _set_run_seed(seed: int) -> None:
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
+    try:
+        import pyro
+    except ImportError:
+        return
+    pyro.set_rng_seed(seed)
+
+
+def _result_summary(payload) -> dict[str, object]:
+    summary = {
+        "mode": payload.get("mode"),
+        "kernel": payload.get("kernel"),
+        "dataset_root": payload.get("dataset_root"),
+        "figure_dir": payload.get("figure_dir"),
+    }
+    if payload.get("mode") == "gp":
+        pred_cov = payload["pred_cov"]
+        summary["avg_total_variance"] = float(torch.diagonal(pred_cov).mean().detach().cpu().item())
+    elif payload.get("mode") == "nuts":
+        predictive = payload.get("hyperposterior_predictive")
+        if predictive is not None:
+            summary["avg_total_variance"] = float(predictive.total_variance.mean().detach().cpu().item())
+            summary["avg_within_variance"] = float(predictive.within_variance.mean().detach().cpu().item())
+            summary["avg_between_variance"] = float(predictive.between_variance.mean().detach().cpu().item())
+        chain_diagnostics = payload.get("chain_diagnostics")
+        if chain_diagnostics is not None:
+            diag_summary = chain_diagnostics.get("summary", {})
+            if diag_summary.get("max_r_hat") is not None:
+                summary["max_r_hat"] = float(diag_summary["max_r_hat"])
+            if diag_summary.get("min_n_eff") is not None:
+                summary["min_n_eff"] = float(diag_summary["min_n_eff"])
+            summary["divergence_total"] = int(diag_summary.get("divergence_total", 0))
+        if "map_log_posterior" in payload:
+            summary["map_log_posterior"] = float(payload["map_log_posterior"].detach().cpu().item())
+    return summary
+
+
+def _aggregate_summaries(summaries: list[dict[str, object]]) -> tuple[dict[str, object], dict[str, float]]:
+    if not summaries:
+        return {}, {}
+    mean_summary: dict[str, object] = {}
+    std_summary: dict[str, float] = {}
+    keys = summaries[0].keys()
+    for key in keys:
+        values = [summary[key] for summary in summaries]
+        first = values[0]
+        if isinstance(first, (int, float)):
+            arr = np.asarray(values, dtype=float)
+            mean_summary[key] = float(arr.mean())
+            std_summary[key] = float(arr.std(ddof=0))
+        else:
+            mean_summary[key] = first
+    return mean_summary, std_summary
+
+
+def _write_device_comparison(
+    root_dir: Path,
+    *,
+    comparisons: list[dict[str, object]],
+) -> None:
+    text_lines = ["device benchmark comparison"]
+    for item in comparisons:
+        text_lines.append("")
+        text_lines.append(f"label: {item['label']}")
+        text_lines.append(f"device: {item['device']}")
+        text_lines.append(f"num_runs: {item['num_runs']}")
+        text_lines.append(f"num_chains_per_run: {item['num_chains_per_run']}")
+        text_lines.append(f"elapsed_seconds_total: {item['elapsed_seconds_total']:.6f}")
+        text_lines.append(f"elapsed_seconds_mean: {item['elapsed_seconds_mean']:.6f}")
+        for key, value in item["summary_mean"].items():
+            text_lines.append(f"{key}: {value}")
+        if item["summary_std"]:
+            text_lines.append("summary_std:")
+            for key, value in item["summary_std"].items():
+                text_lines.append(f"  {key}: {value}")
+    (root_dir / "device_comparison.txt").write_text("\n".join(text_lines) + "\n")
+    (root_dir / "device_comparison.json").write_text(json.dumps(comparisons, indent=2) + "\n")
+
+
+def _run_single(
+    args: argparse.Namespace,
+    base_bundle,
+    *,
+    device: str,
+    figure_dir: Path,
+    num_chains: int | None = None,
+    seed: int | None = None,
+):
+    seed_to_use = args.seed if seed is None else seed
+    _set_run_seed(seed_to_use)
+    run_args = argparse.Namespace(
+        **{
+            **vars(args),
+            "device": device,
+            "num_chains": args.num_chains if num_chains is None else num_chains,
+            "seed": seed_to_use,
+        }
+    )
+    bundle = move_workflow_bundle(base_bundle, device=device)
+    start = time.perf_counter()
+    if run_args.mode == "gp":
+        payload = run_gp_mode(run_args, bundle, figure_dir)
+    else:
+        payload = run_nuts_mode(run_args, bundle, figure_dir)
+    elapsed_seconds = time.perf_counter() - start
+    payload["device"] = device
+    payload["elapsed_seconds"] = elapsed_seconds
+    payload["seed"] = seed_to_use
+    payload["num_chains"] = run_args.num_chains
+    return payload
+
+
 def main() -> None:
-    parser = build_parser()
+    pre_parser = argparse.ArgumentParser(add_help=False)
+    pre_parser.add_argument("--config", type=str, default=None)
+    pre_args, _ = pre_parser.parse_known_args()
+    config_defaults = _load_config_defaults(pre_args.config)
+
+    parser = build_parser(defaults=config_defaults)
     args = parser.parse_args()
     figure_dir = prepare_figure_dir(args.figure_dir, args.mode, project_root=args.project_root)
 
-    bundle = prepare_gprhd_hmc_inputs(
+    base_bundle = prepare_gprhd_hmc_inputs(
         dataset_root=args.dataset_root,
         project_root=args.project_root,
         n_equilibration=args.n_equilibration,
@@ -638,11 +955,63 @@ def main() -> None:
         test_grid_source=args.test_grid_source,
     )
 
-    if args.mode == "gp":
-        payload = run_gp_mode(args, bundle, figure_dir)
-    else:
-        payload = run_nuts_mode(args, bundle, figure_dir)
+    compare_devices = _parse_device_list(args.compare_devices) if args.compare_devices else None
+    if compare_devices:
+        comparisons = []
+        for device in compare_devices:
+            resolved_device = resolve_device(device)
+            if resolved_device == "cpu":
+                num_runs = 1
+                num_chains = args.benchmark_cpu_num_chains or args.num_chains
+                label = (
+                    f"cpu_parallel_{num_chains}chains"
+                    if num_chains > 1 else "cpu"
+                )
+            else:
+                num_runs = max(1, int(args.benchmark_gpu_runs))
+                num_chains = 1 if num_runs > 1 else args.num_chains
+                label = (
+                    f"cuda_serial_{num_runs}runs"
+                    if num_runs > 1 else "cuda"
+                )
 
+            device_dir = figure_dir / label
+            device_dir.mkdir(parents=True, exist_ok=True)
+            payloads = []
+            for run_idx in range(num_runs):
+                run_dir = device_dir / f"run_{run_idx:02d}" if num_runs > 1 else device_dir
+                run_dir.mkdir(parents=True, exist_ok=True)
+                payload = _run_single(
+                    args,
+                    base_bundle,
+                    device=resolved_device,
+                    figure_dir=run_dir,
+                    num_chains=num_chains,
+                    seed=args.seed + run_idx,
+                )
+                payloads.append(payload)
+
+            summaries = [_result_summary(payload) for payload in payloads]
+            summary_mean, summary_std = _aggregate_summaries(summaries)
+            comparisons.append(
+                {
+                    "label": label,
+                    "device": resolved_device,
+                    "num_runs": num_runs,
+                    "num_chains_per_run": num_chains,
+                    "elapsed_seconds_total": float(sum(payload["elapsed_seconds"] for payload in payloads)),
+                    "elapsed_seconds_mean": float(np.mean([payload["elapsed_seconds"] for payload in payloads])),
+                    "summary_mean": summary_mean,
+                    "summary_std": summary_std,
+                    "run_dirs": [str((device_dir / f"run_{idx:02d}").resolve()) for idx in range(num_runs)]
+                    if num_runs > 1 else [str(device_dir.resolve())],
+                }
+            )
+        _write_device_comparison(figure_dir, comparisons=comparisons)
+        return
+
+    device = resolve_device(args.device)
+    payload = _run_single(args, base_bundle, device=device, figure_dir=figure_dir)
     maybe_save_output(args.output, payload)
 
 

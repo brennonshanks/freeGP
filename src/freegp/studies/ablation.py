@@ -21,6 +21,7 @@ from ..hmc import (
     run_hmc_nuts,
     summarize_chain_diagnostics,
 )
+from ..config import resolve_device
 from ..metrics import ReferenceComparison, compare_to_reference_curves
 from ..posterior import (
     HyperposteriorPredictiveSummary,
@@ -28,7 +29,7 @@ from ..posterior import (
     summarize_hyperposterior_predictive,
 )
 from ..preprocess import build_joint_observations, build_test_grid, process_umbrella_windows
-from ..workflow import WorkflowBundle
+from ..workflow import WorkflowBundle, move_workflow_bundle
 
 CSANYI_FIXED_ELL = float(np.pi / 2.0)
 CSANYI_FIXED_W = float(4.184 * np.sqrt(10.0))
@@ -95,6 +96,7 @@ class AblationStudyResult:
     window_selection_mode: str
     trajectory_selection_mode: str
     random_seed: int
+    device: str
     pmf_alignment: str = "max"
 
 
@@ -224,6 +226,16 @@ def _prepare_ablation_bundle(
     )
 
 
+def _cpu_clone(value):
+    if isinstance(value, torch.Tensor):
+        return value.detach().cpu().clone()
+    if isinstance(value, dict):
+        return {key: _cpu_clone(val) for key, val in value.items()}
+    if isinstance(value, list):
+        return [_cpu_clone(val) for val in value]
+    return value
+
+
 def _replicate_plan(
     *,
     effective_replicates: int,
@@ -270,29 +282,29 @@ def _bundle_artifact_payload(bundle: WorkflowBundle) -> dict[str, object]:
     return {
         "dataset_root": str(bundle.dataset_root),
         "processed": {
-            "folder_numbers": processed.folder_numbers.clone(),
-            "force_constants": processed.force_constants.clone(),
-            "modes": processed.modes.clone(),
-            "variances": processed.variances.clone(),
-            "autocorr_times": processed.autocorr_times.clone(),
-            "n_samples": processed.n_samples.clone(),
-            "restoring_forces": processed.restoring_forces.clone(),
-            "histogram_counts": [value.clone() for value in processed.histogram_counts],
-            "histogram_probs": [value.clone() for value in processed.histogram_probs],
-            "histogram_densities": [value.clone() for value in processed.histogram_densities],
-            "bin_centers_list": [value.clone() for value in processed.bin_centers_list],
+            "folder_numbers": _cpu_clone(processed.folder_numbers),
+            "force_constants": _cpu_clone(processed.force_constants),
+            "modes": _cpu_clone(processed.modes),
+            "variances": _cpu_clone(processed.variances),
+            "autocorr_times": _cpu_clone(processed.autocorr_times),
+            "n_samples": _cpu_clone(processed.n_samples),
+            "restoring_forces": _cpu_clone(processed.restoring_forces),
+            "histogram_counts": _cpu_clone(processed.histogram_counts),
+            "histogram_probs": _cpu_clone(processed.histogram_probs),
+            "histogram_densities": _cpu_clone(processed.histogram_densities),
+            "bin_centers_list": _cpu_clone(processed.bin_centers_list),
         },
         "observations": {
-            "x_obs": observations.x_obs.clone(),
-            "y_obs": observations.y_obs.clone(),
-            "H_obs": observations.H_obs.clone(),
-            "x_der": observations.x_der.clone(),
-            "dy_der": observations.dy_der.clone(),
-            "noise_func_cov": observations.noise_func_cov.clone(),
-            "noise_deriv_diag": observations.noise_deriv_diag.clone(),
-            "F_list": [value.clone() for value in observations.F_list],
+            "x_obs": _cpu_clone(observations.x_obs),
+            "y_obs": _cpu_clone(observations.y_obs),
+            "H_obs": _cpu_clone(observations.H_obs),
+            "x_der": _cpu_clone(observations.x_der),
+            "dy_der": _cpu_clone(observations.dy_der),
+            "noise_func_cov": _cpu_clone(observations.noise_func_cov),
+            "noise_deriv_diag": _cpu_clone(observations.noise_deriv_diag),
+            "F_list": _cpu_clone(observations.F_list),
         },
-        "x_test": bundle.x_test.clone(),
+        "x_test": _cpu_clone(bundle.x_test),
     }
 
 
@@ -425,13 +437,13 @@ def _nuts_summary(bundle: WorkflowBundle, model: StudyModelConfig):
 
 def _predictive_summary_payload(summary: HyperposteriorPredictiveSummary) -> dict[str, object]:
     return {
-        "x_test": summary.x_test.clone(),
-        "mean": summary.mean.clone(),
-        "total_variance": summary.total_variance.clone(),
-        "within_variance": summary.within_variance.clone(),
-        "between_variance": summary.between_variance.clone(),
-        "conditional_means": summary.conditional_means.clone(),
-        "selected_indices": summary.selected_indices.clone(),
+        "x_test": _cpu_clone(summary.x_test),
+        "mean": _cpu_clone(summary.mean),
+        "total_variance": _cpu_clone(summary.total_variance),
+        "within_variance": _cpu_clone(summary.within_variance),
+        "between_variance": _cpu_clone(summary.between_variance),
+        "conditional_means": _cpu_clone(summary.conditional_means),
+        "selected_indices": _cpu_clone(summary.selected_indices),
     }
 
 
@@ -458,7 +470,7 @@ def _replicate_result_payload(
         "predictive_summary": _predictive_summary_payload(summary),
         "metrics": asdict(metrics),
         "chain_diagnostics": None if diagnostics is None else asdict(diagnostics),
-        "nuts_samples": nuts_samples,
+        "nuts_samples": _cpu_clone(nuts_samples),
     }
 
 
@@ -483,9 +495,11 @@ def run_ablation_study(
     window_selection_mode: str = "evenly_spaced",
     trajectory_selection_mode: str = "contiguous",
     random_seed: int = 0,
+    device: str = "cpu",
     pmf_alignment: str = "max",
 ) -> AblationStudyResult:
     model = model or StudyModelConfig()
+    resolved_device = resolve_device(device)
     dataset_root_path = Path(dataset_root).expanduser().resolve()
     windows = load_umbrella_windows(dataset_root_path)
     references = load_reference_curves(
@@ -572,6 +586,7 @@ def run_ablation_study(
                     trajectory_selection_mode=str(rep_spec["trajectory_selection_mode"]),
                     rng=cell_rng,
                 )
+                bundle = move_workflow_bundle(bundle, device=resolved_device)
                 if model.method == "fixed_gp":
                     summary = _fixed_summary(bundle, model)
                     diagnostics = None
@@ -647,6 +662,7 @@ def run_ablation_study(
         window_selection_mode=window_selection_mode,
         trajectory_selection_mode=trajectory_selection_mode,
         random_seed=random_seed,
+        device=resolved_device,
         pmf_alignment=pmf_alignment,
     )
 
@@ -1161,6 +1177,7 @@ def _save_result_artifacts(
         "window_selection_mode": result.window_selection_mode,
         "trajectory_selection_mode": result.trajectory_selection_mode,
         "random_seed": result.random_seed,
+        "device": result.device,
         "dataset_root": str(result.cells[0].dataset_root) if result.cells else "",
         "reference_barriers": {
             k: v for k, v in [("wham", wham_b), ("ui", ui_b)] if v is not None
@@ -1185,8 +1202,8 @@ def _save_result_artifacts(
             "canonical_predictive_summary": None
             if cell_result.canonical_predictive_summary is None
             else _predictive_summary_payload(cell_result.canonical_predictive_summary),
-            "nuts_samples": cell_result.nuts_samples,
-            "canonical_nuts_samples": cell_result.canonical_nuts_samples,
+            "nuts_samples": _cpu_clone(cell_result.nuts_samples),
+            "canonical_nuts_samples": _cpu_clone(cell_result.canonical_nuts_samples),
         }
         torch.save(payload, cell_dir / f"{slug}.pt")
         manifest["cells"].append(
@@ -1358,10 +1375,11 @@ def save_ablation_summary(
                 ]
             )
 
-    lines = [
-        f"method: {result.model.method}",
-        f"kernel: {result.model.kernel}",
-        f"objective: {result.model.objective}",
+        lines = [
+            f"method: {result.model.method}",
+            f"kernel: {result.model.kernel}",
+            f"device: {result.device}",
+            f"objective: {result.model.objective}",
     ]
     if result.model.kernel == "stationary":
         lines.extend(

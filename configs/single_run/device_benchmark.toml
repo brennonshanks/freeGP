@@ -1,0 +1,17 @@
+[single_run]
+dataset_root = "~/freeGP-datasets/membranes/katka"
+mode = "nuts"
+kernel = "stationary"
+objective = "loo"
+
+num_bins = 20
+num_test_points = 100
+warmup_steps = 1000
+num_samples = 1000
+predictive_samples = 100
+posterior_draws = 0
+no_corner = true
+
+compare_devices = ["cpu", "cuda"]
+
+results_dir = "/home/bshanks/freeGP-dev/results/device-benchmark-stationary"

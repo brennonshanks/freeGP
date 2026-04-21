@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 import torch
 
@@ -38,6 +38,47 @@ class JointObservations:
     noise_func_cov: torch.Tensor
     noise_deriv_diag: torch.Tensor
     F_list: list[torch.Tensor]
+
+
+def move_processed_umbrella_data(
+    processed: ProcessedUmbrellaData,
+    *,
+    device: torch.device | str,
+) -> ProcessedUmbrellaData:
+    """Return a copy of ``processed`` moved onto ``device``."""
+    return replace(
+        processed,
+        folder_numbers=processed.folder_numbers.to(device=device),
+        force_constants=processed.force_constants.to(device=device),
+        modes=processed.modes.to(device=device),
+        variances=processed.variances.to(device=device),
+        autocorr_times=processed.autocorr_times.to(device=device),
+        n_samples=processed.n_samples.to(device=device),
+        restoring_forces=processed.restoring_forces.to(device=device),
+        histogram_counts=[value.to(device=device) for value in processed.histogram_counts],
+        histogram_probs=[value.to(device=device) for value in processed.histogram_probs],
+        histogram_densities=[value.to(device=device) for value in processed.histogram_densities],
+        bin_centers_list=[value.to(device=device) for value in processed.bin_centers_list],
+    )
+
+
+def move_joint_observations(
+    observations: JointObservations,
+    *,
+    device: torch.device | str,
+) -> JointObservations:
+    """Return a copy of ``observations`` moved onto ``device``."""
+    return replace(
+        observations,
+        x_obs=observations.x_obs.to(device=device),
+        y_obs=observations.y_obs.to(device=device),
+        H_obs=observations.H_obs.to(device=device),
+        x_der=observations.x_der.to(device=device),
+        dy_der=observations.dy_der.to(device=device),
+        noise_func_cov=observations.noise_func_cov.to(device=device),
+        noise_deriv_diag=observations.noise_deriv_diag.to(device=device),
+        F_list=[value.to(device=device) for value in observations.F_list],
+    )
 
 
 def bayes_autocorrelation_time(
