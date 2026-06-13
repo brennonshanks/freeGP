@@ -604,6 +604,105 @@ def predict_function(
     raise ValueError(f"Unsupported posterior kernel: {posterior.kernel_name}")
 
 
+def predict_function_mean(
+    posterior: JointGPPosterior,
+    x_test: torch.Tensor,
+    *,
+    H_test: torch.Tensor | None = None,
+) -> torch.Tensor:
+    """Predict only the latent function mean, avoiding covariance construction."""
+    H_test = _default_H_test(posterior, x_test, H_test)
+    if posterior.kernel_name == "stationary_se":
+        ell = posterior.kernel_params["ell"]
+        w = posterior.kernel_params["w"]
+        _, xdd_xf = pairwise_differences(x_test, posterior.x_func)
+        K_xf = se_kernel(xdd_xf, ell, w)
+        xd_xd, xdd_xd = pairwise_differences(x_test, posterior.x_der)
+        K_xd = fdse_kernel(xd_xd, xdd_xd, ell, w)
+    elif posterior.kernel_name == "gibbs":
+        params = posterior.kernel_params
+        config = GibbsKernelConfig(
+            length_model=params["length_model"],
+            width_model=params["width_model"],
+        )
+        _, xdd_xf = pairwise_differences(x_test, posterior.x_func)
+        K_xf = gibbs_kernel(
+            xdd_xf,
+            params["a0"],
+            params["a1"],
+            params["b"],
+            params["c"],
+            params["length_w"],
+            params["s"],
+            params["u"],
+            params["width_w"],
+            x_test[:, None],
+            posterior.x_func[None, :],
+            config=config,
+        )
+        xd_xd, xdd_xd = pairwise_differences(x_test, posterior.x_der)
+        K_xd = sdgibbs_kernel(
+            xd_xd,
+            xdd_xd,
+            params["a0"],
+            params["a1"],
+            params["b"],
+            params["c"],
+            params["length_w"],
+            params["s"],
+            params["u"],
+            params["width_w"],
+            x_test[:, None],
+            posterior.x_der[None, :],
+            config=config,
+        )
+    else:
+        raise ValueError(f"Unsupported posterior kernel: {posterior.kernel_name}")
+
+    K_xY = torch.cat([K_xf, K_xd], dim=1)
+    return (
+        K_xY @ posterior.alpha
+        + H_test @ posterior.beta_hat
+    )
+
+
+def predict_derivative(
+    posterior: JointGPPosterior,
+    x_test: torch.Tensor,
+) -> tuple[torch.Tensor, torch.Tensor]:
+    """Predict latent first derivatives at x_test from a stationary joint posterior."""
+    if posterior.kernel_name != "stationary_se":
+        raise ValueError("Derivative prediction is currently implemented only for the stationary SE kernel.")
+
+    ell = posterior.kernel_params["ell"]
+    w = posterior.kernel_params["w"]
+
+    xd_gf, xdd_gf = pairwise_differences(x_test, posterior.x_func)
+    K_gf = -fdse_kernel(xd_gf, xdd_gf, ell, w)
+
+    xd_gd, xdd_gd = pairwise_differences(x_test, posterior.x_der)
+    K_gd = ddse_kernel(xd_gd, xdd_gd, ell, w)
+    K_gY = torch.cat([K_gf, K_gd], dim=1)
+
+    pred_mean = (K_gY @ posterior.alpha.reshape(-1, 1)).squeeze(-1)
+
+    v = torch.linalg.solve_triangular(posterior.L, K_gY.T, upper=False)
+    xd_gg, xdd_gg = pairwise_differences(x_test, x_test)
+    K_gg = ddse_kernel(xd_gg, xdd_gg, ell, w)
+    term1 = K_gg - v.T @ v
+
+    # The profiled histogram offsets are constants, so their derivatives are zero.
+    M = K_gY @ posterior.Kinv_H
+    S = 0.5 * (
+        (posterior.H_full.T @ posterior.Kinv_H)
+        + (posterior.H_full.T @ posterior.Kinv_H).T
+    )
+    term2 = M @ (torch.linalg.inv(S) @ M.T)
+    pred_cov = term1 + term2
+    pred_cov = 0.5 * (pred_cov + pred_cov.T)
+    return pred_mean, pred_cov
+
+
 def gpr_hd(
     x_func: torch.Tensor,
     y_func: torch.Tensor,

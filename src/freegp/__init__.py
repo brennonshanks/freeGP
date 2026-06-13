@@ -17,7 +17,9 @@ from .gp import (
     gpr_hd_gibbs,
     joint_log_marginal_likelihood,
     joint_loo_loglik,
+    predict_derivative,
     predict_function,
+    predict_function_mean,
 )
 from .hmc import (
     HMCChainDiagnostics,
@@ -26,7 +28,13 @@ from .hmc import (
     display_samples_for_diagnostics,
     run_hmc_nuts,
     sample_posterior_functions,
+    stationary_ell_prior_distribution,
+    stationary_log_ell_bounds,
     summarize_chain_diagnostics,
+)
+from .hyperopt import (
+    HyperparameterOptimizationResult,
+    optimize_stationary_hyperparameters,
 )
 from .metrics import ReferenceComparison, compare_to_reference_curves
 from .preprocess import (
@@ -38,7 +46,11 @@ from .preprocess import (
 )
 from .posterior import (
     HyperposteriorPredictiveSummary,
+    anchor_predictive_summary,
+    hyperposterior_conditional_means,
+    summarize_fixed_posterior_derivative,
     summarize_fixed_posterior_predictive,
+    summarize_hyperposterior_derivative,
     summarize_hyperposterior_predictive,
 )
 from .studies import (
@@ -55,12 +67,14 @@ __all__ = [
     "AblationCell",
     "AblationCellResult",
     "AblationStudyResult",
+    "anchor_predictive_summary",
     "DEFAULT_DTYPE",
     "DEFAULT_SEED",
     "GibbsKernelConfig",
     "HMCChainDiagnostics",
     "HyperPriorConfig",
     "HyperposteriorPredictiveSummary",
+    "HyperparameterOptimizationResult",
     "JointGPPosterior",
     "JointObservations",
     "NUTSConfig",
@@ -83,7 +97,10 @@ __all__ = [
     "joint_loo_loglik",
     "load_reference_curves",
     "load_umbrella_windows",
+    "optimize_stationary_hyperparameters",
+    "predict_derivative",
     "predict_function",
+    "predict_function_mean",
     "prepare_gprhd_hmc_inputs",
     "process_umbrella_windows",
     "resolve_dataset_root",
@@ -91,7 +108,12 @@ __all__ = [
     "run_hmc_nuts",
     "save_ablation_summary",
     "summarize_fixed_posterior_predictive",
+    "summarize_fixed_posterior_derivative",
     "summarize_chain_diagnostics",
     "summarize_hyperposterior_predictive",
+    "summarize_hyperposterior_derivative",
+    "hyperposterior_conditional_means",
     "sample_posterior_functions",
+    "stationary_ell_prior_distribution",
+    "stationary_log_ell_bounds",
 ]

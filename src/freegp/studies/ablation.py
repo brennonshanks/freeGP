@@ -413,6 +413,16 @@ def _flatten_numeric_values(value) -> list[float]:
     return []
 
 
+def _divergence_count(value) -> int:
+    if value is None:
+        return 0
+    if isinstance(value, dict):
+        return sum(_divergence_count(item) for item in value.values())
+    if isinstance(value, (list, tuple, set)):
+        return len(value)
+    return int(value)
+
+
 def _extract_multi_chain_diagnostics(mcmc) -> dict[str, object]:
     diagnostics = _diagnostic_value_to_python(mcmc.diagnostics())
     parameter_diags = {
@@ -425,9 +435,7 @@ def _extract_multi_chain_diagnostics(mcmc) -> dict[str, object]:
         r_hats.extend(_flatten_numeric_values(value.get("r_hat")))
         n_effs.extend(_flatten_numeric_values(value.get("n_eff")))
     divergence_map = diagnostics.get("divergences", {})
-    divergence_total = 0
-    if isinstance(divergence_map, dict):
-        divergence_total = int(sum(int(v or 0) for v in divergence_map.values()))
+    divergence_total = _divergence_count(divergence_map)
     return {
         "raw": diagnostics,
         "summary": {

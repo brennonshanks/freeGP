@@ -142,6 +142,62 @@ Results are written by default to a timestamped directory under:
 
 - [`results/`](/home/bshanks/freeGP-dev/results)
 
+### Quick UQ Method Comparison
+
+Use [`compare_uq_methods.py`](/home/bshanks/freeGP-dev/scripts/compare_uq_methods.py)
+to compare the block-averaged UI curve against:
+
+- the fixed-hyperparameter stationary GP
+- a plug-in GP conditioned at optimized hyperparameters
+- the NUTS hyperposterior predictive distribution
+
+```bash
+OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 MPLCONFIGDIR=/tmp/mpl \
+/home/bshanks/miniforge3/envs/freegp311/bin/python \
+/home/bshanks/freeGP-dev/scripts/compare_uq_methods.py \
+  --dataset-root ~/freeGP-datasets/membranes/katka \
+  --objective lml
+```
+
+The plug-in fit finds a MAP estimate for `ell`, `w`, `sigma_f`, and `sigma_d`
+using the same hyperpriors as NUTS, but does not propagate uncertainty in those
+fitted hyperparameters. Results are written to `results/uq-method-comparison`
+by default.
+
+The comparison also writes `asymptotic_gauge_check.png` and
+`asymptotic_gauge_check.csv`. These evaluate each retained hyperposterior
+conditional mean beyond the data domain to test whether all samples approach
+the same asymptotic zero reference.
+
+The function-UQ figures use the GP means directly in that native
+asymptotic-zero gauge. No finite-point anchoring or per-curve display shift is
+applied. The UI reference is overlaid after applying one documented constant
+offset chosen by least squares against the hyperposterior mean; its error bars
+are unchanged. The derivative figures use analytic GP derivative posteriors
+and are gauge invariant.
+
+For a low-data comparison with six evenly spaced windows and one quarter of
+each post-equilibration trajectory:
+
+```bash
+python scripts/compare_uq_methods.py \
+  --window-count 6 \
+  --trajectory-fraction 0.25 \
+  --results-dir results/uq-method-comparison-low-data
+```
+
+To compare four priors on `ell` while keeping every other hyperprior fixed:
+
+```bash
+OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 MPLCONFIGDIR=/tmp/mpl \
+/home/bshanks/miniforge3/envs/freegp311/bin/python \
+scripts/compare_lengthscale_priors.py
+```
+
+The cases are bounded-flat in `log(ell)`, the current
+`Normal(log(4), 1)` prior, `Normal(log(0.5), 0.5)`, and
+`Normal(log(0.5), 0.1)`.
+
 ### 2. Ablation-Grid Study
 
 Use [`run_ablation_grid.py`](/home/bshanks/freeGP-dev/src/freegp/run_ablation_grid.py) for publication-oriented ablation tests.

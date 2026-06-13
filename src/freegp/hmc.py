@@ -24,7 +24,7 @@ from .preprocess import JointObservations
 class HyperPriorConfig:
     # Stationary kernel priors in log-parameter space.
     m_ell: float = math.log(4.0)
-    s_ell: float = 1.0
+    s_ell: float | None = 1.0
     m_w: float = 1.0
     s_w: float = 0.5
     m_sf: float = 0.5
@@ -85,6 +85,25 @@ def _observation_domain(observations: JointObservations) -> tuple[float, float, 
     x_mid = 0.5 * (x_min + x_max)
     x_span = max(x_max - x_min, 1e-3)
     return x_min, x_mid, x_span
+
+
+def stationary_log_ell_bounds(
+    observations: JointObservations,
+) -> tuple[float, float]:
+    """Numerical bounds used for a flat prior on log length scale."""
+    _, _, x_span = _observation_domain(observations)
+    return math.log(x_span / 100.0), math.log(x_span * 10.0)
+
+
+def stationary_ell_prior_distribution(
+    observations: JointObservations,
+    priors: HyperPriorConfig,
+):
+    """Return the configured prior distribution for log length scale."""
+    if priors.s_ell is None:
+        lower, upper = stationary_log_ell_bounds(observations)
+        return dist.Uniform(lower, upper)
+    return dist.Normal(priors.m_ell, priors.s_ell)
 
 
 def _sample_site_names(config: NUTSConfig) -> list[str]:
@@ -254,7 +273,9 @@ def _sample_kernel_parameters(
     import pyro
 
     if config.kernel == "stationary":
-        theta_ell = pyro.sample("theta_ell", dist.Normal(priors.m_ell, priors.s_ell))
+        theta_ell = pyro.sample(
+            "theta_ell", stationary_ell_prior_distribution(observations, priors)
+        )
         theta_w = pyro.sample("theta_w", dist.Normal(priors.m_w, priors.s_w))
         theta_sf = pyro.sample("theta_sf", dist.Normal(priors.m_sf, priors.s_sf))
         theta_sd = pyro.sample("theta_sd", dist.Normal(priors.m_sd, priors.s_sd))
@@ -328,7 +349,9 @@ def _state_to_parameters_and_log_prior(
 
     if config.kernel == "stationary":
         log_prior = (
-            dist.Normal(priors.m_ell, priors.s_ell).log_prob(sample_state["theta_ell"])
+            stationary_ell_prior_distribution(observations, priors).log_prob(
+                sample_state["theta_ell"]
+            )
             + dist.Normal(priors.m_w, priors.s_w).log_prob(sample_state["theta_w"])
             + dist.Normal(priors.m_sf, priors.s_sf).log_prob(sample_state["theta_sf"])
             + dist.Normal(priors.m_sd, priors.s_sd).log_prob(sample_state["theta_sd"])

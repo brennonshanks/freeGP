@@ -10,14 +10,14 @@ MPLCONFIGDIR="${MPLCONFIGDIR:-/tmp/mpl}"
 OMP_NUM_THREADS="${OMP_NUM_THREADS:-1}"
 MKL_NUM_THREADS="${MKL_NUM_THREADS:-1}"
 
-CASES=(easy medium hard)
+CASES=(easy medium hard super_hard)
 WARMUPS=(250 500 1000)
 SAMPLES=(250 500 1000)
 
 usage() {
   cat <<USAGE
 Usage:
-  $(basename "$0") [--cases easy,medium,hard] [--warmups 250,500,...] [--samples 250,500,...]
+  $(basename "$0") [--cases easy,medium,hard,super_hard] [--warmups 250,500,...] [--samples 250,500,...]
 
 Optional env vars:
   PYTHON_BIN     Python executable
