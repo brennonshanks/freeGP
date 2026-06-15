@@ -191,12 +191,22 @@ To compare four priors on `ell` while keeping every other hyperprior fixed:
 ```bash
 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 MPLCONFIGDIR=/tmp/mpl \
 /home/bshanks/miniforge3/envs/freegp311/bin/python \
-scripts/compare_lengthscale_priors.py
+scripts/compare_lengthscale_priors.py \
+  --window-count 7 \
+  --trajectory-fraction 0.25 \
+  --warmup-steps 500 \
+  --num-samples 1000 \
+  --num-chains 4 \
+  --chain-execution spawn \
+  --results-dir results/lengthscale-prior-sensitivity-hard
 ```
 
 The cases are bounded-flat in `log(ell)`, the current
 `Normal(log(4), 1)` prior, `Normal(log(0.5), 0.5)`, and
-`Normal(log(0.5), 0.1)`.
+`Normal(log(0.5), 0.1)`. The defaults use the calibrated HMC setting of 500
+warmup steps and 1000 retained samples for each of four chains. For a
+data-rich sensitivity check, rerun with `--window-count 25
+--trajectory-fraction 1.0` and a separate results directory.
 
 ### 2. Ablation-Grid Study
 
