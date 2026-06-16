@@ -142,6 +142,65 @@ Results are written by default to a timestamped directory under:
 
 - [`results/`](/home/bshanks/freeGP-dev/results)
 
+### Metadynamics GPR(H+D) Run
+
+Use [`run_metadynamics_gprhd.py`](/home/bshanks/freeGP-dev/scripts/run_metadynamics_gprhd.py)
+for Lagrangian metadynamics data. The script reads a PLUMED-style `COLVAR`
+file with columns `time, MetaCV, CV, bias, lower, upper` by default and an
+optional `fes.dat` reference with columns `MetaCV, PMF, PMF derivative`.
+It bins `MetaCV` into pseudo-umbrella windows for histogram observations and
+bins the restraint-force estimate `k * (MetaCV - CV)` by `CV` for derivative
+observations.
+
+```bash
+OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 MPLCONFIGDIR=/tmp/mpl \
+/home/bshanks/miniforge3/envs/freegp311/bin/python \
+/home/bshanks/freeGP-dev/scripts/run_metadynamics_gprhd.py \
+  --data-root ~/freeGP-datasets/metadynamics/lagran_2 \
+  --colvar COLVAR \
+  --fes fes.dat \
+  --force-constant 10000 \
+  --interval 0.0 4.5 \
+  --n-histogram-windows 45 \
+  --n-derivative-bins 90 \
+  --mode map \
+  --results-dir results/metadynamics-gprhd
+```
+
+The initial implementation is a clean port of the notebook data model into
+the package preprocessing layer. It supports fixed-hyperparameter and MAP
+stationary GP reconstructions; HMC can be added on top of the same generated
+`JointObservations` object.
+
+For the SI trajectory-length sensitivity analysis, use
+[`compare_metadynamics_trajectory_lengths.py`](/home/bshanks/freeGP-dev/scripts/compare_metadynamics_trajectory_lengths.py).
+This script compares the standard well-tempered metadynamics estimate
+reconstructed from `HILLS`, the fixed-hyperparameter GP, the MAP-hyperparameter
+GP using the default hyperpriors, and the HMC-NUTS hyperposterior-propagated GP
+as a function of retained trajectory fraction.
+
+```bash
+OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 MPLCONFIGDIR=/tmp/mpl \
+/home/bshanks/miniforge3/envs/freegp311/bin/python \
+/home/bshanks/freeGP-dev/scripts/compare_metadynamics_trajectory_lengths.py \
+  --data-root /home/bshanks/freeGP-datasets/membranes/zuzka_metadynamics/metad \
+  --force-constant 10000 \
+  --interval -1.0 5.0 \
+  --trajectory-fractions 0.05,0.10,0.25,0.50,1.00 \
+  --n-histogram-windows 60 \
+  --n-derivative-bins 120 \
+  --warmup-steps 500 \
+  --num-samples 1000 \
+  --predictive-samples 100 \
+  --results-dir results/metadynamics-trajectory-length-comparison
+```
+
+The main outputs are `trajectory_length_fit_grid.png`, which shows the
+reconstructed PMFs against the final metadynamics FES reference, and
+`trajectory_length_metrics.png`, which summarizes RMSE and average predictive
+variance versus trajectory fraction. A quick non-HMC check can be run with
+`--skip-hmc`.
+
 ### Quick UQ Method Comparison
 
 Use [`compare_uq_methods.py`](/home/bshanks/freeGP-dev/scripts/compare_uq_methods.py)
