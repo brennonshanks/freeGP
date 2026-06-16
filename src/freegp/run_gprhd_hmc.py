@@ -73,6 +73,8 @@ def _load_config_defaults(path: str | None) -> dict[str, object]:
     key_aliases = {
         "results_dir": "figure_dir",
         "figure_dir": "figure_dir",
+        "method": "mode",
+        "random_seed": "seed",
     }
     defaults = {
         key_aliases.get(key.replace("-", "_"), key.replace("-", "_")):
@@ -105,6 +107,36 @@ def build_parser(*, defaults: dict[str, object] | None = None) -> argparse.Argum
         type=str,
         default=None,
         help="Path to the freeGP-dev project root. Defaults to this installed package location.",
+    )
+    parser.add_argument(
+        "--reference-wham-path",
+        type=str,
+        default=None,
+        help="Path to a reference WHAM PMF file (2-column: x, F). Plotted alongside GP output.",
+    )
+    parser.add_argument(
+        "--reference-wham-x-units",
+        type=str,
+        default="nm",
+        help="X-axis units of the WHAM PMF file: 'nm' or 'angstrom'.",
+    )
+    parser.add_argument(
+        "--reference-ui-path",
+        type=str,
+        default=None,
+        help="Path to a reference UI PMF file (2-column: x, F). Plotted alongside GP output.",
+    )
+    parser.add_argument(
+        "--reference-ui-x-units",
+        type=str,
+        default="nm",
+        help="X-axis units of the UI PMF file: 'nm' or 'angstrom'.",
+    )
+    parser.add_argument(
+        "--pmf-alignment",
+        choices=("max", "min"),
+        default="max",
+        help="Align shifted PMF curves at their maximum ('max', default) or minimum ('min').",
     )
     parser.add_argument("--n-equilibration", type=int, default=40_000)
     parser.add_argument("--num-bins", type=int, default=20)
@@ -185,9 +217,9 @@ def build_parser(*, defaults: dict[str, object] | None = None) -> argparse.Argum
     parser.add_argument("--target-accept-prob", type=float, default=0.8)
     parser.add_argument(
         "--objective",
-        choices=("lml", "loo"),
+        choices=("lml", "loo", "both"),
         default="lml",
-        help="Objective used inside NUTS.",
+        help="Objective used inside NUTS. 'both' runs lml and loo sequentially into subdirectories.",
     )
     parser.add_argument(
         "--posterior-draws",
@@ -302,16 +334,22 @@ def plot_unbiased_windows(bundle, figure_dir: Path) -> None:
     plt.close()
 
 
-def plot_gp_posterior(bundle, pred_mean, pred_cov, figure_dir: Path, *, filename: str) -> None:
+def plot_gp_posterior(
+    bundle,
+    pred_mean,
+    pred_cov,
+    figure_dir: Path,
+    *,
+    filename: str,
+    pmf_alignment: str = "max",
+) -> None:
     x_test = _to_numpy(bundle.x_test).ravel()
     pred_mean_np = _to_numpy(pred_mean).ravel()
     pred_std_np = np.sqrt(np.clip(np.diag(_to_numpy(pred_cov)), a_min=0.0, a_max=None))
-    shifted_mean = pred_mean_np - np.max(pred_mean_np)
+    anchor = np.max(pred_mean_np) if pmf_alignment == "max" else np.min(pred_mean_np)
+    shifted_mean = pred_mean_np - anchor
 
     refs = bundle.references
-    wham_shift = refs.wham_f - np.max(refs.wham_f)
-    umbrella_shift = refs.umbrella_f - np.max(refs.umbrella_f)
-
     plt.figure(figsize=(10, 6))
     plt.plot(x_test, shifted_mean, lw=2, color="royalblue", label="Posterior mean")
     plt.fill_between(
@@ -322,16 +360,22 @@ def plot_gp_posterior(bundle, pred_mean, pred_cov, figure_dir: Path, *, filename
         color="royalblue",
         label="±2σ",
     )
-    plt.errorbar(refs.wham_x, wham_shift, yerr=refs.wham_e, capsize=3, color="crimson", alpha=0.5, label="WHAM")
-    plt.errorbar(
-        refs.umbrella_x,
-        umbrella_shift,
-        yerr=refs.umbrella_e,
-        capsize=3,
-        color="steelblue",
-        alpha=0.5,
-        label="UI (Semen)",
-    )
+    if refs.has_wham:
+        ref_anchor = np.max(refs.wham_f) if pmf_alignment == "max" else np.min(refs.wham_f)
+        wham_shift = refs.wham_f - ref_anchor
+        plt.errorbar(refs.wham_x, wham_shift, yerr=refs.wham_e, capsize=3, color="crimson", alpha=0.5, label="WHAM")
+    if refs.has_ui:
+        ref_anchor = np.max(refs.umbrella_f) if pmf_alignment == "max" else np.min(refs.umbrella_f)
+        umbrella_shift = refs.umbrella_f - ref_anchor
+        plt.errorbar(
+            refs.umbrella_x,
+            umbrella_shift,
+            yerr=refs.umbrella_e,
+            capsize=3,
+            color="steelblue",
+            alpha=0.5,
+            label="UI (Semen)",
+        )
     plt.xlabel("Position [nm]")
     plt.ylabel("Free Energy [kJ/mol]")
     plt.title("GPR(H+D) Posterior")
@@ -632,7 +676,7 @@ def run_gp_mode(args: argparse.Namespace, bundle, figure_dir: Path):
     }
     plot_histograms(bundle, figure_dir)
     plot_unbiased_windows(bundle, figure_dir)
-    plot_gp_posterior(bundle, pred_mean, pred_cov, figure_dir, filename="gp_posterior.png")
+    plot_gp_posterior(bundle, pred_mean, pred_cov, figure_dir, filename="gp_posterior.png", pmf_alignment=args.pmf_alignment)
     plot_matrix(K_joint, figure_dir, filename="joint_covariance.png", title="Joint Covariance Matrix")
     plot_matrix(pred_cov, figure_dir, filename="predictive_covariance.png", title="Predictive Covariance Matrix")
     write_run_summary(
@@ -761,6 +805,7 @@ def run_nuts_mode(args: argparse.Namespace, bundle, figure_dir: Path):
         predictive_summary.total_cov,
         figure_dir,
         filename="nuts_hyperposterior_predictive.png",
+        pmf_alignment=args.pmf_alignment,
     )
     plot_variance_decomposition(bundle, predictive_summary, figure_dir)
     result["hyperposterior_predictive"] = predictive_summary
@@ -801,6 +846,7 @@ def run_nuts_mode(args: argparse.Namespace, bundle, figure_dir: Path):
             map_pred_cov,
             figure_dir,
             filename="nuts_map_posterior.png",
+            pmf_alignment=args.pmf_alignment,
         )
         result["map_sample_index"] = map_idx
         result["map_theta"] = map_theta
@@ -955,6 +1001,10 @@ def main() -> None:
     base_bundle = prepare_gprhd_hmc_inputs(
         dataset_root=args.dataset_root,
         project_root=args.project_root,
+        reference_wham_path=args.reference_wham_path,
+        reference_wham_x_units=args.reference_wham_x_units,
+        reference_ui_path=args.reference_ui_path,
+        reference_ui_x_units=args.reference_ui_x_units,
         n_equilibration=args.n_equilibration,
         num_bins=args.num_bins,
         num_test_points=args.num_test_points,
@@ -1019,8 +1069,18 @@ def main() -> None:
         return
 
     device = resolve_device(args.device)
-    payload = _run_single(args, base_bundle, device=device, figure_dir=figure_dir)
-    maybe_save_output(args.output, payload)
+    objectives = ["lml", "loo"] if args.objective == "both" else [args.objective]
+    for objective in objectives:
+        obj_figure_dir = figure_dir / objective if len(objectives) > 1 else figure_dir
+        if len(objectives) > 1:
+            obj_figure_dir.mkdir(parents=True, exist_ok=True)
+        obj_args = argparse.Namespace(**{**vars(args), "objective": objective})
+        payload = _run_single(obj_args, base_bundle, device=device, figure_dir=obj_figure_dir)
+        output_path = args.output
+        if output_path and len(objectives) > 1:
+            p = Path(output_path)
+            output_path = str(p.with_name(f"{p.stem}_{objective}{p.suffix}"))
+        maybe_save_output(output_path, payload)
 
 
 if __name__ == "__main__":

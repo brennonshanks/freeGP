@@ -62,6 +62,7 @@ class NUTSConfig:
     kernel: str = "stationary"
     length_model: str = "exp_linear_bump"
     width_model: str = "tanh_decay"
+    fixed_noise: bool = False  # If True, noise is taken from JointObservations (not sampled)
 
 
 @dataclass(frozen=True)
@@ -108,7 +109,10 @@ def stationary_ell_prior_distribution(
 
 def _sample_site_names(config: NUTSConfig) -> list[str]:
     if config.kernel == "stationary":
-        return ["theta_ell", "theta_w", "theta_sf", "theta_sd"]
+        names = ["theta_ell", "theta_w"]
+        if not config.fixed_noise:
+            names.extend(["theta_sf", "theta_sd"])
+        return names
 
     names: list[str] = []
     if config.length_model == "exp_linear_bump":
@@ -125,13 +129,17 @@ def _sample_site_names(config: NUTSConfig) -> list[str]:
     else:
         raise ValueError(f"Unsupported Gibbs width model: {config.width_model}")
 
-    names.extend(["theta_sf", "theta_sd"])
+    if not config.fixed_noise:
+        names.extend(["theta_sf", "theta_sd"])
     return names
 
 
 def _display_sample_labels(config: NUTSConfig) -> list[str]:
     if config.kernel == "stationary":
-        return ["ell", "w", "sigma_f", "sigma_d"]
+        labels = ["ell", "w"]
+        if not config.fixed_noise:
+            labels.extend(["sigma_f", "sigma_d"])
+        return labels
 
     labels: list[str] = []
     if config.length_model == "exp_linear_bump":
@@ -144,18 +152,23 @@ def _display_sample_labels(config: NUTSConfig) -> list[str]:
     elif config.width_model == "constant":
         labels.append("s")
 
-    labels.extend(["sigma_f", "sigma_d"])
+    if not config.fixed_noise:
+        labels.extend(["sigma_f", "sigma_d"])
     return labels
 
 
 def _display_sample_values(sample_state: dict[str, torch.Tensor], config: NUTSConfig) -> list[torch.Tensor]:
     if config.kernel == "stationary":
-        return [
+        values = [
             torch.exp(sample_state["theta_ell"]),
             torch.exp(sample_state["theta_w"]),
-            torch.exp(sample_state["theta_sf"]),
-            torch.exp(sample_state["theta_sd"]),
         ]
+        if not config.fixed_noise:
+            values.extend([
+                torch.exp(sample_state["theta_sf"]),
+                torch.exp(sample_state["theta_sd"]),
+            ])
+        return values
 
     values: list[torch.Tensor] = []
     if config.length_model == "exp_linear_bump":
@@ -182,7 +195,8 @@ def _display_sample_values(sample_state: dict[str, torch.Tensor], config: NUTSCo
     elif config.width_model == "constant":
         values.append(torch.exp(sample_state["theta_s"]))
 
-    values.extend([torch.exp(sample_state["theta_sf"]), torch.exp(sample_state["theta_sd"])])
+    if not config.fixed_noise:
+        values.extend([torch.exp(sample_state["theta_sf"]), torch.exp(sample_state["theta_sd"])])
     return values
 
 
@@ -277,6 +291,11 @@ def _sample_kernel_parameters(
             "theta_ell", stationary_ell_prior_distribution(observations, priors)
         )
         theta_w = pyro.sample("theta_w", dist.Normal(priors.m_w, priors.s_w))
+        if config.fixed_noise:
+            return {
+                "ell": torch.exp(theta_ell),
+                "w": torch.exp(theta_w),
+            }
         theta_sf = pyro.sample("theta_sf", dist.Normal(priors.m_sf, priors.s_sf))
         theta_sd = pyro.sample("theta_sd", dist.Normal(priors.m_sd, priors.s_sd))
         return {
@@ -332,8 +351,9 @@ def _sample_kernel_parameters(
     else:
         raise ValueError(f"Unsupported Gibbs width model: {config.width_model}")
 
-    params["sigma_f"] = torch.exp(pyro.sample("theta_sf", dist.Normal(priors.m_sf, priors.s_sf)))
-    params["sigma_d"] = torch.exp(pyro.sample("theta_sd", dist.Normal(priors.m_sd, priors.s_sd)))
+    if not config.fixed_noise:
+        params["sigma_f"] = torch.exp(pyro.sample("theta_sf", dist.Normal(priors.m_sf, priors.s_sf)))
+        params["sigma_d"] = torch.exp(pyro.sample("theta_sd", dist.Normal(priors.m_sd, priors.s_sd)))
     return params
 
 
@@ -353,15 +373,19 @@ def _state_to_parameters_and_log_prior(
                 sample_state["theta_ell"]
             )
             + dist.Normal(priors.m_w, priors.s_w).log_prob(sample_state["theta_w"])
-            + dist.Normal(priors.m_sf, priors.s_sf).log_prob(sample_state["theta_sf"])
-            + dist.Normal(priors.m_sd, priors.s_sd).log_prob(sample_state["theta_sd"])
         )
-        params = {
+        params: dict[str, torch.Tensor] = {
             "ell": torch.exp(sample_state["theta_ell"]),
             "w": torch.exp(sample_state["theta_w"]),
-            "sigma_f": torch.exp(sample_state["theta_sf"]),
-            "sigma_d": torch.exp(sample_state["theta_sd"]),
         }
+        if not config.fixed_noise:
+            log_prior = (
+                log_prior
+                + dist.Normal(priors.m_sf, priors.s_sf).log_prob(sample_state["theta_sf"])
+                + dist.Normal(priors.m_sd, priors.s_sd).log_prob(sample_state["theta_sd"])
+            )
+            params["sigma_f"] = torch.exp(sample_state["theta_sf"])
+            params["sigma_d"] = torch.exp(sample_state["theta_sd"])
         return params, log_prior
 
     centers = _gibbs_prior_centers(observations, priors)
@@ -413,10 +437,11 @@ def _state_to_parameters_and_log_prior(
     else:
         raise ValueError(f"Unsupported Gibbs width model: {config.width_model}")
 
-    log_prior = log_prior + dist.Normal(priors.m_sf, priors.s_sf).log_prob(sample_state["theta_sf"])
-    log_prior = log_prior + dist.Normal(priors.m_sd, priors.s_sd).log_prob(sample_state["theta_sd"])
-    params["sigma_f"] = torch.exp(sample_state["theta_sf"])
-    params["sigma_d"] = torch.exp(sample_state["theta_sd"])
+    if not config.fixed_noise:
+        log_prior = log_prior + dist.Normal(priors.m_sf, priors.s_sf).log_prob(sample_state["theta_sf"])
+        log_prior = log_prior + dist.Normal(priors.m_sd, priors.s_sd).log_prob(sample_state["theta_sd"])
+        params["sigma_f"] = torch.exp(sample_state["theta_sf"])
+        params["sigma_d"] = torch.exp(sample_state["theta_sd"])
     return params, log_prior
 
 
@@ -428,12 +453,17 @@ def _posterior_for_parameters(
 ):
     dtype = observations.x_obs.dtype
     device = observations.x_obs.device
-    function_noise = (params["sigma_f"] ** 2) * torch.eye(len(observations.x_obs), dtype=dtype, device=device)
-    derivative_noise = (params["sigma_d"] ** 2) * torch.ones(
-        (len(observations.x_der),),
-        dtype=dtype,
-        device=device,
-    )
+
+    if config.fixed_noise:
+        function_noise = observations.noise_func_cov
+        derivative_noise = observations.noise_deriv_diag
+    else:
+        function_noise = (params["sigma_f"] ** 2) * torch.eye(len(observations.x_obs), dtype=dtype, device=device)
+        derivative_noise = (params["sigma_d"] ** 2) * torch.ones(
+            (len(observations.x_der),),
+            dtype=dtype,
+            device=device,
+        )
 
     if config.kernel == "stationary":
         return build_joint_gp(
@@ -474,22 +504,25 @@ def _posterior_for_parameters(
     )
 
 
-def make_pyro_model(
-    observations: JointObservations,
-    *,
-    priors: HyperPriorConfig | None = None,
-    config: NUTSConfig | None = None,
-):
-    """Return a Pyro model closure for HMC-NUTS."""
-    priors = priors or HyperPriorConfig()
-    config = config or NUTSConfig()
+class _PyroModel:
+    """Picklable Pyro model for HMC-NUTS (required for spawn-based multiprocessing)."""
 
-    import pyro
+    def __init__(
+        self,
+        observations: JointObservations,
+        priors: HyperPriorConfig,
+        config: NUTSConfig,
+    ) -> None:
+        self.observations = observations
+        self.priors = priors
+        self.config = config
 
-    def model():
-        params = _sample_kernel_parameters(observations, priors=priors, config=config)
-        posterior = _posterior_for_parameters(params, observations, config=config)
-        if config.objective == "loo":
+    def __call__(self) -> None:
+        import pyro
+
+        params = _sample_kernel_parameters(self.observations, priors=self.priors, config=self.config)
+        posterior = _posterior_for_parameters(params, self.observations, config=self.config)
+        if self.config.objective == "loo":
             likelihood = joint_loo_loglik(posterior)
         else:
             likelihood = joint_log_marginal_likelihood(posterior)
@@ -501,7 +534,19 @@ def make_pyro_model(
         )
         pyro.factor("likelihood", likelihood)
 
-    return model
+
+def make_pyro_model(
+    observations: JointObservations,
+    *,
+    priors: HyperPriorConfig | None = None,
+    config: NUTSConfig | None = None,
+) -> _PyroModel:
+    """Return a picklable Pyro model for HMC-NUTS."""
+    return _PyroModel(
+        observations,
+        priors or HyperPriorConfig(),
+        config or NUTSConfig(),
+    )
 
 
 def evaluate_log_posterior(
@@ -559,6 +604,7 @@ def run_hmc_nuts(
         num_samples=config.num_samples,
         warmup_steps=config.warmup_steps,
         num_chains=config.num_chains,
+        mp_context="spawn" if config.num_chains > 1 else None,
     )
     mcmc.run()
     return mcmc, mcmc.get_samples()

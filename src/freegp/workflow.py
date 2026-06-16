@@ -24,6 +24,15 @@ from .preprocess import (
 )
 
 
+def _resolve_dataset_root_path(dataset_root: str | None) -> Path:
+    """Resolve dataset root the same way the ablation runner does: plain Path resolution,
+    then let load_umbrella_windows handle Denis/Katka auto-detection internally."""
+    if dataset_root is not None:
+        return Path(dataset_root).expanduser().resolve()
+    # Fall back to env var via resolve_dataset_root when no explicit path is given.
+    return resolve_dataset_root(None)
+
+
 @dataclass(frozen=True)
 class WorkflowBundle:
     processed: ProcessedUmbrellaData
@@ -63,21 +72,16 @@ def prepare_gprhd_hmc_inputs(
     test_grid_source: str = "umbrella_centers",
 ) -> WorkflowBundle:
     """Load data, preprocess it, and build the objects needed for HMC-NUTS."""
-    resolved_dataset_root = resolve_dataset_root(dataset_root)
-    windows = load_umbrella_windows(resolved_dataset_root)
+    # Resolve the path directly (matching the ablation runner pattern) so that
+    # load_umbrella_windows handles Denis/Katka auto-detection in one place.
+    dataset_root_path = _resolve_dataset_root_path(dataset_root)
+    windows = load_umbrella_windows(dataset_root_path)
     processed = process_umbrella_windows(
         windows,
         n_equilibration=n_equilibration,
         num_bins=num_bins,
     )
     observations = build_joint_observations(processed)
-    x_test = build_test_grid(
-        processed,
-        num_points=num_test_points,
-        x_min=x_min,
-        x_max=x_max,
-        source=test_grid_source,
-    )
     references = load_reference_curves(
         project_root,
         wham_path=reference_wham_path,
@@ -85,10 +89,30 @@ def prepare_gprhd_hmc_inputs(
         ui_path=reference_ui_path,
         ui_x_units=reference_ui_x_units,
     )
+
+    # Align test grid to reference PMF x-range when not explicitly overridden
+    if x_min is None and (references.has_wham or references.has_ui):
+        x_min = float(min(
+            references.wham_x.min() if references.has_wham else float("inf"),
+            references.umbrella_x.min() if references.has_ui else float("inf"),
+        ))
+    if x_max is None and (references.has_wham or references.has_ui):
+        x_max = float(max(
+            references.wham_x.max() if references.has_wham else float("-inf"),
+            references.umbrella_x.max() if references.has_ui else float("-inf"),
+        ))
+
+    x_test = build_test_grid(
+        processed,
+        num_points=num_test_points,
+        x_min=x_min,
+        x_max=x_max,
+        source=test_grid_source,
+    )
     return WorkflowBundle(
         processed=processed,
         observations=observations,
         x_test=x_test,
         references=references,
-        dataset_root=resolved_dataset_root,
+        dataset_root=dataset_root_path,
     )

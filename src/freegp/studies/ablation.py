@@ -67,6 +67,7 @@ class StudyModelConfig:
     predictive_samples: int = 20
     barrier_bins: int = 30
     selection_replicates: int | None = None
+    fixed_noise: bool = False
 
 
 @dataclass(frozen=True)
@@ -502,6 +503,7 @@ def _nuts_summary(bundle: WorkflowBundle, model: StudyModelConfig):
         kernel=model.kernel,
         length_model=model.length_model,
         width_model=model.width_model,
+        fixed_noise=model.fixed_noise,
     )
     mcmc, samples = run_hmc_nuts(bundle.observations, config=config)
     grouped_samples = mcmc.get_samples(group_by_chain=True)
