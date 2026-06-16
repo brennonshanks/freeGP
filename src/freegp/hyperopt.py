@@ -8,8 +8,12 @@ import math
 import torch
 
 from .gp import (
+    DerivativeGPPosterior,
     JointGPPosterior,
+    build_derivative_gp,
     build_joint_gp,
+    derivative_log_marginal_likelihood,
+    derivative_loo_loglik,
     joint_log_marginal_likelihood,
     joint_loo_loglik,
 )
@@ -24,7 +28,7 @@ from .preprocess import JointObservations
 @dataclass(frozen=True)
 class HyperparameterOptimizationResult:
     params: dict[str, torch.Tensor]
-    posterior: JointGPPosterior
+    posterior: JointGPPosterior | DerivativeGPPosterior
     objective_value: float
     restart: int
     history: list[float]
@@ -167,6 +171,136 @@ def optimize_stationary_hyperparameters(
                 + torch.distributions.Normal(priors.m_w, priors.s_w).log_prob(theta[1])
                 + torch.distributions.Normal(priors.m_sf, priors.s_sf).log_prob(theta[2])
                 + torch.distributions.Normal(priors.m_sd, priors.s_sd).log_prob(theta[3])
+            )
+            final_score = final_likelihood + final_log_prior
+            result = HyperparameterOptimizationResult(
+                params=final_params,
+                posterior=final_posterior,
+                objective_value=float(final_score.cpu().item()),
+                restart=restart,
+                history=history,
+            )
+        if best is None or result.objective_value > best.objective_value:
+            best = result
+
+    assert best is not None
+    return best
+
+
+def optimize_derivative_hyperparameters(
+    *,
+    x_der: torch.Tensor,
+    dy_der: torch.Tensor,
+    objective: str = "lml",
+    priors: HyperPriorConfig | None = None,
+    steps: int = 250,
+    learning_rate: float = 0.05,
+    restarts: int = 3,
+    seed: int = 0,
+    jitter: float = 1e-6,
+) -> HyperparameterOptimizationResult:
+    """Find a stationary-kernel MAP estimate for derivative-only GPR."""
+    if objective not in {"lml", "loo"}:
+        raise ValueError("objective must be 'lml' or 'loo'.")
+    if steps <= 0 or restarts <= 0:
+        raise ValueError("steps and restarts must be positive.")
+
+    priors = priors or HyperPriorConfig()
+    x_der = x_der.reshape(-1)
+    dy_der = dy_der.reshape(-1)
+    dtype = x_der.dtype
+    device = x_der.device
+    x_span = max(float((x_der.max() - x_der.min()).item()), 1e-3)
+    lower_ell = math.log(x_span / 100.0)
+    upper_ell = math.log(x_span * 10.0)
+    lower = torch.tensor([lower_ell, -6.0, -8.0], dtype=dtype, device=device)
+    upper = torch.tensor([upper_ell, 8.0, 6.0], dtype=dtype, device=device)
+    center = torch.tensor(
+        [math.log(max(x_span / 3.0, 1e-3)), math.log(4.184), math.log(0.5)],
+        dtype=dtype,
+        device=device,
+    )
+    ell_prior = (
+        torch.distributions.Uniform(lower[0], upper[0])
+        if priors.s_ell is None
+        else torch.distributions.Normal(priors.m_ell, priors.s_ell)
+    )
+
+    generator = torch.Generator(device=device)
+    generator.manual_seed(seed)
+    best: HyperparameterOptimizationResult | None = None
+
+    for restart in range(restarts):
+        initial = center.clone()
+        if restart:
+            initial = initial + 0.5 * torch.randn(
+                initial.shape, dtype=dtype, device=device, generator=generator
+            )
+        theta = torch.nn.Parameter(torch.clamp(initial, min=lower, max=upper))
+        optimizer = torch.optim.Adam([theta], lr=learning_rate)
+        history: list[float] = []
+
+        for _ in range(steps):
+            optimizer.zero_grad()
+            values = torch.exp(theta)
+            try:
+                posterior = build_derivative_gp(
+                    x_der=x_der,
+                    dy_der=dy_der,
+                    ell=values[0],
+                    w=values[1],
+                    noise_deriv_diag=values[2].square()
+                    * torch.ones(x_der.numel(), dtype=dtype, device=device),
+                    jitter=jitter,
+                )
+                likelihood = (
+                    derivative_loo_loglik(posterior)
+                    if objective == "loo"
+                    else derivative_log_marginal_likelihood(posterior)
+                )
+                log_prior = (
+                    ell_prior.log_prob(theta[0])
+                    + torch.distributions.Normal(priors.m_w, priors.s_w).log_prob(theta[1])
+                    + torch.distributions.Normal(priors.m_sd, priors.s_sd).log_prob(theta[2])
+                )
+                score = likelihood + log_prior
+            except torch.linalg.LinAlgError:
+                score = theta.sum() * 0.0 - 1e20
+
+            loss = -score
+            if torch.isfinite(loss):
+                loss.backward()
+                torch.nn.utils.clip_grad_norm_([theta], max_norm=100.0)
+                optimizer.step()
+                with torch.no_grad():
+                    theta.clamp_(min=lower, max=upper)
+            history.append(float(score.detach().cpu().item()))
+
+        with torch.no_grad():
+            values = torch.exp(theta)
+            final_params = {
+                "ell": values[0].clone(),
+                "w": values[1].clone(),
+                "sigma_d": values[2].clone(),
+            }
+            final_posterior = build_derivative_gp(
+                x_der=x_der,
+                dy_der=dy_der,
+                ell=final_params["ell"],
+                w=final_params["w"],
+                noise_deriv_diag=final_params["sigma_d"].square()
+                * torch.ones(x_der.numel(), dtype=dtype, device=device),
+                jitter=jitter,
+            )
+            final_likelihood = (
+                derivative_loo_loglik(final_posterior)
+                if objective == "loo"
+                else derivative_log_marginal_likelihood(final_posterior)
+            )
+            final_log_prior = (
+                ell_prior.log_prob(theta[0])
+                + torch.distributions.Normal(priors.m_w, priors.s_w).log_prob(theta[1])
+                + torch.distributions.Normal(priors.m_sd, priors.s_sd).log_prob(theta[2])
             )
             final_score = final_likelihood + final_log_prior
             result = HyperparameterOptimizationResult(

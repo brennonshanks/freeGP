@@ -282,10 +282,57 @@ class JointGPPosterior:
     kernel_params: dict[str, torch.Tensor]
 
 
+@dataclass(frozen=True)
+class DerivativeGPPosterior:
+    x_der: torch.Tensor
+    dy_der: torch.Tensor
+    noise_deriv_diag: torch.Tensor
+    K_dd: torch.Tensor
+    L: torch.Tensor
+    alpha: torch.Tensor
+    jitter: float
+    kernel_name: str
+    kernel_params: dict[str, torch.Tensor]
+
+
 def _derivative_noise_matrix(noise_deriv_diag: torch.Tensor) -> torch.Tensor:
     if noise_deriv_diag.ndim == 2:
         return noise_deriv_diag
     return torch.diag(noise_deriv_diag)
+
+
+def build_derivative_gp(
+    *,
+    x_der: torch.Tensor,
+    dy_der: torch.Tensor,
+    ell: torch.Tensor,
+    w: torch.Tensor,
+    noise_deriv_diag: torch.Tensor,
+    jitter: float = 1e-8,
+) -> DerivativeGPPosterior:
+    """Build a derivative-only stationary GP posterior."""
+    x_der = x_der.reshape(-1)
+    dy_der = dy_der.reshape(-1)
+    xd_dd, xdd_dd = pairwise_differences(x_der, x_der)
+    K_dd = ddse_kernel(xd_dd, xdd_dd, ell, w)
+    K_dd = K_dd + _derivative_noise_matrix(noise_deriv_diag)
+    K_dd = 0.5 * (K_dd + K_dd.T)
+    K_dd = K_dd + jitter * torch.eye(
+        K_dd.shape[0], dtype=K_dd.dtype, device=K_dd.device
+    )
+    L = torch.linalg.cholesky(K_dd)
+    alpha = torch.cholesky_solve(dy_der.reshape(-1, 1), L).squeeze(-1)
+    return DerivativeGPPosterior(
+        x_der=x_der,
+        dy_der=dy_der,
+        noise_deriv_diag=noise_deriv_diag,
+        K_dd=K_dd,
+        L=L,
+        alpha=alpha,
+        jitter=jitter,
+        kernel_name="stationary_se_derivative_only",
+        kernel_params={"ell": ell, "w": w},
+    )
 
 
 def _finalize_joint_posterior(
@@ -666,6 +713,50 @@ def predict_function_mean(
     )
 
 
+def predict_derivative_gp_function(
+    posterior: DerivativeGPPosterior,
+    x_test: torch.Tensor,
+) -> tuple[torch.Tensor, torch.Tensor]:
+    """Predict latent function values from a derivative-only posterior."""
+    if posterior.kernel_name != "stationary_se_derivative_only":
+        raise ValueError(
+            "Function prediction is implemented only for stationary derivative-only GP."
+        )
+    ell = posterior.kernel_params["ell"]
+    w = posterior.kernel_params["w"]
+    xd_fd, xdd_fd = pairwise_differences(x_test, posterior.x_der)
+    K_fd = fdse_kernel(xd_fd, xdd_fd, ell, w)
+    _, xdd_ff = pairwise_differences(x_test, x_test)
+    K_ff = se_kernel(xdd_ff, ell, w)
+    pred_mean = K_fd @ posterior.alpha
+    v = torch.cholesky_solve(K_fd.T, posterior.L)
+    pred_cov = K_ff - K_fd @ v
+    pred_cov = 0.5 * (pred_cov + pred_cov.T)
+    return pred_mean, pred_cov
+
+
+def predict_derivative_gp_derivative(
+    posterior: DerivativeGPPosterior,
+    x_test: torch.Tensor,
+) -> tuple[torch.Tensor, torch.Tensor]:
+    """Predict latent derivative values from a derivative-only posterior."""
+    if posterior.kernel_name != "stationary_se_derivative_only":
+        raise ValueError(
+            "Derivative prediction is implemented only for stationary derivative-only GP."
+        )
+    ell = posterior.kernel_params["ell"]
+    w = posterior.kernel_params["w"]
+    xd_gd, xdd_gd = pairwise_differences(x_test, posterior.x_der)
+    K_gd = ddse_kernel(xd_gd, xdd_gd, ell, w)
+    xd_gg, xdd_gg = pairwise_differences(x_test, x_test)
+    K_gg = ddse_kernel(xd_gg, xdd_gg, ell, w)
+    pred_mean = K_gd @ posterior.alpha
+    v = torch.cholesky_solve(K_gd.T, posterior.L)
+    pred_cov = K_gg - K_gd @ v
+    pred_cov = 0.5 * (pred_cov + pred_cov.T)
+    return pred_mean, pred_cov
+
+
 def predict_derivative(
     posterior: JointGPPosterior,
     x_test: torch.Tensor,
@@ -813,6 +904,29 @@ def loo_loglik_from_alpha_and_precision_diag(alpha: torch.Tensor, precision_diag
     err = alpha / precision_diag
     logp_i = -0.5 * (torch.log(2 * np.pi * sigma2) + (err**2) / sigma2)
     return logp_i.sum()
+
+
+def derivative_log_marginal_likelihood(
+    posterior: DerivativeGPPosterior,
+    *,
+    include_constant: bool = True,
+) -> torch.Tensor:
+    """Standard Gaussian log marginal likelihood for derivative-only observations."""
+    residual = posterior.dy_der.reshape(-1)
+    logdet = 2.0 * torch.sum(torch.log(torch.diagonal(posterior.L)))
+    quad = torch.dot(residual, posterior.alpha.reshape(-1))
+    value = -0.5 * (quad + logdet)
+    if include_constant:
+        value = value - 0.5 * residual.numel() * np.log(2.0 * np.pi)
+    return value
+
+
+def derivative_loo_loglik(posterior: DerivativeGPPosterior) -> torch.Tensor:
+    """Sundararajan-style LOO log likelihood for derivative-only observations."""
+    precision_diag = precision_diag_from_cholesky(posterior.L)
+    return loo_loglik_from_alpha_and_precision_diag(
+        posterior.alpha.reshape(-1), precision_diag
+    )
 
 
 def joint_log_marginal_likelihood(posterior: JointGPPosterior, *, include_constant: bool = True) -> torch.Tensor:

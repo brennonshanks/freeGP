@@ -68,6 +68,18 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--min-derivative-samples", type=int, default=10)
     parser.add_argument("--num-test-points", type=int, default=250)
     parser.add_argument("--pmf-alignment", choices=("max", "min"), default="max")
+    parser.add_argument(
+        "--fes-y-margin",
+        type=float,
+        default=0.15,
+        help="Fractional y-axis margin around the aligned final FES in fit-grid plots.",
+    )
+    parser.add_argument(
+        "--metrics-yscale",
+        choices=("linear", "log"),
+        default="log",
+        help="Y-axis scale for RMSE and variance metric plots.",
+    )
     parser.add_argument("--objective", choices=("lml", "loo"), default="loo")
     parser.add_argument("--opt-steps", type=int, default=300)
     parser.add_argument("--opt-restarts", type=int, default=3)
@@ -281,6 +293,7 @@ def _plot_fit_grid(
     fractions: list[float],
     predictions: dict[float, dict[str, object]],
     alignment: str,
+    y_margin_fraction: float,
 ) -> None:
     methods = [
         ("standard_metadynamics", "Standard metadynamics", "tab:gray"),
@@ -302,6 +315,11 @@ def _plot_fit_grid(
         sharey=True,
     )
     ref_shifted = _shift(reference, alignment)
+    y_min = float(np.nanmin(ref_shifted))
+    y_max = float(np.nanmax(ref_shifted))
+    y_span = max(y_max - y_min, 1.0)
+    y_margin = max(0.0, y_margin_fraction) * y_span
+    y_limits = (y_min - y_margin, y_max + y_margin)
     for row_i, fraction in enumerate(fractions):
         for col_i, (key, title, color) in enumerate(active_methods):
             ax = axes[row_i, col_i]
@@ -331,6 +349,7 @@ def _plot_fit_grid(
                 ax.set_ylabel(f"{fraction:g} trajectory\nFree energy [kJ/mol]")
             if row_i == len(fractions) - 1:
                 ax.set_xlabel("Position [nm]")
+            ax.set_ylim(*y_limits)
             ax.grid(alpha=0.2)
     handles, labels = axes[0, 0].get_legend_handles_labels()
     fig.legend(handles, labels, loc="upper center", ncol=min(4, len(labels)))
@@ -339,7 +358,12 @@ def _plot_fit_grid(
     plt.close(fig)
 
 
-def _plot_metrics(output_dir: Path, rows: list[dict[str, object]]) -> None:
+def _plot_metrics(
+    output_dir: Path,
+    rows: list[dict[str, object]],
+    *,
+    yscale: str,
+) -> None:
     labels = {
         "standard_metadynamics": "Standard metadynamics",
         "fixed_gp": "Fixed-hyper GP",
@@ -388,6 +412,7 @@ def _plot_metrics(output_dir: Path, rows: list[dict[str, object]]) -> None:
     axes[1].set_xlabel("Trajectory fraction")
     axes[1].set_ylabel("Average predictive variance [(kJ/mol)$^2$]")
     for ax in axes:
+        ax.set_yscale(yscale)
         ax.grid(alpha=0.2)
         ax.legend()
     fig.tight_layout()
@@ -421,6 +446,9 @@ def main() -> None:
         "force_constant": args.force_constant,
         "objective": args.objective,
         "skip_hmc": args.skip_hmc,
+        "pmf_alignment": args.pmf_alignment,
+        "fes_y_margin": args.fes_y_margin,
+        "metrics_yscale": args.metrics_yscale,
     }
 
     for fraction in fractions:
@@ -486,8 +514,9 @@ def main() -> None:
         fractions=fractions,
         predictions=predictions,
         alignment=args.pmf_alignment,
+        y_margin_fraction=args.fes_y_margin,
     )
-    _plot_metrics(output_dir, metric_rows)
+    _plot_metrics(output_dir, metric_rows, yscale=args.metrics_yscale)
 
     with (output_dir / "run_summary.json").open("w") as handle:
         json.dump(run_metadata, handle, indent=2)

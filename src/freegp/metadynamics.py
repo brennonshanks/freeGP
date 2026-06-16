@@ -44,6 +44,15 @@ class MetadynamicsProcessed:
     derivative_autocorr_times: torch.Tensor
 
 
+@dataclass(frozen=True)
+class MetadynamicsDerivativeObservations:
+    x_der: torch.Tensor
+    dy_der: torch.Tensor
+    sample_counts: torch.Tensor
+    autocorr_times: torch.Tensor
+    sample_variances: torch.Tensor
+
+
 def _load_numeric_table(path: str | Path) -> np.ndarray:
     resolved = Path(path).expanduser().resolve()
     data = np.loadtxt(resolved, comments=("#", "@", ";"))
@@ -162,6 +171,32 @@ def _bin_edges_from_interval(
     if n_bins <= 0:
         raise ValueError("n_bins must be positive.")
     return np.linspace(lower, upper, n_bins + 1)
+
+
+def _quantile_bin_edges(
+    values: np.ndarray,
+    interval: tuple[float, float],
+    *,
+    n_bins: int | None,
+) -> np.ndarray:
+    if n_bins is None:
+        raise ValueError("n_bins is required for quantile binning.")
+    if n_bins <= 0:
+        raise ValueError("n_bins must be positive.")
+    if values.size < n_bins:
+        raise ValueError(
+            f"Need at least as many samples as bins for quantile binning: {values.size} < {n_bins}."
+        )
+    quantiles = np.linspace(0.0, 1.0, n_bins + 1)
+    edges = np.quantile(values, quantiles)
+    edges[0] = interval[0]
+    edges[-1] = interval[1]
+    edges = np.maximum.accumulate(edges)
+    if np.any(np.diff(edges) <= 0.0):
+        raise ValueError(
+            "Quantile binning produced empty or repeated bins; reduce n_bins or use uniform binning."
+        )
+    return edges
 
 
 def process_lagrangian_metadynamics(
@@ -289,6 +324,80 @@ def process_lagrangian_metadynamics(
         derivative_variances=torch.tensor(dy_var, dtype=torch.float64),
         derivative_sample_counts=torch.tensor(dy_counts, dtype=torch.float64),
         derivative_autocorr_times=torch.tensor(dy_tau, dtype=torch.float64),
+    )
+
+
+def process_metadynamics_icf_derivatives(
+    trajectory: MetadynamicsTrajectory,
+    *,
+    force_constant: float,
+    interval: tuple[float, float],
+    derivative_bin_width: float | None = None,
+    n_derivative_bins: int | None = None,
+    derivative_binning: str = "uniform",
+    time_fraction: float = 1.0,
+    min_derivative_samples: int = 5,
+) -> MetadynamicsDerivativeObservations:
+    """Bin instantaneous collective-force estimates for derivative-only GPR.
+
+    For the extended-Lagrangian metadynamics data used here, the force estimate
+    is k * (MetaCV - CV), which matches the sign convention used by the legacy
+    meta_gprd notebook and the derivative column in the PLUMED FES reference.
+    """
+    if force_constant <= 0.0:
+        raise ValueError("force_constant must be positive.")
+    traj = _filtered_trajectory(
+        trajectory, interval=interval, time_fraction=time_fraction
+    )
+    if traj.cv.size == 0:
+        raise ValueError("No metadynamics samples remain after filtering.")
+
+    if derivative_binning == "uniform":
+        derivative_edges = _bin_edges_from_interval(
+            interval, bin_width=derivative_bin_width, n_bins=n_derivative_bins
+        )
+    elif derivative_binning == "quantile":
+        if derivative_bin_width is not None:
+            raise ValueError("derivative_bin_width cannot be used with quantile binning.")
+        derivative_edges = _quantile_bin_edges(
+            traj.cv,
+            interval,
+            n_bins=n_derivative_bins,
+        )
+    else:
+        raise ValueError("derivative_binning must be 'uniform' or 'quantile'.")
+    derivative_centers = 0.5 * (derivative_edges[:-1] + derivative_edges[1:])
+    restraint_derivative = force_constant * (traj.meta_cv - traj.cv)
+
+    dx: list[float] = []
+    dy: list[float] = []
+    counts: list[float] = []
+    taus: list[float] = []
+    variances: list[float] = []
+    for index, center in enumerate(derivative_centers):
+        left, right = derivative_edges[index], derivative_edges[index + 1]
+        mask = (traj.cv >= left) & (traj.cv < right)
+        values = restraint_derivative[mask]
+        if values.size < min_derivative_samples:
+            continue
+        values_t = torch.tensor(values, dtype=torch.float64)
+        tau = max(1e-6, bayes_autocorrelation_time(values_t)) if values.size >= 3 else 1.0
+        sample_var = float(values_t.var(unbiased=True).item()) if values.size > 1 else 0.0
+        dx.append(float(center))
+        dy.append(float(values_t.mean().item()))
+        counts.append(float(values.size))
+        taus.append(float(tau))
+        variances.append(sample_var)
+
+    if not dx:
+        raise ValueError("No derivative bins passed the sample filters.")
+
+    return MetadynamicsDerivativeObservations(
+        x_der=torch.tensor(dx, dtype=torch.float64),
+        dy_der=torch.tensor(dy, dtype=torch.float64),
+        sample_counts=torch.tensor(counts, dtype=torch.float64),
+        autocorr_times=torch.tensor(taus, dtype=torch.float64),
+        sample_variances=torch.tensor(variances, dtype=torch.float64),
     )
 
 

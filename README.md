@@ -172,6 +172,29 @@ the package preprocessing layer. It supports fixed-hyperparameter and MAP
 stationary GP reconstructions; HMC can be added on top of the same generated
 `JointObservations` object.
 
+For a closer implementation of the Mones, Bernstein, and Csanyi MTD/ICF/GPR
+workflow, use [`run_metadynamics_gprd.py`](/home/bshanks/freeGP-dev/scripts/run_metadynamics_gprd.py).
+This derivative-only path skips pseudo-window histogram observations and fits
+the GP only to binned instantaneous collective-force estimates,
+`k * (MetaCV - CV)`, as in the legacy `meta_gprd` notebook.
+
+```bash
+OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 MPLCONFIGDIR=/tmp/mpl \
+/home/bshanks/miniforge3/envs/freegp311/bin/python \
+/home/bshanks/freeGP-dev/scripts/run_metadynamics_gprd.py \
+  --data-root /home/bshanks/freeGP-datasets/membranes/zuzka_metadynamics/metad \
+  --force-constant 10000 \
+  --interval -1.0 5.0 \
+  --time-fraction 1.0 \
+  --n-derivative-bins 120 \
+  --mode map \
+  --objective lml \
+  --results-dir results/metadynamics-gprd
+```
+
+The derivative-only model has hyperparameters `ell`, `w`, and `sigma_d`; there
+is no `sigma_f` because no function observations are used.
+
 For the SI trajectory-length sensitivity analysis, use
 [`compare_metadynamics_trajectory_lengths.py`](/home/bshanks/freeGP-dev/scripts/compare_metadynamics_trajectory_lengths.py).
 This script compares the standard well-tempered metadynamics estimate
