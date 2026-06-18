@@ -66,6 +66,24 @@ from freegp.studies.ablation import (
 
 import matplotlib.pyplot as plt
 
+CRAZY_VALUE_THRESHOLD = 1e4
+
+
+def _zero_crazy_tensor(value: torch.Tensor, *, threshold: float = CRAZY_VALUE_THRESHOLD) -> torch.Tensor:
+    """Return a plotting-safe tensor with nonfinite or absurd values zeroed."""
+    mask = ~torch.isfinite(value) | (torch.abs(value) > threshold)
+    if not torch.any(mask):
+        return value
+    cleaned = value.clone()
+    cleaned[mask] = 0.0
+    return cleaned
+
+
+def _zero_crazy_number(value, *, threshold: float = CRAZY_VALUE_THRESHOLD):
+    if isinstance(value, (int, float)) and (not np.isfinite(float(value)) or abs(float(value)) > threshold):
+        return 0.0
+    return value
+
 
 # ---------------------------------------------------------------------------
 # Helpers to reconstruct dataclass objects from the saved .pt payloads
@@ -96,11 +114,11 @@ def _load_predictive_summary(payload: dict) -> HyperposteriorPredictiveSummary:
     any of the plotting functions).
     """
     x_test = payload["x_test"]
-    mean = payload["mean"]
-    total_var = payload["total_variance"]
-    within_var = payload["within_variance"]
-    between_var = payload["between_variance"]
-    conditional_means = payload["conditional_means"]
+    mean = _zero_crazy_tensor(payload["mean"])
+    total_var = _zero_crazy_tensor(payload["total_variance"], threshold=CRAZY_VALUE_THRESHOLD**2)
+    within_var = _zero_crazy_tensor(payload["within_variance"], threshold=CRAZY_VALUE_THRESHOLD**2)
+    between_var = _zero_crazy_tensor(payload["between_variance"], threshold=CRAZY_VALUE_THRESHOLD**2)
+    conditional_means = _zero_crazy_tensor(payload["conditional_means"])
     selected_indices = payload["selected_indices"]
 
     n = len(total_var)
@@ -122,14 +140,14 @@ def _load_metrics(payload: dict | None) -> ReferenceComparison | None:
     if payload is None:
         return None
     return ReferenceComparison(
-        rmse_wham=payload.get("rmse_wham", float("nan")),
-        rmse_ui=payload.get("rmse_ui", float("nan")),
-        avg_total_std=payload.get("avg_total_std", float("nan")),
-        avg_within_std=payload.get("avg_within_std", float("nan")),
-        avg_between_std=payload.get("avg_between_std", float("nan")),
-        avg_total_variance=payload.get("avg_total_variance", float("nan")),
-        avg_within_variance=payload.get("avg_within_variance", float("nan")),
-        avg_between_variance=payload.get("avg_between_variance", float("nan")),
+        rmse_wham=_zero_crazy_number(payload.get("rmse_wham", float("nan"))),
+        rmse_ui=_zero_crazy_number(payload.get("rmse_ui", float("nan"))),
+        avg_total_std=_zero_crazy_number(payload.get("avg_total_std", float("nan"))),
+        avg_within_std=_zero_crazy_number(payload.get("avg_within_std", float("nan"))),
+        avg_between_std=_zero_crazy_number(payload.get("avg_between_std", float("nan"))),
+        avg_total_variance=_zero_crazy_number(payload.get("avg_total_variance", float("nan")), threshold=CRAZY_VALUE_THRESHOLD**2),
+        avg_within_variance=_zero_crazy_number(payload.get("avg_within_variance", float("nan")), threshold=CRAZY_VALUE_THRESHOLD**2),
+        avg_between_variance=_zero_crazy_number(payload.get("avg_between_variance", float("nan")), threshold=CRAZY_VALUE_THRESHOLD**2),
     )
 
 
@@ -223,6 +241,7 @@ def load_ablation_result(objective_dir: Path) -> AblationStudyResult:
     window_selection_mode: str = manifest.get("window_selection_mode", "evenly_spaced")
     trajectory_selection_mode: str = manifest.get("trajectory_selection_mode", "contiguous")
     random_seed: int = manifest.get("random_seed", 0)
+    device: str = manifest.get("device", "cpu")
     pmf_alignment: str = manifest.get("pmf_alignment", "max")
 
     references = _load_references(artifacts_dir)
@@ -277,6 +296,7 @@ def load_ablation_result(objective_dir: Path) -> AblationStudyResult:
         window_selection_mode=window_selection_mode,
         trajectory_selection_mode=trajectory_selection_mode,
         random_seed=random_seed,
+        device=device,
         pmf_alignment=pmf_alignment,
     )
 

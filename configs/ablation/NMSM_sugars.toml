@@ -1,0 +1,29 @@
+[ablation]
+dataset_root = "/home/bshanks/freeGP-datasets/sugars/NMSM_prosECCo75/NMSM_prosECCo75"
+method = "nuts"
+kernel = "stationary"
+objective = "both"
+include_fixed = true
+
+reference_wham_path = "/home/bshanks/freeGP-datasets/sugars/NMSM_prosECCo75/NMSM_prosECCo75/reference-wham/denis-nmsm-wham.csv"
+reference_wham_x_units = "angstrom"
+
+pmf_alignment = "max"
+
+window_counts = [15, 13, 12, 11, 10, 9, 8, 6, 4, 3]
+trajectory_fractions = [1.0, 0.9, 0.8, 0.6, 0.4, 0.25, 0.16, 0.1, 0.063, 0.04]
+
+window_selection_mode = "random_subset"
+trajectory_selection_mode = "contiguous"
+random_seed = 42
+selection_replicates = 5
+
+num_bins = 20
+num_test_points = 100
+warmup_steps = 500
+num_samples = 1000
+predictive_samples = 100
+barrier_bins = 30
+num_chains = 4
+
+results_dir = "/home/bshanks/freeGP-dev/results/NMSM-sugars-ablation-10x10-5replicates"
