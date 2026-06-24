@@ -1466,51 +1466,9 @@ def compute_param_clims(result: AblationStudyResult) -> dict[str, tuple[float, f
 def save_ablation_summary(
     result: AblationStudyResult,
     figure_dir: Path,
-    *,
-    predictive_y_lim: tuple[float, float] | None = None,
-    metric_clims: dict[str, tuple[float, float]] | None = None,
-    param_clims: dict[str, tuple[float, float]] | None = None,
 ) -> None:
     figure_dir.mkdir(parents=True, exist_ok=True)
     _save_result_artifacts(result, figure_dir)
-    _save_predictive_figures(result, figure_dir, y_lim=predictive_y_lim)
-    _save_nuts_diagnostics(result, figure_dir)
-    _save_hyperparameter_heatmaps(result, figure_dir, param_clims=param_clims)
-    _save_barrier_histograms(result, figure_dir)
-
-    metric_specs = [
-        ("rmse_wham", "RMSE vs WHAM"),
-        ("rmse_ui", "RMSE vs UI"),
-        ("avg_total_std", "Average total std (common grid)"),
-    ]
-    if not result.references.has_wham:
-        metric_specs = [(k, v) for k, v in metric_specs if k != "rmse_wham"]
-    if not result.references.has_ui:
-        metric_specs = [(k, v) for k, v in metric_specs if k != "rmse_ui"]
-
-    fig, axes = plt.subplots(1, len(metric_specs), figsize=(5.5 * len(metric_specs), 4.8))
-    if len(metric_specs) == 1:
-        axes = [axes]
-    for ax, (metric_name, title) in zip(axes, metric_specs):
-        grid = _metric_grid(result, metric_name)
-        _vmin, _vmax = (metric_clims or {}).get(metric_name, (None, None))
-        image = ax.imshow(grid, aspect="auto", origin="lower", cmap="viridis", vmin=_vmin, vmax=_vmax)
-        ax.set_xticks(range(len(result.trajectory_fractions)))
-        ax.set_xticklabels([f"{value:.2f}" for value in result.trajectory_fractions])
-        ax.set_yticks(range(len(result.window_counts)))
-        ax.set_yticklabels([str(value) for value in result.window_counts])
-        ax.set_xlabel("Trajectory fraction retained")
-        ax.set_ylabel("Windows retained")
-        ax.set_title(title)
-        ax.invert_xaxis()
-        fig.colorbar(image, ax=ax, shrink=0.85)
-    fig.suptitle(
-        f"Ablation Summary ({result.model.method}, {result.model.kernel}, {result.model.objective})",
-        fontsize=14,
-    )
-    fig.tight_layout()
-    fig.savefig(figure_dir / "ablation_summary.png", dpi=200)
-    plt.close(fig)
 
     with (figure_dir / "ablation_metrics.csv").open("w", newline="") as handle:
         writer = csv.writer(handle)
@@ -1616,7 +1574,6 @@ def save_ablation_summary(
             f"random_seed: {result.random_seed}",
             f"default_selection_replicates: {result.cells[0].replicate_count if result.cells else 0}",
             "uncertainty_summary: average total standard deviation on the prediction grid",
-            f"predictive_cell_dir: {figure_dir / 'predictive_cells'}",
             f"artifacts_dir: {figure_dir / 'artifacts'}",
         ]
     )
@@ -1631,10 +1588,6 @@ def save_ablation_summary(
         lines.append(f"target_accept_prob: {result.model.target_accept_prob}")
         lines.append(f"max_tree_depth: {result.model.max_tree_depth}")
         lines.append(f"stuck_cells: {stuck_count}")
-        lines.append(f"nuts_diagnostics_dir: {figure_dir / 'nuts_diagnostics'}")
-        lines.append(f"hyperparameter_heatmaps: {figure_dir / 'hyperparameter_heatmaps.png'}")
-        lines.append(f"barrier_histograms_by_windows: {figure_dir / 'barrier_histograms_by_windows.png'}")
-        lines.append(f"barrier_histograms_by_trajectory: {figure_dir / 'barrier_histograms_by_trajectory.png'}")
         r_hats = [
             cell.multi_chain_diagnostics.get("summary", {}).get("max_r_hat")
             for cell in result.cells

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run a publication-oriented ablation-grid study and save summary heatmaps."""
+"""Run a publication-oriented ablation-grid study and save data artifacts."""
 
 from __future__ import annotations
 
@@ -10,9 +10,6 @@ from pathlib import Path
 import sys
 import tomllib
 
-import matplotlib
-matplotlib.use("Agg")
-
 if __package__ in (None, ""):
     package_root = Path(__file__).resolve().parents[2]
     if str(package_root) not in sys.path:
@@ -21,9 +18,6 @@ if __package__ in (None, ""):
         CSANYI_FIXED_ELL,
         CSANYI_FIXED_W,
         StudyModelConfig,
-        compute_metric_clims,
-        compute_param_clims,
-        compute_predictive_y_lim,
         run_ablation_study,
         save_ablation_summary,
     )
@@ -32,9 +26,6 @@ else:
         CSANYI_FIXED_ELL,
         CSANYI_FIXED_W,
         StudyModelConfig,
-        compute_metric_clims,
-        compute_param_clims,
-        compute_predictive_y_lim,
         run_ablation_study,
         save_ablation_summary,
     )
@@ -227,26 +218,6 @@ def prepare_figure_dir(
     return root
 
 
-def _compute_global_scales(results: list) -> dict:
-    """Compute unified axis/color scales across all AblationStudyResult objects."""
-    y_lims = [compute_predictive_y_lim(r) for r in results]
-    y_lim = (min(lo for lo, _ in y_lims), max(hi for _, hi in y_lims))
-
-    all_mc = [compute_metric_clims(r) for r in results]
-    metric_clims: dict = {}
-    for name in {k for d in all_mc for k in d}:
-        vals = [d[name] for d in all_mc if name in d]
-        metric_clims[name] = (min(lo for lo, _ in vals), max(hi for _, hi in vals))
-
-    all_pc = [compute_param_clims(r) for r in results]
-    param_clims: dict = {}
-    for name in {k for d in all_pc for k in d}:
-        vals = [d[name] for d in all_pc if name in d]
-        param_clims[name] = (min(lo for lo, _ in vals), max(hi for _, hi in vals))
-
-    return {"predictive_y_lim": y_lim, "metric_clims": metric_clims, "param_clims": param_clims}
-
-
 def main() -> None:
     pre_parser = argparse.ArgumentParser(add_help=False)
     pre_parser.add_argument("--config", type=str, default=None)
@@ -356,20 +327,11 @@ def main() -> None:
         fixed_dir = root_dir / "fixed" if compare_objectives or args.include_fixed else root_dir
         run_specs.append((replace(model, method="fixed_gp", kernel="stationary", objective="fixed"), fixed_dir, "fixed"))
 
-    result_plan = []
     for model_cfg, figure_dir, label in run_specs:
         result = _run(model_cfg, figure_dir)
-        result_plan.append((result, figure_dir, label))
-        scale_kwargs = _compute_global_scales([result])
-        save_ablation_summary(result, figure_dir, **scale_kwargs)
+        save_ablation_summary(result, figure_dir)
         print(f"figure_dir ({label}): {figure_dir}")
         print(f"cells completed ({label}): {len(result.cells)}")
-
-    if len(result_plan) > 1:
-        scale_kwargs = _compute_global_scales([r for r, _, _ in result_plan])
-        for result, figure_dir, label in result_plan:
-            save_ablation_summary(result, figure_dir, **scale_kwargs)
-            print(f"rescaled figure_dir ({label}): {figure_dir}")
 
 
 if __name__ == "__main__":
