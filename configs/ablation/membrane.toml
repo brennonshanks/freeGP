@@ -4,9 +4,12 @@ method = "nuts"
 kernel = "stationary"
 objective = "both"
 include_fixed = true
+include_optimized = true
+checkpoint_cells = true
+resume = true
 
-window_counts = [25, 22, 19, 16, 13, 10, 8, 6, 4, 3]
-trajectory_fractions = [1.0, 0.9, 0.8, 0.6, 0.4, 0.25, 0.16, 0.1, 0.063, 0.04]
+window_counts = [3, 4, 6, 8, 10, 13, 16, 19, 22, 25]
+trajectory_fractions = [0.04, 0.063, 0.1, 0.16, 0.25, 0.4, 0.6, 0.8, 0.9, 1.0]
 
 window_selection_mode = "random_subset"
 trajectory_selection_mode = "contiguous"
@@ -14,9 +17,14 @@ random_seed = 42
 
 num_bins = 20
 num_test_points = 100
-warmup_steps = 1000
-num_samples = 2000
+warmup_steps = 500
+num_samples = 1000
+num_chains = 4
+max_tree_depth = 10
 predictive_samples = 100
 barrier_bins = 30
+opt_steps = 250
+opt_restarts = 3
+opt_learning_rate = 0.05
 
 results_dir = "/home/bshanks/freeGP-dev/results/membrane-ablation-10x10-5replicates"

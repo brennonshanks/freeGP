@@ -15,6 +15,7 @@ import torch
 
 from ..data import ReferenceCurves, UmbrellaWindow, load_reference_curves, load_umbrella_windows
 from ..gp import GibbsKernelConfig, build_joint_gp, build_joint_gp_gibbs
+from ..hyperopt import optimize_stationary_hyperparameters
 from ..hmc import (
     HMCChainDiagnostics,
     NUTSConfig,
@@ -64,10 +65,14 @@ class StudyModelConfig:
     num_samples: int = 20
     num_chains: int = 1
     target_accept_prob: float = 0.8
+    max_tree_depth: int = 10
     predictive_samples: int = 20
     barrier_bins: int = 30
     selection_replicates: int | None = None
     fixed_noise: bool = False
+    opt_steps: int = 250
+    opt_restarts: int = 3
+    opt_learning_rate: float = 0.05
 
 
 @dataclass(frozen=True)
@@ -492,12 +497,28 @@ def _fixed_summary(bundle: WorkflowBundle, model: StudyModelConfig):
     return summarize_fixed_posterior_predictive(posterior, bundle.x_test)
 
 
-def _nuts_summary(bundle: WorkflowBundle, model: StudyModelConfig):
+def _optimized_summary(bundle: WorkflowBundle, model: StudyModelConfig):
+    if model.kernel != "stationary":
+        raise ValueError("optimized_gp currently supports only the stationary kernel.")
+    optimized = optimize_stationary_hyperparameters(
+        bundle.observations,
+        objective=model.objective,
+        steps=model.opt_steps,
+        learning_rate=model.opt_learning_rate,
+        restarts=model.opt_restarts,
+        jitter=model.jitter,
+    )
+    return summarize_fixed_posterior_predictive(optimized.posterior, bundle.x_test)
+
+
+def _nuts_summary(bundle: WorkflowBundle, model: StudyModelConfig, *, seed: int | None = None):
     config = NUTSConfig(
         num_samples=model.num_samples,
         warmup_steps=model.warmup_steps,
         num_chains=model.num_chains,
         target_accept_prob=model.target_accept_prob,
+        max_tree_depth=model.max_tree_depth,
+        seed=seed,
         jitter=model.jitter,
         objective=model.objective,
         kernel=model.kernel,
@@ -538,6 +559,7 @@ def _replicate_result_payload(
     window_selection_mode: str,
     trajectory_selection_mode: str,
     random_seed: int,
+    hmc_seed: int | None = None,
     bundle: WorkflowBundle,
     summary: HyperposteriorPredictiveSummary,
     metrics: ReferenceComparison,
@@ -552,6 +574,7 @@ def _replicate_result_payload(
         "window_selection_mode": window_selection_mode,
         "trajectory_selection_mode": trajectory_selection_mode,
         "random_seed": random_seed,
+        "hmc_seed": hmc_seed,
         "bundle": _bundle_artifact_payload(bundle),
         "predictive_summary": _predictive_summary_payload(summary),
         "metrics": asdict(metrics),
@@ -585,6 +608,8 @@ def run_ablation_study(
     random_seed: int = 0,
     device: str = "cpu",
     pmf_alignment: str = "max",
+    checkpoint_dir: Path | str | None = None,
+    resume: bool = False,
 ) -> AblationStudyResult:
     model = model or StudyModelConfig()
     resolved_device = resolve_device(device)
@@ -635,11 +660,30 @@ def run_ablation_study(
     if effective_replicates is None:
         effective_replicates = 5 if random_modes_active else 1
     effective_replicates = max(1, int(effective_replicates))
+    checkpoint_path = Path(checkpoint_dir).expanduser().resolve() if checkpoint_dir is not None else None
+    if checkpoint_path is not None:
+        checkpoint_path.mkdir(parents=True, exist_ok=True)
 
     cells: list[AblationCellResult] = []
     for i, window_count in enumerate(window_counts):
         for j, trajectory_fraction in enumerate(trajectory_fractions):
             cell = AblationCell(window_count=window_count, trajectory_fraction=trajectory_fraction)
+            cell_checkpoint = (
+                checkpoint_path / f"{_cell_slug(cell)}.pt"
+                if checkpoint_path is not None else None
+            )
+            if resume and cell_checkpoint is not None and cell_checkpoint.exists():
+                loaded_cell = torch.load(
+                    cell_checkpoint,
+                    map_location=resolved_device,
+                    weights_only=False,
+                )
+                if not isinstance(loaded_cell, AblationCellResult):
+                    raise TypeError(f"Checkpoint {cell_checkpoint} does not contain an AblationCellResult.")
+                cells.append(loaded_cell)
+                print(f"resumed checkpoint: {cell_checkpoint}")
+                continue
+
             replicate_summaries: list[HyperposteriorPredictiveSummary] = []
             replicate_metrics: list[ReferenceComparison] = []
             replicate_diagnostics: list[HMCChainDiagnostics] = []
@@ -652,8 +696,15 @@ def run_ablation_study(
             canonical_multi_chain_diagnostics: dict[str, object] | None = None
             canonical_nuts_samples: dict[str, torch.Tensor] | None = None
             canonical_nuts_grouped_samples: dict[str, torch.Tensor] | None = None
+            cell_replicates = effective_replicates
+            if (
+                window_selection_mode == "random_subset"
+                and trajectory_selection_mode != "random_subsample"
+                and window_count >= len(windows)
+            ):
+                cell_replicates = 1
             replicate_plan = _replicate_plan(
-                effective_replicates=effective_replicates,
+                effective_replicates=cell_replicates,
                 window_selection_mode=window_selection_mode,
                 trajectory_selection_mode=trajectory_selection_mode,
             )
@@ -684,8 +735,19 @@ def run_ablation_study(
                     multi_chain_diagnostics = None
                     nuts_samples = None
                     nuts_grouped_samples = None
+                elif model.method == "optimized_gp":
+                    summary = _optimized_summary(bundle, model)
+                    diagnostics = None
+                    multi_chain_diagnostics = None
+                    nuts_samples = None
+                    nuts_grouped_samples = None
                 elif model.method == "nuts":
-                    summary, diagnostics, multi_chain_diagnostics, nuts_samples, nuts_grouped_samples = _nuts_summary(bundle, model)
+                    hmc_seed = cell_seed + 1_000_003
+                    summary, diagnostics, multi_chain_diagnostics, nuts_samples, nuts_grouped_samples = _nuts_summary(
+                        bundle,
+                        model,
+                        seed=hmc_seed,
+                    )
                 else:
                     raise ValueError(f"Unsupported ablation method: {model.method}")
 
@@ -699,6 +761,7 @@ def run_ablation_study(
                         window_selection_mode=str(rep_spec["window_selection_mode"]),
                         trajectory_selection_mode=str(rep_spec["trajectory_selection_mode"]),
                         random_seed=cell_seed,
+                        hmc_seed=hmc_seed if model.method == "nuts" else None,
                         bundle=bundle,
                         summary=summary,
                         metrics=metrics,
@@ -729,31 +792,35 @@ def run_ablation_study(
                 if replicate_diagnostics else None
             )
             nuts_samples = replicate_nuts_samples[0] if replicate_nuts_samples else None
-            cells.append(
-                AblationCellResult(
-                    cell=cell,
-                    replicate_count=effective_replicates,
-                    metrics=metrics,
-                    dataset_root=dataset_root_path,
-                    x_test=summary.x_test,
-                    predictive_summary=summary,
-                    canonical_predictive_summary=canonical_summary,
-                    canonical_metrics=canonical_metrics,
-                    chain_diagnostics=diagnostics,
-                    multi_chain_diagnostics=canonical_multi_chain_diagnostics,
-                    nuts_samples=canonical_nuts_samples if canonical_nuts_samples is not None else nuts_samples,
-                    nuts_grouped_samples=canonical_nuts_grouped_samples if canonical_nuts_grouped_samples is not None else (replicate_nuts_grouped_samples[0] if replicate_nuts_grouped_samples else None),
-                    canonical_chain_diagnostics=canonical_diagnostics,
-                    canonical_multi_chain_diagnostics=canonical_multi_chain_diagnostics,
-                    canonical_nuts_samples=canonical_nuts_samples,
-                    canonical_nuts_grouped_samples=canonical_nuts_grouped_samples,
-                    artifact_payload={
-                        "selection_replicates": effective_replicates,
-                        "canonical_replicate_index": 0 if random_modes_active else 0,
-                        "replicates": replicate_artifacts,
-                    },
-                )
+            cell_result = AblationCellResult(
+                cell=cell,
+                replicate_count=cell_replicates,
+                metrics=metrics,
+                dataset_root=dataset_root_path,
+                x_test=summary.x_test,
+                predictive_summary=summary,
+                canonical_predictive_summary=canonical_summary,
+                canonical_metrics=canonical_metrics,
+                chain_diagnostics=diagnostics,
+                multi_chain_diagnostics=canonical_multi_chain_diagnostics,
+                nuts_samples=canonical_nuts_samples if canonical_nuts_samples is not None else nuts_samples,
+                nuts_grouped_samples=canonical_nuts_grouped_samples if canonical_nuts_grouped_samples is not None else (replicate_nuts_grouped_samples[0] if replicate_nuts_grouped_samples else None),
+                canonical_chain_diagnostics=canonical_diagnostics,
+                canonical_multi_chain_diagnostics=canonical_multi_chain_diagnostics,
+                canonical_nuts_samples=canonical_nuts_samples,
+                canonical_nuts_grouped_samples=canonical_nuts_grouped_samples,
+                artifact_payload={
+                    "selection_replicates": cell_replicates,
+                    "canonical_replicate_index": 0 if random_modes_active else 0,
+                    "replicates": replicate_artifacts,
+                },
             )
+            cells.append(cell_result)
+            if cell_checkpoint is not None:
+                tmp_checkpoint = cell_checkpoint.with_suffix(cell_checkpoint.suffix + ".tmp")
+                torch.save(cell_result, tmp_checkpoint)
+                tmp_checkpoint.replace(cell_checkpoint)
+                print(f"wrote checkpoint: {cell_checkpoint}")
 
     return AblationStudyResult(
         model=model,
@@ -976,11 +1043,13 @@ def _nuts_config_from_model(model: StudyModelConfig) -> NUTSConfig:
         warmup_steps=model.warmup_steps,
         num_chains=model.num_chains,
         target_accept_prob=model.target_accept_prob,
+        max_tree_depth=model.max_tree_depth,
         jitter=model.jitter,
         objective=model.objective,
         kernel=model.kernel,
         length_model=model.length_model,
         width_model=model.width_model,
+        fixed_noise=model.fixed_noise,
     )
 
 
@@ -1556,6 +1625,11 @@ def save_ablation_summary(
             1 for cell in result.cells
             if cell.chain_diagnostics is not None and cell.chain_diagnostics.looks_stuck
         )
+        lines.append(f"warmup_steps: {result.model.warmup_steps}")
+        lines.append(f"num_samples: {result.model.num_samples}")
+        lines.append(f"num_chains: {result.model.num_chains}")
+        lines.append(f"target_accept_prob: {result.model.target_accept_prob}")
+        lines.append(f"max_tree_depth: {result.model.max_tree_depth}")
         lines.append(f"stuck_cells: {stuck_count}")
         lines.append(f"nuts_diagnostics_dir: {figure_dir / 'nuts_diagnostics'}")
         lines.append(f"hyperparameter_heatmaps: {figure_dir / 'hyperparameter_heatmaps.png'}")
@@ -1577,4 +1651,8 @@ def save_ablation_summary(
             lines.append(f"worst_cell_max_r_hat: {max(r_hats)}")
         if n_effs:
             lines.append(f"worst_cell_min_n_eff: {min(n_effs)}")
+    if result.model.method == "optimized_gp":
+        lines.append(f"opt_steps: {result.model.opt_steps}")
+        lines.append(f"opt_restarts: {result.model.opt_restarts}")
+        lines.append(f"opt_learning_rate: {result.model.opt_learning_rate}")
     (figure_dir / "run_summary.txt").write_text("\n".join(lines) + "\n")

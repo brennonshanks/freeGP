@@ -57,6 +57,8 @@ class NUTSConfig:
     warmup_steps: int = 2000
     num_chains: int = 1
     target_accept_prob: float = 0.8
+    max_tree_depth: int = 10
+    seed: int | None = None
     jitter: float = 1e-6
     objective: str = "lml"
     kernel: str = "stationary"
@@ -591,6 +593,13 @@ def run_hmc_nuts(
     import pyro
     from pyro.infer.mcmc import MCMC, NUTS
 
+    if config.seed is not None:
+        seed = int(config.seed)
+        np.random.seed(seed % (2**32 - 1))
+        torch.manual_seed(seed)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(seed)
+        pyro.set_rng_seed(seed)
     pyro.clear_param_store()
     model = make_pyro_model(observations, priors=priors, config=config)
     nuts_kernel = NUTS(
@@ -598,6 +607,7 @@ def run_hmc_nuts(
         adapt_step_size=True,
         adapt_mass_matrix=True,
         target_accept_prob=config.target_accept_prob,
+        max_tree_depth=config.max_tree_depth,
     )
     mcmc = MCMC(
         nuts_kernel,

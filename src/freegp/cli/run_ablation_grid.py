@@ -100,7 +100,7 @@ def build_parser(*, defaults: dict[str, object] | None = None) -> argparse.Argum
     )
     parser.add_argument("--window-counts", default="25,13", type=str)
     parser.add_argument("--trajectory-fractions", default="1.0,0.5", type=str)
-    parser.add_argument("--method", choices=("fixed_gp", "nuts"), default="fixed_gp")
+    parser.add_argument("--method", choices=("fixed_gp", "optimized_gp", "nuts"), default="fixed_gp")
     parser.add_argument("--kernel", choices=("stationary", "gibbs"), default="stationary")
     parser.add_argument("--length-model", choices=("exp_linear_bump", "constant"), default="exp_linear_bump")
     parser.add_argument("--width-model", choices=("tanh_decay", "constant"), default="tanh_decay")
@@ -138,6 +138,15 @@ def build_parser(*, defaults: dict[str, object] | None = None) -> argparse.Argum
     parser.add_argument("--num-samples", type=int, default=10)
     parser.add_argument("--num-chains", type=int, default=1)
     parser.add_argument(
+        "--max-tree-depth",
+        type=int,
+        default=10,
+        help="Maximum NUTS tree depth. Lower values cap pathological long iterations but may increase sampler bias if too small.",
+    )
+    parser.add_argument("--opt-steps", type=int, default=250)
+    parser.add_argument("--opt-restarts", type=int, default=3)
+    parser.add_argument("--opt-learning-rate", type=float, default=0.05)
+    parser.add_argument(
         "--device",
         choices=("cpu", "cuda"),
         default="cpu",
@@ -157,6 +166,27 @@ def build_parser(*, defaults: dict[str, object] | None = None) -> argparse.Argum
         action=argparse.BooleanOptionalAction,
         default=False,
         help="When using --method nuts, also write a fixed-hyperparameter stationary baseline to fixed/.",
+    )
+    parser.add_argument(
+        "--include-optimized",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help=(
+            "When using --method nuts, also write optimized plug-in GP baselines. "
+            "With --objective both, writes lml_map/ and loo_map/."
+        ),
+    )
+    parser.add_argument(
+        "--checkpoint-cells",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Write each completed ablation cell to FIGURE_DIR/_checkpoints and reuse it when --resume is set.",
+    )
+    parser.add_argument(
+        "--resume",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Reuse per-cell checkpoints from FIGURE_DIR/_checkpoints when available.",
     )
     parser.add_argument(
         "--results-dir",
@@ -227,6 +257,8 @@ def main() -> None:
     args = parser.parse_args()
     if args.dataset_root is None:
         parser.error("--dataset-root is required unless provided in --config.")
+    if args.include_optimized and args.method != "nuts":
+        parser.error("--include-optimized is intended for --method nuts. Use --method optimized_gp to run only MAP baselines.")
 
     model = StudyModelConfig(
         method=args.method,
@@ -249,17 +281,21 @@ def main() -> None:
         num_samples=args.num_samples,
         num_chains=args.num_chains,
         target_accept_prob=args.target_accept_prob,
+        max_tree_depth=args.max_tree_depth,
         predictive_samples=args.predictive_samples,
         barrier_bins=args.barrier_bins,
         selection_replicates=args.selection_replicates,
+        opt_steps=args.opt_steps,
+        opt_restarts=args.opt_restarts,
+        opt_learning_rate=args.opt_learning_rate,
     )
     window_counts = _parse_int_list(args.window_counts)
     trajectory_fractions = _parse_float_list(args.trajectory_fractions)
 
     objectives = [args.objective]
     if args.objective == "both":
-        if args.method != "nuts":
-            raise ValueError("--objective both is only supported for --method nuts.")
+        if args.method not in {"nuts", "optimized_gp"}:
+            raise ValueError("--objective both is only supported for --method nuts or optimized_gp.")
         objectives = ["lml", "loo"]
 
     compare_objectives = len(objectives) > 1
@@ -269,7 +305,7 @@ def main() -> None:
         compare_objectives=compare_objectives,
     )
 
-    def _run(model_cfg) -> object:
+    def _run(model_cfg, figure_dir: Path) -> object:
         return run_ablation_study(
             dataset_root=args.dataset_root,
             project_root=args.project_root,
@@ -292,22 +328,48 @@ def main() -> None:
             trajectory_selection_mode=args.trajectory_selection_mode,
             random_seed=args.random_seed,
             device=args.device,
+            checkpoint_dir=figure_dir / "_checkpoints" if args.checkpoint_cells else None,
+            resume=args.resume,
         )
 
-    result_plan = []
+    run_specs = []
     for objective in objectives:
-        figure_dir = root_dir / objective if compare_objectives else root_dir
-        result_plan.append((_run(replace(model, objective=objective)), figure_dir, objective))
+        if compare_objectives:
+            dirname = f"{objective}_map" if model.method == "optimized_gp" else objective
+            figure_dir = root_dir / dirname
+        else:
+            figure_dir = root_dir
+        run_specs.append((replace(model, objective=objective), figure_dir, objective))
+
+    if args.include_optimized:
+        for objective in objectives:
+            opt_dir = root_dir / f"{objective}_map" if compare_objectives or args.include_optimized else root_dir
+            opt_model = replace(
+                model,
+                method="optimized_gp",
+                kernel="stationary",
+                objective=objective,
+            )
+            run_specs.append((opt_model, opt_dir, f"{objective}_map"))
 
     if args.include_fixed:
         fixed_dir = root_dir / "fixed" if compare_objectives or args.include_fixed else root_dir
-        result_plan.append((_run(replace(model, method="fixed_gp", kernel="stationary", objective="fixed")), fixed_dir, "fixed"))
+        run_specs.append((replace(model, method="fixed_gp", kernel="stationary", objective="fixed"), fixed_dir, "fixed"))
 
-    scale_kwargs = _compute_global_scales([r for r, _, _ in result_plan])
-    for result, figure_dir, label in result_plan:
+    result_plan = []
+    for model_cfg, figure_dir, label in run_specs:
+        result = _run(model_cfg, figure_dir)
+        result_plan.append((result, figure_dir, label))
+        scale_kwargs = _compute_global_scales([result])
         save_ablation_summary(result, figure_dir, **scale_kwargs)
         print(f"figure_dir ({label}): {figure_dir}")
         print(f"cells completed ({label}): {len(result.cells)}")
+
+    if len(result_plan) > 1:
+        scale_kwargs = _compute_global_scales([r for r, _, _ in result_plan])
+        for result, figure_dir, label in result_plan:
+            save_ablation_summary(result, figure_dir, **scale_kwargs)
+            print(f"rescaled figure_dir ({label}): {figure_dir}")
 
 
 if __name__ == "__main__":
