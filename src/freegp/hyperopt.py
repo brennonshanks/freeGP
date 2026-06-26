@@ -39,15 +39,20 @@ def _stationary_posterior(
     params: dict[str, torch.Tensor],
     *,
     jitter: float,
+    fixed_noise: bool = False,
 ) -> JointGPPosterior:
     dtype = observations.x_obs.dtype
     device = observations.x_obs.device
-    function_noise = params["sigma_f"].square() * torch.eye(
-        observations.x_obs.numel(), dtype=dtype, device=device
-    )
-    derivative_noise = params["sigma_d"].square() * torch.ones(
-        observations.x_der.numel(), dtype=dtype, device=device
-    )
+    if fixed_noise:
+        function_noise = observations.noise_func_cov
+        derivative_noise = observations.noise_deriv_diag
+    else:
+        function_noise = params["sigma_f"].square() * torch.eye(
+            observations.x_obs.numel(), dtype=dtype, device=device
+        )
+        derivative_noise = params["sigma_d"].square() * torch.ones(
+            observations.x_der.numel(), dtype=dtype, device=device
+        )
     return build_joint_gp(
         x_func=observations.x_obs,
         y_func=observations.y_obs,
@@ -67,13 +72,22 @@ def optimize_stationary_hyperparameters(
     *,
     objective: str = "lml",
     priors: HyperPriorConfig | None = None,
+    use_hyperpriors: bool = True,
     steps: int = 250,
     learning_rate: float = 0.05,
     restarts: int = 3,
     seed: int = 0,
     jitter: float = 1e-6,
+    fixed_noise: bool = False,
 ) -> HyperparameterOptimizationResult:
-    """Find a stationary-kernel MAP estimate using the NUTS hyperpriors."""
+    """Find a stationary-kernel MAP or ML estimate.
+
+    If ``fixed_noise`` is true, only ``ell`` and ``w`` are optimized and the
+    trajectory-derived observation covariance in ``observations`` is used
+    directly. Otherwise ``sigma_f`` and ``sigma_d`` are optimized as nuisance
+    noise scales. If ``use_hyperpriors`` is false, the bounded optimizer
+    maximizes only the selected likelihood objective.
+    """
     if objective not in {"lml", "loo"}:
         raise ValueError("objective must be 'lml' or 'loo'.")
     if steps <= 0 or restarts <= 0:
@@ -85,21 +99,30 @@ def optimize_stationary_hyperparameters(
     x_all = torch.cat((observations.x_obs, observations.x_der))
     x_span = max(float((x_all.max() - x_all.min()).item()), 1e-3)
     lower_ell, upper_ell = stationary_log_ell_bounds(observations)
-    lower = torch.tensor(
-        [lower_ell, -6.0, -8.0, -8.0],
-        dtype=dtype,
-        device=device,
-    )
-    upper = torch.tensor(
-        [upper_ell, 8.0, 6.0, 6.0],
-        dtype=dtype,
-        device=device,
-    )
-    center = torch.tensor(
-        [math.log(max(x_span / 3.0, 1e-3)), math.log(4.184), math.log(0.5), math.log(0.5)],
-        dtype=dtype,
-        device=device,
-    )
+    if fixed_noise:
+        lower = torch.tensor([lower_ell, -6.0], dtype=dtype, device=device)
+        upper = torch.tensor([upper_ell, 8.0], dtype=dtype, device=device)
+        center = torch.tensor(
+            [math.log(max(x_span / 3.0, 1e-3)), math.log(4.184)],
+            dtype=dtype,
+            device=device,
+        )
+    else:
+        lower = torch.tensor(
+            [lower_ell, -6.0, -8.0, -8.0],
+            dtype=dtype,
+            device=device,
+        )
+        upper = torch.tensor(
+            [upper_ell, 8.0, 6.0, 6.0],
+            dtype=dtype,
+            device=device,
+        )
+        center = torch.tensor(
+            [math.log(max(x_span / 3.0, 1e-3)), math.log(4.184), math.log(0.5), math.log(0.5)],
+            dtype=dtype,
+            device=device,
+        )
 
     generator = torch.Generator(device=device)
     generator.manual_seed(seed)
@@ -121,22 +144,35 @@ def optimize_stationary_hyperparameters(
             params = {
                 "ell": values[0],
                 "w": values[1],
-                "sigma_f": values[2],
-                "sigma_d": values[3],
             }
+            if not fixed_noise:
+                params["sigma_f"] = values[2]
+                params["sigma_d"] = values[3]
             try:
-                posterior = _stationary_posterior(observations, params, jitter=jitter)
+                posterior = _stationary_posterior(
+                    observations,
+                    params,
+                    jitter=jitter,
+                    fixed_noise=fixed_noise,
+                )
                 likelihood = (
                     joint_loo_loglik(posterior)
                     if objective == "loo"
                     else joint_log_marginal_likelihood(posterior)
                 )
-                log_prior = (
-                    stationary_ell_prior_distribution(observations, priors).log_prob(theta[0])
-                    + torch.distributions.Normal(priors.m_w, priors.s_w).log_prob(theta[1])
-                    + torch.distributions.Normal(priors.m_sf, priors.s_sf).log_prob(theta[2])
-                    + torch.distributions.Normal(priors.m_sd, priors.s_sd).log_prob(theta[3])
-                )
+                if use_hyperpriors:
+                    log_prior = (
+                        stationary_ell_prior_distribution(observations, priors).log_prob(theta[0])
+                        + torch.distributions.Normal(priors.m_w, priors.s_w).log_prob(theta[1])
+                    )
+                    if not fixed_noise:
+                        log_prior = (
+                            log_prior
+                            + torch.distributions.Normal(priors.m_sf, priors.s_sf).log_prob(theta[2])
+                            + torch.distributions.Normal(priors.m_sd, priors.s_sd).log_prob(theta[3])
+                        )
+                else:
+                    log_prior = likelihood * 0.0
                 score = likelihood + log_prior
             except torch.linalg.LinAlgError:
                 score = theta.sum() * 0.0 - 1e20
@@ -155,23 +191,34 @@ def optimize_stationary_hyperparameters(
             final_params = {
                 "ell": values[0].clone(),
                 "w": values[1].clone(),
-                "sigma_f": values[2].clone(),
-                "sigma_d": values[3].clone(),
             }
+            if not fixed_noise:
+                final_params["sigma_f"] = values[2].clone()
+                final_params["sigma_d"] = values[3].clone()
             final_posterior = _stationary_posterior(
-                observations, final_params, jitter=jitter
+                observations,
+                final_params,
+                jitter=jitter,
+                fixed_noise=fixed_noise,
             )
             final_likelihood = (
                 joint_loo_loglik(final_posterior)
                 if objective == "loo"
                 else joint_log_marginal_likelihood(final_posterior)
             )
-            final_log_prior = (
-                stationary_ell_prior_distribution(observations, priors).log_prob(theta[0])
-                + torch.distributions.Normal(priors.m_w, priors.s_w).log_prob(theta[1])
-                + torch.distributions.Normal(priors.m_sf, priors.s_sf).log_prob(theta[2])
-                + torch.distributions.Normal(priors.m_sd, priors.s_sd).log_prob(theta[3])
-            )
+            if use_hyperpriors:
+                final_log_prior = (
+                    stationary_ell_prior_distribution(observations, priors).log_prob(theta[0])
+                    + torch.distributions.Normal(priors.m_w, priors.s_w).log_prob(theta[1])
+                )
+                if not fixed_noise:
+                    final_log_prior = (
+                        final_log_prior
+                        + torch.distributions.Normal(priors.m_sf, priors.s_sf).log_prob(theta[2])
+                        + torch.distributions.Normal(priors.m_sd, priors.s_sd).log_prob(theta[3])
+                    )
+            else:
+                final_log_prior = final_likelihood * 0.0
             final_score = final_likelihood + final_log_prior
             result = HyperparameterOptimizationResult(
                 params=final_params,
