@@ -10,7 +10,9 @@ from __future__ import annotations
 
 import argparse
 import csv
+import json
 from dataclasses import dataclass
+import math
 from pathlib import Path
 
 import matplotlib
@@ -18,6 +20,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
+from matplotlib.ticker import FormatStrFormatter
 from matplotlib import rc
 import numpy as np
 
@@ -29,9 +32,26 @@ AVAILABLE_FIGURES = [
     "main_text_ablation_grids",
     "si_lml_loo_ablation",
     "si_map_sampled_difference",
+    "lengthscale_prior_sensitivity",
+    "hmc_calibration_traces",
 ]
 DEFAULT_WINDOW_COUNTS = [3, 4, 6, 8, 10, 13, 16, 19, 22, 25]
 DEFAULT_TRAJ_FRACTIONS = [1.0, 0.9, 0.8, 0.6, 0.4, 0.25, 0.16, 0.1, 0.063, 0.04]
+
+# JCTC/ACS-style production sizes. The main text ablation grid is intended as
+# a full-width figure that can be included in Overleaf without rescaling.
+JCTC_DOUBLE_COLUMN_WIDTH_IN = 7.0
+JCTC_SINGLE_COLUMN_WIDTH_IN = 3.33
+MAIN_ABLATION_FIGSIZE = (JCTC_DOUBLE_COLUMN_WIDTH_IN, 3.35)
+SI_TWO_METHOD_FIGSIZE = (JCTC_SINGLE_COLUMN_WIDTH_IN, 3.25)
+MAIN_ABLATION_PANEL_FIGSIZE = (1.55, 1.45)
+MAIN_ABLATION_COLORBAR_FIGSIZE = (0.28, 1.75)
+PAPER_FONT_SIZE = 7.0
+PAPER_LABEL_SIZE = 7.5
+PAPER_TITLE_SIZE = 7.5
+PAPER_TICK_SIZE = 5.4
+PAPER_LINE_WIDTH = 0.5
+PANEL_LETTERS = "abcdefghijklmnopqrstuvwxyz"
 
 
 @dataclass(frozen=True)
@@ -43,7 +63,7 @@ class MethodSpec:
 
 METHOD_SPECS = {
     "ui": MethodSpec("ui", "Umbrella integration", Path("ui/ui/ablation_metrics.csv")),
-    "fixed": MethodSpec("fixed", "Fixed-hyperparameter GP", Path("fixed/ablation_metrics.csv")),
+    "fixed": MethodSpec("fixed", "Fixed GP", Path("fixed/ablation_metrics.csv")),
     "lml_map": MethodSpec("lml_map", "Optimized GP (LML)", Path("lml_map/ablation_metrics.csv")),
     "lml": MethodSpec("lml", "Hierarchical GP (LML)", Path("lml/ablation_metrics.csv")),
     "loo_map": MethodSpec("loo_map", "Optimized GP (LOO)", Path("loo_map/ablation_metrics.csv")),
@@ -56,6 +76,19 @@ MAP_SAMPLED_PAIRS = [
     ("lml", "lml_map", "LML"),
     ("loo", "loo_map", "LOO"),
 ]
+LENGTHSCALE_PRIOR_COLORS = {
+    "flat": "#999999",
+    "current": "#0072B2",
+    "ell_0p5_narrow": "#E69F00",
+    "ell_0p5_very_narrow": "#009E73",
+}
+LENGTHSCALE_PRIOR_LINESTYLES = {
+    "flat": (0, (1.0, 1.4)),
+    "current": "-",
+    "ell_0p5_narrow": "-.",
+    "ell_0p5_very_narrow": "--",
+}
+OKABE_ITO_CHAIN_COLORS = ["#999999", "#0072B2", "#E69F00", "#009E73"]
 
 
 class TwoSlopeLogNorm(mcolors.Normalize):
@@ -121,7 +154,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--methods", nargs="+", choices=sorted(METHOD_SPECS), default=DEFAULT_METHODS)
     parser.add_argument("--dpi", type=int, default=600)
-    parser.add_argument("--formats", nargs="+", default=["svg", "png"], help="Figure formats to write.")
+    parser.add_argument("--formats", nargs="+", default=["svg", "pdf"], help="Figure formats to write.")
     parser.add_argument("--rmse-center", type=float, default=5.0)
     parser.add_argument("--std-center", type=float, default=5.0)
     parser.add_argument("--rmse-vmax", type=float, default=None)
@@ -133,6 +166,22 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--main-text-vmax", type=float, default=175.0)
     parser.add_argument("--main-text-std-vmin", type=float, default=0.3)
     parser.add_argument("--main-text-std-vmax", type=float, default=50.0)
+    parser.add_argument(
+        "--main-text-color-power",
+        type=float,
+        default=1.5,
+        help="Power for main ablation centered-log color scale. Values < 1 reduce the white region around the center.",
+    )
+    parser.add_argument(
+        "--hmc-trace-run",
+        default="hard_w1000_s1000",
+        help="Calibration sweep run folder used for HMC trace plots.",
+    )
+    parser.add_argument(
+        "--hmc-trace-cell",
+        default="w07_f0p25.pt",
+        help="Cell artifact filename inside artifacts/cells for HMC trace plots.",
+    )
     return parser
 
 
@@ -224,15 +273,19 @@ def configure_matplotlib() -> None:
 
 
 def configure_main_text_matplotlib() -> None:
-    rc("font", **{"family": "sans-serif", "sans-serif": ["DejaVu Sans"], "size": 10})
+    rc("font", **{"family": "sans-serif", "sans-serif": ["DejaVu Sans"], "size": PAPER_FONT_SIZE})
     rc("mathtext", **{"default": "regular"})
     plt.rcParams.update(
         {
-            "axes.linewidth": 0.7,
-            "xtick.major.width": 0.7,
-            "ytick.major.width": 0.7,
-            "xtick.major.size": 2.8,
-            "ytick.major.size": 2.8,
+            "axes.titlesize": PAPER_TITLE_SIZE,
+            "axes.labelsize": PAPER_LABEL_SIZE,
+            "xtick.labelsize": PAPER_TICK_SIZE,
+            "ytick.labelsize": PAPER_TICK_SIZE,
+            "axes.linewidth": PAPER_LINE_WIDTH,
+            "xtick.major.width": PAPER_LINE_WIDTH,
+            "ytick.major.width": PAPER_LINE_WIDTH,
+            "xtick.major.size": 2.4,
+            "ytick.major.size": 2.4,
             "pdf.fonttype": 42,
             "ps.fonttype": 42,
             "svg.fonttype": "none",
@@ -291,8 +344,10 @@ def draw_main_text_heatmap(
     )
     ax.set_yticks(np.arange(len(DEFAULT_TRAJ_FRACTIONS)))
     ax.set_yticklabels([f"{100.0 * value:.3g}" for value in DEFAULT_TRAJ_FRACTIONS])
-    ax.set_xlabel("Umbrella windows", labelpad=5)
-    ax.set_ylabel("Trajectory length (%)", labelpad=6)
+    ax.set_xlabel("Number of umbrella windows", labelpad=5)
+    ax.set_ylabel("Trajectory length [%]", labelpad=6)
+    ax.tick_params(axis="both", direction="in")
+    ax.set_box_aspect(1)
     return im
 
 
@@ -353,8 +408,8 @@ def plot_ablation_heatmaps(args: argparse.Namespace) -> None:
     )
 
     row_specs = [
-        (rmse_grids, rmse_norm, r"RMSE vs WHAM (kJ mol$^{-1}$)", [1.0, 2.0, 5.0, 10.0, 100.0]),
-        (std_grids, std_norm, r"Average predictive SD (kJ mol$^{-1}$)", [1.0, 2.0, 5.0, 10.0, 100.0]),
+        (rmse_grids, rmse_norm, "RMSE [kJ/mol]", [1.0, 2.0, 5.0, 10.0, 100.0]),
+        (std_grids, std_norm, "Standard Deviation [kJ/mol]", [1.0, 2.0, 5.0, 10.0, 100.0]),
     ]
     panel_letters = "abcdefghijklmnopqrstuvwxyz"
     for row, (grids, norm, cbar_label, cbar_ticks) in enumerate(row_specs):
@@ -376,7 +431,7 @@ def plot_ablation_heatmaps(args: argparse.Namespace) -> None:
             if row == 1:
                 ax.set_xlabel("Umbrella windows")
             if col == 0:
-                ax.set_ylabel("Trajectory length (%)")
+                ax.set_ylabel("Trajectory length [%]")
         assert last_im is not None
         cbar = fig.colorbar(last_im, ax=axes[row, :], fraction=0.035, pad=0.015)
         cbar.set_label(cbar_label)
@@ -391,10 +446,21 @@ def plot_ablation_heatmaps(args: argparse.Namespace) -> None:
     plt.close(fig)
 
 
-def _save_figure(fig, output_dir: Path, stem: str, formats: list[str], dpi: int) -> None:
+def _save_figure(
+    fig,
+    output_dir: Path,
+    stem: str,
+    formats: list[str],
+    dpi: int,
+    *,
+    tight: bool = True,
+) -> None:
     for fmt in formats:
         out = output_dir / f"{stem}.{fmt}"
-        fig.savefig(out, dpi=dpi, bbox_inches="tight")
+        if tight:
+            fig.savefig(out, dpi=dpi, bbox_inches="tight")
+        else:
+            fig.savefig(out, dpi=dpi)
         print(f"Saved {out}")
 
 
@@ -481,11 +547,12 @@ def _main_text_norm(
     center: float,
     vmin: float | None,
     vmax: float | None,
+    power: float = 1.0,
 ) -> TwoSlopeLogNorm:
     lower, upper = _main_text_color_limits(grids, center=center, vmin=vmin, vmax=vmax)
     if lower <= 0.0:
         lower = max(1e-3, 0.5 * float(np.nanmin(_positive_finite_values(list(grids.values())))))
-    return TwoSlopeLogNorm(vmin=lower, vcenter=center, vmax=upper, power=1.0)
+    return TwoSlopeLogNorm(vmin=lower, vcenter=center, vmax=upper, power=power)
 
 
 def _plot_main_text_metric_panels(
@@ -500,26 +567,27 @@ def _plot_main_text_metric_panels(
     args: argparse.Namespace,
 ) -> None:
     for spec, _csv_path in methods:
-        fig, ax = plt.subplots(figsize=(3.45, 2.25))
+        fig, ax = plt.subplots(figsize=MAIN_ABLATION_PANEL_FIGSIZE)
         draw_main_text_heatmap(ax, grids[spec.key], norm=norm, cmap=args.cmap)
-        fig.subplots_adjust(left=0.16, right=0.98, bottom=0.20, top=0.98)
+        fig.subplots_adjust(left=0.22, right=0.98, bottom=0.24, top=0.98)
         _save_figure(fig, output_dir, f"{file_prefix}_{spec.key}", args.formats, args.dpi)
         plt.close(fig)
 
-    fig, ax = plt.subplots(figsize=(0.42, 2.65))
+    fig, ax = plt.subplots(figsize=MAIN_ABLATION_COLORBAR_FIGSIZE)
     sm = plt.cm.ScalarMappable(norm=norm, cmap=args.cmap)
     sm.set_array([])
+    visual_ticks, visual_tick_labels = _even_visual_ticks(norm, n_ticks=7)
     cbar = fig.colorbar(
         sm,
         cax=ax,
         orientation="vertical",
-        extend="both",
-        ticks=cbar_ticks,
+        extend="neither",
+        ticks=visual_ticks,
     )
-    cbar.set_ticklabels([_nice_tick_label(value) for value in cbar_ticks])
-    cbar.set_label(cbar_label, labelpad=4)
-    cbar.ax.tick_params(length=2.8, width=0.7, pad=1)
-    cbar.outline.set_linewidth(0.7)
+    cbar.set_ticklabels(visual_tick_labels)
+    cbar.set_label(cbar_label, labelpad=3)
+    cbar.ax.tick_params(length=2.4, width=PAPER_LINE_WIDTH, pad=1)
+    cbar.outline.set_linewidth(PAPER_LINE_WIDTH)
     _save_figure(fig, output_dir, f"shared_{file_prefix}_colorbar", args.formats, args.dpi)
     plt.close(fig)
 
@@ -547,6 +615,8 @@ def _draw_preview_heatmap(
     ax.set_yticklabels(
         [f"{100.0 * value:.3g}" for value in DEFAULT_TRAJ_FRACTIONS] if show_ylabels else []
     )
+    ax.tick_params(axis="both", direction="in")
+    ax.set_box_aspect(1)
     return im
 
 
@@ -558,14 +628,17 @@ def _add_vertical_colorbar(
     cmap: str,
     ticks: list[float],
     label: str,
+    label_x: float = 5.1,
 ) -> None:
     sm = plt.cm.ScalarMappable(norm=norm, cmap=cmap)
     sm.set_array([])
-    cbar = fig.colorbar(sm, cax=cax, orientation="vertical", extend="both", ticks=ticks)
-    cbar.set_ticklabels([_nice_tick_label(value) for value in ticks])
-    cbar.set_label(label, labelpad=4)
-    cbar.ax.tick_params(length=2.8, width=0.7, pad=1)
-    cbar.outline.set_linewidth(0.7)
+    visual_ticks, visual_tick_labels = _even_visual_ticks(norm, n_ticks=len(ticks))
+    cbar = fig.colorbar(sm, cax=cax, orientation="vertical", extend="neither", ticks=visual_ticks)
+    cbar.set_ticklabels(visual_tick_labels)
+    cbar.set_label(label, labelpad=14)
+    cbar.ax.yaxis.set_label_coords(label_x, 0.5)
+    cbar.ax.tick_params(length=2.4, width=PAPER_LINE_WIDTH, pad=1)
+    cbar.outline.set_linewidth(PAPER_LINE_WIDTH)
 
 
 def _plot_main_text_combined_preview(
@@ -578,13 +651,13 @@ def _plot_main_text_combined_preview(
     output_dir: Path,
     args: argparse.Namespace,
 ) -> None:
-    fig = plt.figure(figsize=(12.8, 5.25), constrained_layout=False)
+    fig = plt.figure(figsize=MAIN_ABLATION_FIGSIZE, constrained_layout=False)
     gs = fig.add_gridspec(
         2,
         len(methods) + 1,
         width_ratios=[1.0] * len(methods) + [0.055],
         wspace=0.08,
-        hspace=0.10,
+        hspace=0.08,
     )
     axes = np.empty((2, len(methods)), dtype=object)
     for row in range(2):
@@ -602,7 +675,7 @@ def _plot_main_text_combined_preview(
                 show_ylabels=col == 0,
             )
             if row == 0:
-                ax.set_title(spec.label, pad=4)
+                ax.set_title(f"({PANEL_LETTERS[col]}) {spec.label}", pad=6)
 
     _add_vertical_colorbar(
         fig,
@@ -610,7 +683,8 @@ def _plot_main_text_combined_preview(
         norm=rmse_norm,
         cmap=args.cmap,
         ticks=[0.25, 0.75, 2.0, 5.0, 15.0, 50.0, 175.0],
-        label="RMSE vs WHAM (kJ/mol)",
+        label="RMSE [kJ/mol]",
+        label_x=3.6,
     )
     _add_vertical_colorbar(
         fig,
@@ -618,12 +692,20 @@ def _plot_main_text_combined_preview(
         norm=std_norm,
         cmap=args.cmap,
         ticks=[0.3, 0.75, 2.0, 5.0, 10.0, 25.0, 50.0],
-        label="Average predictive SD (kJ/mol)",
+        label="Standard Deviation [kJ/mol]",
+        label_x=3.6,
     )
-    fig.supxlabel("Umbrella windows", y=0.025)
-    fig.supylabel("Trajectory length (%)", x=0.025)
-    fig.subplots_adjust(left=0.070, right=0.94, bottom=0.11, top=0.92)
-    _save_figure(fig, output_dir, "main_text_ablation_grids_preview", args.formats, args.dpi)
+    fig.supxlabel("Number of umbrella windows", y=0.022, fontsize=PAPER_LABEL_SIZE)
+    fig.supylabel("Trajectory length [%]", x=0.016, fontsize=PAPER_LABEL_SIZE)
+    fig.subplots_adjust(left=0.055, right=0.935, bottom=0.115, top=0.925)
+    _save_figure(
+        fig,
+        output_dir,
+        "main_text_ablation_grids_preview",
+        args.formats,
+        args.dpi,
+        tight=False,
+    )
     plt.close(fig)
 
 
@@ -638,13 +720,13 @@ def _plot_two_metric_grid_preview(
     stem: str,
     args: argparse.Namespace,
 ) -> None:
-    fig = plt.figure(figsize=(6.8, 5.25), constrained_layout=False)
+    fig = plt.figure(figsize=SI_TWO_METHOD_FIGSIZE, constrained_layout=False)
     gs = fig.add_gridspec(
         2,
         len(methods) + 1,
-        width_ratios=[1.0] * len(methods) + [0.07],
-        wspace=0.10,
-        hspace=0.10,
+        width_ratios=[1.0] * len(methods) + [0.055],
+        wspace=0.08,
+        hspace=0.08,
     )
     for row in range(2):
         for col, (spec, _csv_path) in enumerate(methods):
@@ -660,7 +742,7 @@ def _plot_two_metric_grid_preview(
                 show_ylabels=col == 0,
             )
             if row == 0:
-                ax.set_title(spec.label, pad=4)
+                ax.set_title(f"({PANEL_LETTERS[col]}) {spec.label}", pad=6)
 
     _add_vertical_colorbar(
         fig,
@@ -668,7 +750,8 @@ def _plot_two_metric_grid_preview(
         norm=rmse_norm,
         cmap=args.cmap,
         ticks=[0.25, 0.75, 2.0, 5.0, 15.0, 50.0, 175.0],
-        label="RMSE vs WHAM (kJ/mol)",
+        label="RMSE [kJ/mol]",
+        label_x=4.1,
     )
     _add_vertical_colorbar(
         fig,
@@ -676,12 +759,13 @@ def _plot_two_metric_grid_preview(
         norm=std_norm,
         cmap=args.cmap,
         ticks=[0.3, 0.75, 2.0, 5.0, 10.0, 25.0, 50.0],
-        label="Average predictive SD (kJ/mol)",
+        label="Standard Deviation [kJ/mol]",
+        label_x=4.1,
     )
-    fig.supxlabel("Umbrella windows", y=0.025)
-    fig.supylabel("Trajectory length (%)", x=0.025)
-    fig.subplots_adjust(left=0.12, right=0.90, bottom=0.11, top=0.92)
-    _save_figure(fig, output_dir, stem, args.formats, args.dpi)
+    fig.supxlabel("Number of umbrella windows", y=0.022, fontsize=PAPER_LABEL_SIZE)
+    fig.supylabel("Trajectory length [%]", x=0.000, fontsize=PAPER_LABEL_SIZE)
+    fig.subplots_adjust(left=0.090, right=0.900, bottom=0.115, top=0.925)
+    _save_figure(fig, output_dir, stem, args.formats, args.dpi, tight=False)
     plt.close(fig)
 
 
@@ -693,6 +777,74 @@ def _difference_ticks(norm: mcolors.Normalize) -> list[float]:
     return [-50.0, -25.0, 0.0, 25.0, 50.0]
 
 
+def _positive_log_kde(samples: np.ndarray, x_grid: np.ndarray) -> np.ndarray:
+    values = np.asarray(samples, dtype=float)
+    values = values[np.isfinite(values) & (values > 0.0)]
+    if values.size < 2:
+        return np.zeros_like(x_grid)
+    log_values = np.log(values)
+    sample_std = float(np.std(log_values, ddof=1))
+    bandwidth = max(sample_std * values.size ** (-1.0 / 5.0), 1e-3)
+    z = (np.log(x_grid)[:, None] - log_values[None, :]) / bandwidth
+    log_density = np.exp(-0.5 * z**2).mean(axis=1) / (
+        bandwidth * math.sqrt(2.0 * math.pi)
+    )
+    return log_density / x_grid
+
+
+def _ell_prior_density(
+    ell_grid: np.ndarray,
+    *,
+    m_ell: float,
+    s_ell: float | None,
+    log_bounds: tuple[float, float],
+) -> np.ndarray:
+    if s_ell is None:
+        lower, upper = log_bounds
+        density = 1.0 / (ell_grid * (upper - lower))
+        log_ell = np.log(ell_grid)
+        return np.where((log_ell >= lower) & (log_ell <= upper), density, 0.0)
+    z = (np.log(ell_grid) - m_ell) / s_ell
+    return np.exp(-0.5 * z**2) / (
+        ell_grid * s_ell * math.sqrt(2.0 * math.pi)
+    )
+
+
+def _normalized_density(values: np.ndarray) -> np.ndarray:
+    max_value = float(np.nanmax(values)) if values.size else 0.0
+    if not np.isfinite(max_value) or max_value <= 0.0:
+        return np.zeros_like(values)
+    return values / max_value
+
+
+def _chain_array(values, *, num_chains: int) -> np.ndarray:
+    array = values.detach().cpu().numpy() if hasattr(values, "detach") else np.asarray(values)
+    array = np.asarray(array, dtype=float)
+    if array.ndim == 1:
+        if array.size % num_chains != 0:
+            raise ValueError(f"Cannot reshape {array.size} samples into {num_chains} chains.")
+        return array.reshape(num_chains, array.size // num_chains)
+    if array.ndim >= 2:
+        return array.reshape(array.shape[0], array.shape[1], -1)[:, :, 0]
+    raise ValueError(f"Unsupported sample shape: {array.shape}")
+
+
+def _load_hmc_trace_chains(cell_path: Path) -> tuple[dict[str, np.ndarray], int]:
+    import torch
+
+    payload = torch.load(cell_path, map_location="cpu", weights_only=False)
+    samples = payload["canonical_nuts_samples"] or payload["nuts_samples"]
+    model = payload.get("model", {})
+    num_chains = int(model.get("num_chains", 1))
+    transformed = {
+        "log_ell": _chain_array(samples["theta_ell"], num_chains=num_chains),
+        "log_w": _chain_array(samples["theta_w"], num_chains=num_chains),
+        "log_sigma_f": _chain_array(samples["theta_sf"], num_chains=num_chains),
+        "log_sigma_d": _chain_array(samples["theta_sd"], num_chains=num_chains),
+    }
+    return transformed, num_chains
+
+
 def _plot_map_sampled_difference_preview(
     *,
     rmse_percent_diffs: dict[str, np.ndarray],
@@ -702,32 +854,48 @@ def _plot_map_sampled_difference_preview(
     output_dir: Path,
     args: argparse.Namespace,
 ) -> None:
-    fig = plt.figure(figsize=(7.0, 5.4), constrained_layout=False)
+    fig = plt.figure(figsize=SI_TWO_METHOD_FIGSIZE, constrained_layout=False)
     gs = fig.add_gridspec(
         2,
         len(MAP_SAMPLED_PAIRS) + 1,
-        width_ratios=[1.0] * len(MAP_SAMPLED_PAIRS) + [0.07],
-        wspace=0.10,
-        hspace=0.18,
+        width_ratios=[1.0] * len(MAP_SAMPLED_PAIRS) + [0.055],
+        wspace=0.08,
+        hspace=0.08,
     )
     row_specs = [
-        (rmse_percent_diffs, rmse_norm, r"% change, HMC-NUTS vs MAP"),
-        (std_percent_diffs, std_norm, r"% change, HMC-NUTS vs MAP"),
+        (rmse_percent_diffs, rmse_norm, r"$\Delta$ [%]"),
+        (std_percent_diffs, std_norm, r"$\Delta$ [%]"),
     ]
     for row, (diffs, norm, _label) in enumerate(row_specs):
-        for col, (_sampled_key, _map_key, title) in enumerate(MAP_SAMPLED_PAIRS):
+        for col, (sampled_key, _map_key, title) in enumerate(MAP_SAMPLED_PAIRS):
             ax = fig.add_subplot(gs[row, col])
             key = title.lower()
             _draw_preview_heatmap(
                 ax,
                 diffs[key],
                 norm=norm,
-                cmap="coolwarm",
+                cmap=args.cmap,
                 show_xlabels=row == 1,
                 show_ylabels=col == 0,
             )
             avg_diff = float(np.nanmean(diffs[key]))
-            ax.set_title(rf"$\bar{{\Delta}}$ = {_nice_tick_label(avg_diff)}%", pad=4)
+            if row == 0:
+                ax.set_title(f"({PANEL_LETTERS[col]}) {METHOD_SPECS[sampled_key].label}", pad=6)
+            ax.text(
+                0.96,
+                0.06,
+                rf"mean $\Delta$ = {_nice_tick_label(avg_diff)}%",
+                transform=ax.transAxes,
+                ha="right",
+                va="bottom",
+                fontsize=PAPER_TICK_SIZE,
+                bbox={
+                    "boxstyle": "round,pad=0.15",
+                    "facecolor": "white",
+                    "edgecolor": "none",
+                    "alpha": 0.75,
+                },
+            )
 
     for row, (_diffs, norm, label) in enumerate(row_specs):
         ticks = _difference_ticks(norm)
@@ -735,14 +903,22 @@ def _plot_map_sampled_difference_preview(
             fig,
             fig.add_subplot(gs[row, -1]),
             norm=norm,
-        cmap="coolwarm",
+            cmap=args.cmap,
             ticks=ticks,
             label=label,
+            label_x=3.9,
         )
-    fig.supxlabel("Umbrella windows", y=0.025)
-    fig.supylabel("Trajectory length (%)", x=0.025)
-    fig.subplots_adjust(left=0.12, right=0.90, bottom=0.11, top=0.90)
-    _save_figure(fig, output_dir, "si_map_sampled_difference_preview", args.formats, args.dpi)
+    fig.supxlabel("Number of umbrella windows", y=0.022, fontsize=PAPER_LABEL_SIZE)
+    fig.supylabel("Trajectory length [%]", x=0.000, fontsize=PAPER_LABEL_SIZE)
+    fig.subplots_adjust(left=0.090, right=0.900, bottom=0.115, top=0.925)
+    _save_figure(
+        fig,
+        output_dir,
+        "si_map_sampled_difference_preview",
+        args.formats,
+        args.dpi,
+        tight=False,
+    )
     plt.close(fig)
 
 
@@ -761,34 +937,16 @@ def plot_main_text_ablation_grids(args: argparse.Namespace) -> None:
         center=args.main_text_center,
         vmin=args.main_text_vmin,
         vmax=args.main_text_vmax,
+        power=args.main_text_color_power,
     )
     std_norm = _main_text_norm(
         std_grids,
         center=args.std_center,
         vmin=args.main_text_std_vmin,
         vmax=args.main_text_std_vmax,
+        power=args.main_text_color_power,
     )
 
-    _plot_main_text_metric_panels(
-        methods=methods,
-        grids=rmse_grids,
-        norm=rmse_norm,
-        output_dir=output_dir,
-        file_prefix="rmse",
-        cbar_label="RMSE vs WHAM (kJ/mol)",
-        cbar_ticks=[0.25, 0.75, 2.0, 5.0, 15.0, 50.0, 175.0],
-        args=args,
-    )
-    _plot_main_text_metric_panels(
-        methods=methods,
-        grids=std_grids,
-        norm=std_norm,
-        output_dir=output_dir,
-        file_prefix="avg_std",
-        cbar_label="Average predictive SD (kJ/mol)",
-        cbar_ticks=[0.3, 0.75, 2.0, 5.0, 10.0, 25.0, 50.0],
-        args=args,
-    )
     _plot_main_text_combined_preview(
         methods=methods,
         rmse_grids=rmse_grids,
@@ -814,34 +972,16 @@ def plot_si_lml_loo_ablation(args: argparse.Namespace) -> None:
         center=args.main_text_center,
         vmin=args.main_text_vmin,
         vmax=args.main_text_vmax,
+        power=args.main_text_color_power,
     )
     std_norm = _main_text_norm(
         std_grids,
         center=args.std_center,
         vmin=args.main_text_std_vmin,
         vmax=args.main_text_std_vmax,
+        power=args.main_text_color_power,
     )
 
-    _plot_main_text_metric_panels(
-        methods=methods,
-        grids=rmse_grids,
-        norm=rmse_norm,
-        output_dir=output_dir,
-        file_prefix="rmse",
-        cbar_label="RMSE vs WHAM (kJ/mol)",
-        cbar_ticks=[0.25, 0.75, 2.0, 5.0, 15.0, 50.0, 175.0],
-        args=args,
-    )
-    _plot_main_text_metric_panels(
-        methods=methods,
-        grids=std_grids,
-        norm=std_norm,
-        output_dir=output_dir,
-        file_prefix="avg_std",
-        cbar_label="Average predictive SD (kJ/mol)",
-        cbar_ticks=[0.3, 0.75, 2.0, 5.0, 10.0, 25.0, 50.0],
-        args=args,
-    )
     _plot_two_metric_grid_preview(
         methods=methods,
         rmse_grids=rmse_grids,
@@ -919,11 +1059,260 @@ def plot_si_map_sampled_difference(args: argparse.Namespace) -> None:
     print(f"Saved {summary_path}")
 
 
+def plot_lengthscale_prior_sensitivity(args: argparse.Namespace) -> None:
+    """Replot length-scale prior sensitivity from saved HMC artifacts."""
+    results_dir = args.results_dir.resolve()
+    data_path = results_dir / "prior_sensitivity_replot_data.npz"
+    summary_path = results_dir / "run_summary.json"
+    if not data_path.exists():
+        raise FileNotFoundError(
+            f"Missing {data_path}. Run scripts/compare_lengthscale_priors.py once to create it."
+        )
+    if not summary_path.exists():
+        raise FileNotFoundError(f"Missing {summary_path}.")
+
+    output_dir = figure_output_dir(args, "lengthscale_prior_sensitivity")
+    configure_main_text_matplotlib()
+
+    data = np.load(data_path)
+    summary = json.loads(summary_path.read_text())
+    cases = summary["lengthscale_prior_cases"]
+    log_bounds = tuple(float(value) for value in data["flat_log_ell_bounds"])
+    ell_grid = np.asarray(data["ell_grid"], dtype=float)
+    ell_kde_grid = np.asarray(data["ell_kde_grid"], dtype=float)
+    density_xlim = (
+        float(min(np.nanmin(ell_grid), np.nanmin(ell_kde_grid))),
+        float(max(np.nanmax(ell_grid), np.nanmax(ell_kde_grid))),
+    )
+
+    fig = plt.figure(figsize=(JCTC_SINGLE_COLUMN_WIDTH_IN, 6.0), constrained_layout=False)
+    outer_gs = fig.add_gridspec(
+        2,
+        1,
+        height_ratios=[1.85, 2.35],
+        hspace=0.16,
+    )
+    ax_pmf = fig.add_subplot(outer_gs[0, 0])
+    density_gs = outer_gs[1, 0].subgridspec(4, 1, hspace=0.11)
+    density_axes = [fig.add_subplot(density_gs[index, 0]) for index in range(4)]
+    for case in cases:
+        slug = case["slug"]
+        color = LENGTHSCALE_PRIOR_COLORS.get(slug, "black")
+        linewidth = 1.5 if slug == "ell_0p5_very_narrow" else 1.1
+        band_alpha = 0.08 if slug == "ell_0p5_very_narrow" else 0.045
+        x = np.asarray(data[f"{slug}_x"], dtype=float)
+        mean = np.asarray(data[f"{slug}_mean"], dtype=float)
+        std = np.asarray(data[f"{slug}_std"], dtype=float)
+        mean = mean - mean[-1]
+        ax_pmf.plot(
+            x,
+            mean,
+            color=color,
+            linestyle="-",
+            linewidth=linewidth,
+            label=case["label"],
+        )
+        ax_pmf.fill_between(
+            x,
+            mean - 2.0 * std,
+            mean + 2.0 * std,
+            color=color,
+            alpha=band_alpha,
+            linewidth=0.0,
+        )
+
+    for row, case in enumerate(cases):
+        ax_density = density_axes[row]
+        slug = case["slug"]
+        color = LENGTHSCALE_PRIOR_COLORS.get(slug, "black")
+        linewidth = 1.6 if slug == "ell_0p5_very_narrow" else 1.3
+
+        prior_params = np.asarray(data[f"{slug}_prior_params"], dtype=float)
+        s_ell = None if np.isnan(prior_params[1]) else float(prior_params[1])
+        prior_density = _normalized_density(
+            _ell_prior_density(
+                ell_grid,
+                m_ell=float(prior_params[0]),
+                s_ell=s_ell,
+                log_bounds=log_bounds,
+            )
+        )
+        posterior_density = _normalized_density(
+            _positive_log_kde(
+                np.asarray(data[f"{slug}_ell_samples"], dtype=float), ell_kde_grid
+            )
+        )
+        positive = prior_density > 0.0
+        ax_density.plot(
+            ell_grid[positive],
+            prior_density[positive],
+            color=color,
+            linestyle=(0, (1.0, 1.4)),
+            linewidth=1.2,
+            alpha=0.75,
+        )
+        ax_density.plot(
+            ell_kde_grid,
+            posterior_density,
+            color=color,
+            linestyle="-",
+            linewidth=linewidth,
+        )
+        ax_density.set_xscale("log")
+        ax_density.set_xlim(density_xlim)
+        ax_density.margins(x=0.0)
+        ax_density.set_ylim(bottom=0.0, top=1.08)
+        ax_density.set_yticks([])
+        ax_density.grid(False)
+        ax_density.text(
+            0.98,
+            0.78,
+            case["label"],
+            transform=ax_density.transAxes,
+            ha="right",
+            va="center",
+            fontsize=PAPER_TICK_SIZE,
+            color=color,
+        )
+        if row < len(density_axes) - 1:
+            ax_density.set_xticklabels([])
+
+    ui_x = np.asarray(data["ui_x"], dtype=float)
+    if ui_x.size:
+        ui_f = np.asarray(data["ui_f"], dtype=float)
+        ui_f = ui_f - ui_f[-1]
+        ui_stride = slice(None, None, 2)
+        ax_pmf.errorbar(
+            ui_x[ui_stride],
+            ui_f[ui_stride],
+            yerr=np.asarray(data["ui_e"], dtype=float)[ui_stride],
+            color="black",
+            linewidth=0.8,
+            capsize=1.8,
+            label="Block-averaged UI",
+        )
+
+    ax_pmf.set_xlabel("Position [nm]")
+    ax_pmf.set_ylabel("Free Energy [kJ/mol]")
+    ax_pmf.grid(False)
+    ax_pmf.legend(fontsize=PAPER_TICK_SIZE, frameon=False)
+
+    density_axes[-1].set_xlabel(r"Length scale $\ell$ [nm]")
+    fig.subplots_adjust(left=0.18, right=0.98, bottom=0.095, top=0.985)
+    density_bottom = density_axes[-1].get_position().y0
+    density_top = density_axes[0].get_position().y1
+    fig.text(
+        0.078,
+        0.5 * (density_bottom + density_top),
+        "Normalized Probability Density",
+        rotation=90,
+        va="center",
+        ha="center",
+        fontsize=PAPER_LABEL_SIZE,
+    )
+    _save_figure(fig, output_dir, "lengthscale_prior_sensitivity", args.formats, args.dpi)
+    plt.close(fig)
+
+
+def plot_hmc_calibration_traces(args: argparse.Namespace) -> None:
+    """Export paper-ready NUTS trace plots from a calibration cell artifact."""
+    results_dir = args.results_dir.resolve()
+    cell_path = results_dir / args.hmc_trace_run / "artifacts" / "cells" / args.hmc_trace_cell
+    if not cell_path.exists():
+        raise FileNotFoundError(f"Missing HMC trace cell artifact: {cell_path}")
+
+    output_dir = figure_output_dir(args, "hmc_calibration_traces")
+    configure_main_text_matplotlib()
+    chains, num_chains = _load_hmc_trace_chains(cell_path)
+    parameter_specs = [
+        ("log_ell", r"$\log \ell$"),
+        ("log_w", r"$\log w$"),
+        ("log_sigma_f", r"$\log \sigma_f$"),
+        ("log_sigma_d", r"$\log \sigma_d$"),
+    ]
+
+    fig, axes = plt.subplots(
+        len(parameter_specs),
+        2,
+        figsize=(JCTC_SINGLE_COLUMN_WIDTH_IN, 4.75),
+        constrained_layout=False,
+        gridspec_kw={"width_ratios": [2.25, 1.25]},
+    )
+    for row, (key, ylabel) in enumerate(parameter_specs):
+        trace_ax = axes[row, 0]
+        marginal_ax = axes[row, 1]
+        values = chains[key]
+        iterations = np.arange(1, values.shape[1] + 1)
+        for chain_index in range(values.shape[0]):
+            color = OKABE_ITO_CHAIN_COLORS[chain_index % len(OKABE_ITO_CHAIN_COLORS)]
+            trace_ax.plot(
+                iterations,
+                values[chain_index],
+                color=color,
+                linewidth=0.45,
+                alpha=0.9,
+                label=f"Chain {chain_index + 1}" if row == 0 else None,
+            )
+            marginal_ax.hist(
+                values[chain_index],
+                bins=28,
+                density=True,
+                histtype="step",
+                color=color,
+                linewidth=0.8,
+                alpha=0.95,
+            )
+        trace_ax.set_ylabel(ylabel)
+        trace_ax.yaxis.set_label_coords(-0.18, 0.5)
+        trace_ax.grid(False)
+        trace_ax.tick_params(axis="both", direction="in")
+        marginal_ax.grid(False)
+        marginal_ax.set_yticks([])
+        marginal_ax.tick_params(axis="both", direction="in")
+        finite_values = values[np.isfinite(values)]
+        x_min, x_max = np.quantile(finite_values, [0.005, 0.995])
+        x_padding = 0.08 * (x_max - x_min) if x_max > x_min else 0.5
+        x_min -= x_padding
+        x_max += x_padding
+        marginal_ax.set_xlim(x_min, x_max)
+        marginal_ax.set_xticks(np.linspace(x_min, x_max, 4))
+        marginal_ax.xaxis.set_major_formatter(FormatStrFormatter("%.1f"))
+        if row < len(parameter_specs) - 1:
+            trace_ax.tick_params(labelbottom=False)
+
+    axes[-1, 0].set_xlabel("NUTS sample")
+    y_min, y_max = axes[0, 0].get_ylim()
+    axes[0, 0].set_ylim(y_min, y_max + 0.18 * (y_max - y_min))
+    axes[0, 0].set_title("(a) NUTS trace plots", pad=6)
+    axes[0, 1].set_title("(b) Posterior Marginals", pad=6)
+    axes[0, 0].legend(
+        fontsize=PAPER_TICK_SIZE,
+        frameon=False,
+        ncol=2,
+        loc="upper right",
+        handlelength=1.6,
+        columnspacing=0.8,
+    )
+    fig.subplots_adjust(
+        left=0.22,
+        right=0.995,
+        bottom=0.095,
+        top=0.965,
+        hspace=0.22,
+        wspace=0.09,
+    )
+    stem = f"hmc_calibration_traces_{args.hmc_trace_run}_{Path(args.hmc_trace_cell).stem}"
+    _save_figure(fig, output_dir, stem, args.formats, args.dpi)
+    plt.close(fig)
+
+
 FIGURE_MODULES = {
     "ablation_heatmaps": plot_ablation_heatmaps,
     "main_text_ablation_grids": plot_main_text_ablation_grids,
     "si_lml_loo_ablation": plot_si_lml_loo_ablation,
     "si_map_sampled_difference": plot_si_map_sampled_difference,
+    "lengthscale_prior_sensitivity": plot_lengthscale_prior_sensitivity,
+    "hmc_calibration_traces": plot_hmc_calibration_traces,
 }
 
 

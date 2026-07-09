@@ -15,6 +15,7 @@ import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+from matplotlib import rc
 from matplotlib.lines import Line2D
 import numpy as np
 import torch
@@ -42,6 +43,13 @@ from freegp.posterior import (
     summarize_hyperposterior_derivative,
     summarize_hyperposterior_predictive,
 )
+
+PAPER_FONT_SIZE = 7.0
+PAPER_LABEL_SIZE = 7.5
+PAPER_TITLE_SIZE = 7.5
+PAPER_TICK_SIZE = 5.4
+PAPER_LINE_WIDTH = 0.5
+JCTC_SINGLE_COLUMN_WIDTH_IN = 3.33
 
 
 @dataclass(frozen=True)
@@ -86,7 +94,7 @@ def _parser() -> argparse.ArgumentParser:
         "--results-dir", default="results/lengthscale-prior-sensitivity-hard"
     )
     parser.add_argument("--objective", choices=("lml", "loo"), default="loo")
-    parser.add_argument("--pmf-alignment", choices=("max", "min"), default="max")
+    parser.add_argument("--pmf-alignment", choices=("max", "min", "last"), default="max")
     parser.add_argument("--window-count", type=int, default=7)
     parser.add_argument("--trajectory-fraction", type=float, default=0.25)
     parser.add_argument("--n-equilibration", type=int, default=40_000)
@@ -104,15 +112,50 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--predictive-samples", type=int, default=200)
     parser.add_argument("--target-accept-prob", type=float, default=0.9)
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument(
+        "--plot-components",
+        action="store_true",
+        help="Also save the auxiliary diagnostic component plots.",
+    )
+    parser.add_argument("--formats", nargs="+", default=["svg", "pdf"], help="Figure formats to write.")
     return parser
+
+
+def _configure_paper_matplotlib() -> None:
+    rc("font", **{"family": "sans-serif", "sans-serif": ["DejaVu Sans"], "size": PAPER_FONT_SIZE})
+    rc("mathtext", **{"default": "regular"})
+    plt.rcParams.update(
+        {
+            "axes.titlesize": PAPER_TITLE_SIZE,
+            "axes.labelsize": PAPER_LABEL_SIZE,
+            "xtick.labelsize": PAPER_TICK_SIZE,
+            "ytick.labelsize": PAPER_TICK_SIZE,
+            "legend.fontsize": PAPER_TICK_SIZE,
+            "axes.linewidth": PAPER_LINE_WIDTH,
+            "xtick.major.width": PAPER_LINE_WIDTH,
+            "ytick.major.width": PAPER_LINE_WIDTH,
+            "xtick.major.size": 2.4,
+            "ytick.major.size": 2.4,
+            "pdf.fonttype": 42,
+            "ps.fonttype": 42,
+            "svg.fonttype": "none",
+        }
+    )
 
 
 def _finish_grid(axes, *, ylabel: str) -> None:
     for ax in axes.flat:
         ax.set_xlabel("Position [nm]")
         ax.set_ylabel(ylabel)
-        ax.grid(alpha=0.2)
-        ax.legend(fontsize=8)
+        ax.grid(False)
+        ax.legend(fontsize=PAPER_TICK_SIZE)
+
+
+def _save_figure(fig, output_dir: Path, stem: str, formats: list[str], *, dpi: int = 600) -> None:
+    for fmt in formats:
+        out = output_dir / f"{stem}.{fmt}"
+        fig.savefig(out, dpi=dpi, bbox_inches="tight")
+        print(f"Saved {out}")
 
 
 def _to_python(value):
@@ -264,7 +307,14 @@ def _parameter_samples(samples: dict[str, torch.Tensor]) -> dict[str, np.ndarray
 def _aligned_curve(summary, alignment: str) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     x = summary.x_test.detach().cpu().numpy()
     mean = summary.mean.detach().cpu().numpy()
-    anchor = np.max(mean) if alignment == "max" else np.min(mean)
+    if alignment == "max":
+        anchor = np.max(mean)
+    elif alignment == "min":
+        anchor = np.min(mean)
+    elif alignment == "last":
+        anchor = mean[-1]
+    else:
+        raise ValueError(f"Unknown PMF alignment: {alignment}")
     std = np.sqrt(
         np.clip(summary.total_variance.detach().cpu().numpy(), 0.0, None)
     )
@@ -366,16 +416,17 @@ def _plot_prior_posterior_comparison(
         Line2D([0], [0], color=case.color, linewidth=2.2, label=case.label)
         for case in PRIOR_CASES
     ]
-    ax.legend(handles=case_handles + style_handles, fontsize=8)
+    ax.legend(handles=case_handles + style_handles, fontsize=PAPER_TICK_SIZE, frameon=False)
     ax.set_xscale("log")
     ax.set_xlabel(r"Length scale $\ell$ [nm]")
     ax.set_ylabel("Peak-normalized density")
     ax.set_ylim(bottom=0.0)
-    ax.grid(alpha=0.2)
+    ax.grid(False)
 
 
 def main() -> None:
     args = _parser().parse_args()
+    _configure_paper_matplotlib()
     configure_torch(seed=args.seed)
     output_dir = Path(args.results_dir).expanduser().resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -435,127 +486,63 @@ def main() -> None:
             }
         )
 
-    fig, axes = plt.subplots(2, 2, figsize=(14, 11), sharex=True, sharey=True)
-    for ax, result in zip(axes.flat, results):
-        case = result["case"]
-        ui_offset = _ui_display_offset(bundle.references, result["hyper_function"])
-        _plot_ui_reference(ax, bundle.references, offset=ui_offset)
-        _plot_summary(
-            ax,
-            result["hyper_function"],
-            label="Hyperposterior-propagated GP",
-            color=case.color,
-        )
-        ax.set_title(case.label)
-        result["ui_offset"] = ui_offset
-    _finish_grid(axes, ylabel="Free energy [kJ/mol]")
-    fig.suptitle("Function UQ sensitivity to the length-scale hyperprior")
-    fig.tight_layout()
-    fig.savefig(output_dir / "function_uq_by_lengthscale_prior.png", dpi=200)
-    plt.close(fig)
-
-    derivative_error = np.sqrt(
-        np.clip(observations.noise_deriv_diag.detach().cpu().numpy(), 0.0, None)
-    )
-    fig, axes = plt.subplots(2, 2, figsize=(14, 11), sharex=True, sharey=True)
-    for ax, result in zip(axes.flat, results):
-        case = result["case"]
-        ax.errorbar(
-            observations.x_der.detach().cpu().numpy(),
-            observations.dy_der.detach().cpu().numpy(),
-            yerr=derivative_error,
-            color="black",
-            linestyle="none",
-            marker="o",
-            markersize=3,
-            capsize=2,
-            alpha=0.65,
-            label="Derivative observations",
-        )
-        _plot_summary(
-            ax,
-            result["hyper_derivative"],
-            label="Hyperposterior-propagated GP",
-            color=case.color,
-        )
-        ax.set_title(case.label)
-    _finish_grid(axes, ylabel="Free-energy derivative [kJ/mol/nm]")
-    fig.suptitle("Derivative UQ sensitivity to the length-scale hyperprior")
-    fig.tight_layout()
-    fig.savefig(output_dir / "derivative_uq_by_lengthscale_prior.png", dpi=200)
-    plt.close(fig)
-
-    fig, ax = plt.subplots(figsize=(10, 6))
     ell_kde_grid = _positive_kde_grid(
         [result["parameter_samples"]["ell"] for result in results]
     )
-    for result in results:
-        case = result["case"]
-        ax.plot(
-            ell_kde_grid,
-            _positive_kde(result["parameter_samples"]["ell"], ell_kde_grid),
-            linewidth=2.0,
-            color=case.color,
-            label=case.label,
-        )
-    ax.set_xscale("log")
-    ax.set_xlabel(r"Length scale $\ell$ [nm]")
-    ax.set_ylabel("Posterior density")
-    ax.set_title("Length-scale hyperposterior by hyperprior")
-    ax.grid(alpha=0.2)
-    ax.legend(fontsize=8)
-    fig.tight_layout()
-    fig.savefig(output_dir / "ell_posterior_by_prior.png", dpi=200)
-    plt.close(fig)
-
     log_ell_bounds = stationary_log_ell_bounds(observations)
     ell_grid = np.geomspace(
         math.exp(log_ell_bounds[0]), math.exp(log_ell_bounds[1]), 500
     )
-    fig, ax = plt.subplots(figsize=(10, 6))
-    _plot_prior_posterior_comparison(
-        ax,
-        results,
-        ell_grid=ell_grid,
-        ell_kde_grid=ell_kde_grid,
-        log_ell_bounds=log_ell_bounds,
-    )
-    ax.set_title("Length-scale priors and hyperposteriors")
-    fig.tight_layout()
-    fig.savefig(output_dir / "ell_prior_and_posterior.png", dpi=200)
-    plt.close(fig)
 
-    parameter_labels = {
-        "ell": r"Length scale $\ell$ [nm]",
-        "w": r"Kernel amplitude $w$",
-        "sigma_f": r"Function noise $\sigma_f$",
-        "sigma_d": r"Derivative noise $\sigma_d$",
-    }
-    fig, axes = plt.subplots(2, 2, figsize=(13, 10))
-    for ax, (parameter, label) in zip(axes.flat, parameter_labels.items()):
-        kde_grid = _positive_kde_grid(
-            [result["parameter_samples"][parameter] for result in results]
-        )
-        for result in results:
+    for result in results:
+        result["ui_offset"] = _ui_display_offset(bundle.references, result["hyper_function"])
+
+    if args.plot_components:
+        fig, axes = plt.subplots(2, 2, figsize=(6.8, 5.4), sharex=True, sharey=True)
+        for ax, result in zip(axes.flat, results):
             case = result["case"]
-            ax.plot(
-                kde_grid,
-                _positive_kde(result["parameter_samples"][parameter], kde_grid),
-                linewidth=2.0,
+            _plot_ui_reference(ax, bundle.references, offset=result["ui_offset"])
+            _plot_summary(
+                ax,
+                result["hyper_function"],
+                label="Hyperposterior-propagated GP",
                 color=case.color,
-                label=case.label,
             )
-        ax.set_xlabel(label)
-        ax.set_ylabel("Posterior density")
-        ax.set_xscale("log")
-        ax.grid(alpha=0.2)
-    axes[0, 0].legend(fontsize=8)
-    fig.suptitle("Joint hyperparameter sensitivity to the length-scale prior")
-    fig.tight_layout()
-    fig.savefig(output_dir / "all_hyperparameter_posteriors_by_prior.png", dpi=200)
-    plt.close(fig)
+        _finish_grid(axes, ylabel="Free energy [kJ/mol]")
+        fig.tight_layout()
+        _save_figure(fig, output_dir, "function_uq_by_lengthscale_prior", args.formats)
+        plt.close(fig)
 
-    fig, axes = plt.subplots(2, 1, figsize=(10, 10))
+        derivative_error = np.sqrt(
+            np.clip(observations.noise_deriv_diag.detach().cpu().numpy(), 0.0, None)
+        )
+        fig, axes = plt.subplots(2, 2, figsize=(6.8, 5.4), sharex=True, sharey=True)
+        for ax, result in zip(axes.flat, results):
+            case = result["case"]
+            ax.errorbar(
+                observations.x_der.detach().cpu().numpy(),
+                observations.dy_der.detach().cpu().numpy(),
+                yerr=derivative_error,
+                color="black",
+                linestyle="none",
+                marker="o",
+                markersize=3,
+                capsize=2,
+                alpha=0.65,
+                label="Derivative observations",
+            )
+            _plot_summary(
+                ax,
+                result["hyper_derivative"],
+                label="Hyperposterior-propagated GP",
+                color=case.color,
+            )
+        _finish_grid(axes, ylabel="Free-energy derivative [kJ/mol/nm]")
+        fig.tight_layout()
+        _save_figure(fig, output_dir, "derivative_uq_by_lengthscale_prior", args.formats)
+        plt.close(fig)
+
+    fig, axes = plt.subplots(2, 1, figsize=(JCTC_SINGLE_COLUMN_WIDTH_IN, 4.8))
     for result in results:
         case = result["case"]
         x, mean, std = _aligned_curve(
@@ -583,9 +570,8 @@ def main() -> None:
         )
     axes[0].set_xlabel("Position [nm]")
     axes[0].set_ylabel("Aligned free energy [kJ/mol]")
-    axes[0].set_title("Posterior PMF sensitivity")
-    axes[0].grid(alpha=0.2)
-    axes[0].legend(fontsize=8)
+    axes[0].grid(False)
+    axes[0].legend(fontsize=PAPER_TICK_SIZE, frameon=False)
 
     _plot_prior_posterior_comparison(
         axes[1],
@@ -594,10 +580,8 @@ def main() -> None:
         ell_kde_grid=ell_kde_grid,
         log_ell_bounds=log_ell_bounds,
     )
-    axes[1].set_title("Length-scale priors and hyperposteriors")
-    fig.suptitle("Length-scale prior sensitivity analysis")
     fig.tight_layout()
-    fig.savefig(output_dir / "si_prior_sensitivity.png", dpi=200)
+    _save_figure(fig, output_dir, "si_prior_sensitivity", args.formats)
     plt.close(fig)
 
     with (output_dir / "prior_comparison.csv").open("w", newline="") as handle:
@@ -732,6 +716,41 @@ def main() -> None:
     (output_dir / "run_summary.json").write_text(
         json.dumps(summary, indent=2) + "\n", encoding="ascii"
     )
+    if refs.has_ui:
+        ui_anchor_for_replot = (
+            np.max(refs.umbrella_f)
+            if args.pmf_alignment == "max"
+            else np.min(refs.umbrella_f)
+        )
+    else:
+        ui_anchor_for_replot = 0.0
+    replot_arrays: dict[str, np.ndarray] = {
+        "ell_grid": ell_grid,
+        "ell_kde_grid": ell_kde_grid,
+        "ui_x": np.asarray(refs.umbrella_x if refs.has_ui else [], dtype=float),
+        "ui_f": np.asarray(
+            refs.umbrella_f - ui_anchor_for_replot if refs.has_ui else [],
+            dtype=float,
+        ),
+        "ui_e": np.asarray(refs.umbrella_e if refs.has_ui else [], dtype=float),
+        "flat_log_ell_bounds": np.asarray(log_ell_bounds, dtype=float),
+    }
+    for result in results:
+        slug = result["case"].slug
+        x, mean, std = _aligned_curve(result["hyper_function"], args.pmf_alignment)
+        replot_arrays[f"{slug}_x"] = x
+        replot_arrays[f"{slug}_mean"] = mean
+        replot_arrays[f"{slug}_std"] = std
+        replot_arrays[f"{slug}_ell_samples"] = result["parameter_samples"]["ell"]
+        replot_arrays[f"{slug}_prior_params"] = np.asarray(
+            [
+                result["case"].m_ell,
+                np.nan if result["case"].s_ell is None else result["case"].s_ell,
+            ],
+            dtype=float,
+        )
+    np.savez_compressed(output_dir / "prior_sensitivity_replot_data.npz", **replot_arrays)
+    print(f"Saved {output_dir / 'prior_sensitivity_replot_data.npz'}")
     print(f"results: {output_dir}")
 
 
