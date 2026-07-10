@@ -20,7 +20,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
-from matplotlib.ticker import FormatStrFormatter
+from matplotlib.ticker import FixedFormatter, FixedLocator, FormatStrFormatter, NullFormatter
 from matplotlib import rc
 import numpy as np
 
@@ -34,6 +34,7 @@ AVAILABLE_FIGURES = [
     "si_map_sampled_difference",
     "lengthscale_prior_sensitivity",
     "hmc_calibration_traces",
+    "noise_comparison",
 ]
 DEFAULT_WINDOW_COUNTS = [3, 4, 6, 8, 10, 13, 16, 19, 22, 25]
 DEFAULT_TRAJ_FRACTIONS = [1.0, 0.9, 0.8, 0.6, 0.4, 0.25, 0.16, 0.1, 0.063, 0.04]
@@ -89,6 +90,17 @@ LENGTHSCALE_PRIOR_LINESTYLES = {
     "ell_0p5_very_narrow": "--",
 }
 OKABE_ITO_CHAIN_COLORS = ["#999999", "#0072B2", "#E69F00", "#009E73"]
+NOISE_MODEL_COLORS = {
+    "fixed": "#0072B2",
+    "inferred": "#E69F00",
+}
+NOISE_PRIOR_COLOR = "#7a7a7a"
+NOISE_PRIOR_LOG_PARAMS = {
+    "ell": (math.log(4.0), 1.0),
+    "w": (1.0, 0.5),
+    "sigma_f": (0.5, 2.0),
+    "sigma_d": (0.5, 2.0),
+}
 
 
 class TwoSlopeLogNorm(mcolors.Normalize):
@@ -181,6 +193,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--hmc-trace-cell",
         default="w07_f0p25.pt",
         help="Cell artifact filename inside artifacts/cells for HMC trace plots.",
+    )
+    parser.add_argument(
+        "--noise-reference-wham-path",
+        type=Path,
+        default=Path("reference_data/wham.dat"),
+        help="WHAM reference used for the noise-comparison posterior predictive panel.",
     )
     return parser
 
@@ -845,6 +863,458 @@ def _load_hmc_trace_chains(cell_path: Path) -> tuple[dict[str, np.ndarray], int]
     return transformed, num_chains
 
 
+def _load_noise_checkpoint(results_dir: Path, *, noise_model: str, objective: str = "LOO") -> dict:
+    import torch
+
+    stems = {
+        "fixed": "hgp_fixed_noise_checkpoint.pt",
+        "inferred": "hgp_full_checkpoint.pt",
+    }
+    if noise_model not in stems:
+        raise ValueError(f"Unknown noise model: {noise_model}")
+    path = results_dir / objective.upper() / stems[noise_model]
+    if not path.exists():
+        raise FileNotFoundError(f"Missing noise checkpoint: {path}")
+    return torch.load(path, map_location="cpu", weights_only=False)
+
+
+def _noise_physical_samples(checkpoint: dict) -> dict[str, np.ndarray]:
+    samples = checkpoint["samples"]
+    mapping = {
+        "ell": "theta_ell",
+        "w": "theta_w",
+        "sigma_f": "theta_sf",
+        "sigma_d": "theta_sd",
+    }
+    out: dict[str, np.ndarray] = {}
+    for name, key in mapping.items():
+        if key in samples:
+            values = samples[key]
+            values = values.detach().cpu().numpy() if hasattr(values, "detach") else np.asarray(values)
+            values = np.exp(np.asarray(values, dtype=float).reshape(-1))
+            out[name] = values[np.isfinite(values) & (values > 0.0)]
+    return out
+
+
+def _noise_predictive(checkpoint: dict) -> dict[str, np.ndarray]:
+    variance = checkpoint["total_variance"]
+    mean = checkpoint["mean"]
+    x_test = checkpoint["x_test"]
+    variance = variance.detach().cpu().numpy() if hasattr(variance, "detach") else np.asarray(variance)
+    mean = mean.detach().cpu().numpy() if hasattr(mean, "detach") else np.asarray(mean)
+    x_test = x_test.detach().cpu().numpy() if hasattr(x_test, "detach") else np.asarray(x_test)
+    return {
+        "x": np.asarray(x_test, dtype=float),
+        "mean": np.asarray(mean, dtype=float),
+        "std": np.sqrt(np.clip(np.asarray(variance, dtype=float), 0.0, None)),
+    }
+
+
+def _load_wham_reference(path: Path) -> tuple[np.ndarray, np.ndarray]:
+    if not path.exists():
+        raise FileNotFoundError(f"Missing WHAM reference: {path}")
+    data = np.loadtxt(path, comments="#")
+    if data.ndim != 2 or data.shape[1] < 2:
+        raise ValueError(f"WHAM reference must have at least two columns: {path}")
+    return np.asarray(data[:, 0], dtype=float), np.asarray(data[:, 1], dtype=float)
+
+
+def _align_to_reference_minimum(mean: np.ndarray, reference: np.ndarray) -> np.ndarray:
+    mean = np.asarray(mean, dtype=float)
+    reference = np.asarray(reference, dtype=float)
+    return mean - float(np.nanmin(mean)) + float(np.nanmin(reference))
+
+
+def _align_to_reference_tail(mean: np.ndarray, reference: np.ndarray) -> np.ndarray:
+    mean = np.asarray(mean, dtype=float)
+    reference = np.asarray(reference, dtype=float)
+    return mean - float(mean[-1]) + float(reference[-1])
+
+
+def _log_kde_density(log_values: np.ndarray, log_grid: np.ndarray) -> np.ndarray:
+    values = np.asarray(log_values, dtype=float)
+    values = values[np.isfinite(values)]
+    if values.size < 2:
+        return np.zeros_like(log_grid)
+    sample_std = float(np.std(values, ddof=1))
+    bandwidth = max(sample_std * values.size ** (-1.0 / 5.0), 1e-3)
+    z = (log_grid[:, None] - values[None, :]) / bandwidth
+    return np.exp(-0.5 * z**2).mean(axis=1) / (bandwidth * math.sqrt(2.0 * math.pi))
+
+
+def _log_kde_2d_density(
+    log_x: np.ndarray,
+    log_y: np.ndarray,
+    x_grid: np.ndarray,
+    y_grid: np.ndarray,
+    *,
+    max_samples: int = 1200,
+) -> np.ndarray:
+    log_x = np.asarray(log_x, dtype=float)
+    log_y = np.asarray(log_y, dtype=float)
+    mask = np.isfinite(log_x) & np.isfinite(log_y)
+    values = np.column_stack([log_x[mask], log_y[mask]])
+    if values.shape[0] < 3:
+        return np.zeros((y_grid.size, x_grid.size), dtype=float)
+    if values.shape[0] > max_samples:
+        indices = np.linspace(0, values.shape[0] - 1, max_samples, dtype=int)
+        values = values[indices]
+    std = np.std(values, axis=0, ddof=1)
+    bandwidth = np.maximum(std * values.shape[0] ** (-1.0 / 6.0), 1e-3)
+    dx = (x_grid[None, :] - values[:, 0, None]) / bandwidth[0]
+    dy = (y_grid[None, :] - values[:, 1, None]) / bandwidth[1]
+    density = np.exp(-0.5 * (dy[:, :, None] ** 2 + dx[:, None, :] ** 2)).mean(axis=0)
+    density /= 2.0 * math.pi * bandwidth[0] * bandwidth[1]
+    return density
+
+
+def _linear_kde_density(values: np.ndarray, grid: np.ndarray) -> np.ndarray:
+    values = np.asarray(values, dtype=float)
+    values = values[np.isfinite(values)]
+    if values.size < 2:
+        return np.zeros_like(grid)
+    sample_std = float(np.std(values, ddof=1))
+    bandwidth = max(sample_std * values.size ** (-1.0 / 5.0), 1e-12)
+    z = (grid[:, None] - values[None, :]) / bandwidth
+    return np.exp(-0.5 * z**2).mean(axis=1) / (bandwidth * math.sqrt(2.0 * math.pi))
+
+
+def _linear_kde_2d_density(
+    x_values: np.ndarray,
+    y_values: np.ndarray,
+    x_grid: np.ndarray,
+    y_grid: np.ndarray,
+    *,
+    max_samples: int = 1200,
+) -> np.ndarray:
+    x_values = np.asarray(x_values, dtype=float)
+    y_values = np.asarray(y_values, dtype=float)
+    mask = np.isfinite(x_values) & np.isfinite(y_values)
+    values = np.column_stack([x_values[mask], y_values[mask]])
+    if values.shape[0] < 3:
+        return np.zeros((y_grid.size, x_grid.size), dtype=float)
+    if values.shape[0] > max_samples:
+        indices = np.linspace(0, values.shape[0] - 1, max_samples, dtype=int)
+        values = values[indices]
+    std = np.std(values, axis=0, ddof=1)
+    bandwidth = np.maximum(std * values.shape[0] ** (-1.0 / 6.0), 1e-12)
+    dx = (x_grid[None, :] - values[:, 0, None]) / bandwidth[0]
+    dy = (y_grid[None, :] - values[:, 1, None]) / bandwidth[1]
+    density = np.exp(-0.5 * (dy[:, :, None] ** 2 + dx[:, None, :] ** 2)).mean(axis=0)
+    density /= 2.0 * math.pi * bandwidth[0] * bandwidth[1]
+    return density
+
+
+def _noise_prior_density(parameter: str, grid: np.ndarray) -> np.ndarray:
+    """Default physical-space hyperprior density for a positive parameter."""
+    if parameter not in NOISE_PRIOR_LOG_PARAMS:
+        return np.zeros_like(grid, dtype=float)
+    mu, sigma = NOISE_PRIOR_LOG_PARAMS[parameter]
+    grid = np.asarray(grid, dtype=float)
+    density = np.zeros_like(grid, dtype=float)
+    mask = grid > 0.0
+    z = (np.log(grid[mask]) - mu) / sigma
+    density[mask] = np.exp(-0.5 * z**2) / (grid[mask] * sigma * math.sqrt(2.0 * math.pi))
+    return density
+
+
+def _histogram2d_contour_density(
+    x_values: np.ndarray,
+    y_values: np.ndarray,
+    *,
+    x_limits: tuple[float, float],
+    y_limits: tuple[float, float],
+    bins: int = 26,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Return normalized 2D histogram density on bin centers for contours."""
+    hist, x_edges, y_edges = np.histogram2d(
+        x_values,
+        y_values,
+        bins=bins,
+        range=[x_limits, y_limits],
+        density=False,
+    )
+    hist = hist.T.astype(float)
+    if np.nanmax(hist) > 0.0:
+        hist /= np.nanmax(hist)
+    x_centers = 0.5 * (x_edges[:-1] + x_edges[1:])
+    y_centers = 0.5 * (y_edges[:-1] + y_edges[1:])
+    return x_centers, y_centers, hist
+
+
+def _nice_linear_limits(values: np.ndarray, *, pad_fraction: float = 0.08) -> tuple[float, float]:
+    values = np.asarray(values, dtype=float)
+    values = values[np.isfinite(values)]
+    if values.size == 0:
+        return 0.0, 1.0
+    lo, hi = np.quantile(values, [0.005, 0.995])
+    span = max(float(hi - lo), 1e-12)
+    return float(lo - pad_fraction * span), float(hi + pad_fraction * span)
+
+
+def _nice_log_limits(values: np.ndarray, *, pad_fraction: float = 0.08) -> tuple[float, float]:
+    values = np.asarray(values, dtype=float)
+    values = values[np.isfinite(values) & (values > 0.0)]
+    if values.size == 0:
+        return 1e-3, 1.0
+    log_min, log_max = np.quantile(np.log(values), [0.005, 0.995])
+    span = max(float(log_max - log_min), 0.5)
+    log_min -= pad_fraction * span
+    log_max += pad_fraction * span
+    return float(np.exp(log_min)), float(np.exp(log_max))
+
+
+def _set_corner_ticks(
+    ax,
+    axis: str,
+    values: np.ndarray,
+    *,
+    n_ticks: int = 3,
+) -> None:
+    lo, hi = _nice_linear_limits(values)
+    span = hi - lo
+    if span <= 0.0:
+        ticks = np.full(n_ticks, lo)
+    else:
+        tick_pad = 0.08 * span
+        ticks = np.linspace(lo + tick_pad, hi - tick_pad, n_ticks)
+    labels = _corner_tick_labels(ticks)
+    if axis == "x":
+        ax.xaxis.set_major_locator(FixedLocator(ticks))
+        ax.xaxis.set_major_formatter(FixedFormatter(labels))
+        ax.xaxis.set_minor_formatter(NullFormatter())
+    elif axis == "y":
+        ax.yaxis.set_major_locator(FixedLocator(ticks))
+        ax.yaxis.set_major_formatter(FixedFormatter(labels))
+        ax.yaxis.set_minor_formatter(NullFormatter())
+    else:
+        raise ValueError(axis)
+
+
+def _corner_tick_labels(values: np.ndarray) -> list[str]:
+    for sig_figs in (1, 2):
+        labels = [_format_corner_tick(value, sig_figs=sig_figs) for value in values]
+        if len(set(labels)) == len(labels):
+            return labels
+    return [_format_corner_tick(value, sig_figs=2) for value in values]
+
+
+def _format_corner_tick(value: float, *, sig_figs: int) -> str:
+    value = float(value)
+    if value == 0.0:
+        return "0"
+    abs_value = abs(value)
+    if abs_value < 1e-3 or abs_value >= 1e3:
+        return f"{value:.{sig_figs - 1}e}"
+    decimals = max(sig_figs - 1 - int(math.floor(math.log10(abs_value))), 0)
+    return f"{value:.{decimals}f}".rstrip("0").rstrip(".")
+
+
+def _draw_noise_corner(
+    fig,
+    gs_cell,
+    samples: dict[str, np.ndarray],
+    *,
+    color: str,
+    title: str,
+    parameters: list[str] | None = None,
+    origin_in: tuple[float, float] | None = None,
+    cell_size_in: float | None = None,
+    gap_in: float | None = None,
+    y_label_x: float = -0.22,
+) -> None:
+    parameter_labels = {
+        "ell": r"$\ell$ [nm]",
+        "w": r"$w$ [kJ/mol]",
+        "sigma_f": r"$\sigma_f$ [kJ/mol]",
+        "sigma_d": r"$\sigma_d$ [kJ/mol/nm]",
+    }
+    parameters = parameters or ["ell", "w"]
+    missing = [parameter for parameter in parameters if parameter not in samples]
+    if missing:
+        raise ValueError(f"Noise corner plot missing samples for: {', '.join(missing)}")
+
+    n_params = len(parameters)
+    if origin_in is None:
+        sub = gs_cell.subgridspec(
+            n_params,
+            n_params,
+            wspace=0.08,
+            hspace=0.08,
+        )
+    else:
+        if cell_size_in is None or gap_in is None:
+            raise ValueError("Manual corner placement requires cell_size_in and gap_in.")
+        fig_width, fig_height = fig.get_size_inches()
+        left_in, bottom_in = origin_in
+        sub = None
+    limits = {parameter: _nice_linear_limits(samples[parameter]) for parameter in parameters}
+    axes = np.empty((n_params, n_params), dtype=object)
+
+    for row, y_parameter in enumerate(parameters):
+        for col, x_parameter in enumerate(parameters):
+            if sub is None:
+                x_in = left_in + col * (cell_size_in + gap_in)
+                y_in = bottom_in + (n_params - 1 - row) * (cell_size_in + gap_in)
+                ax = fig.add_axes([
+                    x_in / fig_width,
+                    y_in / fig_height,
+                    cell_size_in / fig_width,
+                    cell_size_in / fig_height,
+                ])
+            else:
+                ax = fig.add_subplot(sub[row, col])
+            axes[row, col] = ax
+            ax.grid(False)
+            for spine in ax.spines.values():
+                spine.set_linewidth(PAPER_LINE_WIDTH)
+            ax.set_box_aspect(1)
+
+            if row == col:
+                values = samples[x_parameter]
+                lo, hi = limits[x_parameter]
+                finite_values = values[np.isfinite(values)]
+                hist_values, hist_edges = np.histogram(
+                    finite_values,
+                    bins=22,
+                    range=(lo, hi),
+                    density=True,
+                )
+                ax.stairs(
+                    hist_values,
+                    hist_edges,
+                    fill=True,
+                    color=color,
+                    alpha=0.18,
+                    linewidth=0.0,
+                )
+                ax.stairs(
+                    hist_values,
+                    hist_edges,
+                    fill=False,
+                    color=color,
+                    linewidth=0.75,
+                )
+                grid = np.linspace(lo, hi, 300)
+                prior_density = _noise_prior_density(x_parameter, grid)
+                ax.plot(grid, prior_density, color=NOISE_PRIOR_COLOR, linewidth=0.85)
+                ax.set_xlim(lo, hi)
+                max_density = max(
+                    float(np.nanmax(hist_values)) if hist_values.size else 0.0,
+                    float(np.nanmax(prior_density)) if prior_density.size else 0.0,
+                )
+                ax.set_ylim(0.0, max_density * 1.12 if max_density > 0.0 else 1.0)
+                ax.set_yticks([])
+                if row == 0:
+                    ax.set_title(title, pad=5, fontsize=PAPER_TITLE_SIZE)
+            else:
+                x_values = samples[x_parameter]
+                y_values = samples[y_parameter]
+                x_limits = limits[x_parameter]
+                y_limits = limits[y_parameter]
+                ax.set_xlim(*x_limits)
+                ax.set_ylim(*y_limits)
+
+                if row > col:
+                    n_points = min(x_values.size, y_values.size)
+                    if n_points > 650:
+                        indices = np.linspace(0, n_points - 1, 650, dtype=int)
+                    else:
+                        indices = np.arange(n_points)
+                    ax.scatter(
+                        x_values[indices],
+                        y_values[indices],
+                        s=2.0,
+                        color=color,
+                        alpha=0.16,
+                        linewidths=0.0,
+                    )
+                else:
+                    contour_x, contour_y, density = _histogram2d_contour_density(
+                        x_values,
+                        y_values,
+                        x_limits=x_limits,
+                        y_limits=y_limits,
+                        bins=26,
+                    )
+                    if np.nanmax(density) > 0.0:
+                        ax.contour(
+                            contour_x,
+                            contour_y,
+                            density,
+                            levels=[0.12, 0.28, 0.45, 0.62],
+                            colors=color,
+                            linewidths=0.55,
+                            alpha=0.85,
+                        )
+
+            if row < n_params - 1:
+                ax.xaxis.set_major_formatter(NullFormatter())
+                ax.xaxis.set_minor_formatter(NullFormatter())
+                ax.tick_params(labelbottom=False)
+            else:
+                _set_corner_ticks(
+                    ax,
+                    "x",
+                    samples[x_parameter],
+                    n_ticks=3,
+                )
+                ax.set_xlabel(parameter_labels[x_parameter], labelpad=2, fontsize=PAPER_FONT_SIZE)
+
+            if col > 0:
+                ax.yaxis.set_major_formatter(NullFormatter())
+                ax.yaxis.set_minor_formatter(NullFormatter())
+                ax.tick_params(labelleft=False)
+            elif row > 0:
+                _set_corner_ticks(
+                    ax,
+                    "y",
+                    samples[y_parameter],
+                    n_ticks=3,
+                )
+                ax.set_ylabel(parameter_labels[y_parameter], labelpad=2, fontsize=PAPER_FONT_SIZE)
+                ax.yaxis.set_label_coords(y_label_x, 0.5)
+            else:
+                ax.yaxis.set_major_formatter(NullFormatter())
+                ax.yaxis.set_minor_formatter(NullFormatter())
+                ax.tick_params(labelleft=False)
+
+            ax.tick_params(axis="both", which="both", direction="in", labelsize=PAPER_TICK_SIZE)
+
+
+def _draw_noise_predictive(
+    ax,
+    *,
+    checkpoint: dict,
+    color: str,
+    label: str,
+    wham_x: np.ndarray,
+    wham_f: np.ndarray,
+) -> None:
+    ax.plot(wham_x, wham_f, color="black", linewidth=0.85, label="WHAM")
+    pred = _noise_predictive(checkpoint)
+    reference = np.interp(pred["x"], wham_x, wham_f)
+    mean = _align_to_reference_tail(pred["mean"], reference)
+    std = pred["std"]
+    ax.fill_between(
+        pred["x"],
+        mean - 2.0 * std,
+        mean + 2.0 * std,
+        color=color,
+        alpha=0.12,
+        linewidth=0.0,
+    )
+    ax.plot(pred["x"], mean, color=color, linewidth=1.05, label=label)
+
+    y_pad = max(2.0, 0.08 * float(np.nanmax(wham_f) - np.nanmin(wham_f))) + 20.0
+    ax.set_ylim(float(np.nanmin(wham_f) - y_pad), float(np.nanmax(wham_f) + y_pad))
+    ax.set_xlabel("Position [nm]")
+    ax.set_ylabel("Free Energy [kJ/mol]")
+    ax.tick_params(axis="both", which="both", direction="in")
+    ax.grid(False)
+    ax.legend(fontsize=PAPER_TICK_SIZE, frameon=False, loc="best", handlelength=1.6)
+
+
 def _plot_map_sampled_difference_preview(
     *,
     rmse_percent_diffs: dict[str, np.ndarray],
@@ -1177,24 +1647,37 @@ def plot_lengthscale_prior_sensitivity(args: argparse.Namespace) -> None:
         if row < len(density_axes) - 1:
             ax_density.set_xticklabels([])
 
-    ui_x = np.asarray(data["ui_x"], dtype=float)
-    if ui_x.size:
-        ui_f = np.asarray(data["ui_f"], dtype=float)
-        ui_f = ui_f - ui_f[-1]
-        ui_stride = slice(None, None, 2)
-        ax_pmf.errorbar(
-            ui_x[ui_stride],
-            ui_f[ui_stride],
-            yerr=np.asarray(data["ui_e"], dtype=float)[ui_stride],
+    wham_x = np.asarray(data["wham_x"], dtype=float) if "wham_x" in data.files else np.asarray([])
+    if wham_x.size:
+        wham_f = np.asarray(data["wham_f"], dtype=float)
+        wham_f = wham_f - wham_f[-1]
+        ax_pmf.plot(
+            wham_x,
+            wham_f,
             color="black",
             linewidth=0.8,
-            capsize=1.8,
-            label="Block-averaged UI",
+            label="WHAM",
         )
+    else:
+        ui_x = np.asarray(data["ui_x"], dtype=float)
+        if ui_x.size:
+            ui_f = np.asarray(data["ui_f"], dtype=float)
+            ui_f = ui_f - ui_f[-1]
+            ui_stride = slice(None, None, 2)
+            ax_pmf.errorbar(
+                ui_x[ui_stride],
+                ui_f[ui_stride],
+                yerr=np.asarray(data["ui_e"], dtype=float)[ui_stride],
+                color="black",
+                linewidth=0.8,
+                capsize=1.8,
+                label="Block-averaged UI",
+            )
 
     ax_pmf.set_xlabel("Position [nm]")
     ax_pmf.set_ylabel("Free Energy [kJ/mol]")
     ax_pmf.grid(False)
+    ax_pmf.tick_params(axis="both", direction="in")
     ax_pmf.legend(fontsize=PAPER_TICK_SIZE, frameon=False)
 
     density_axes[-1].set_xlabel(r"Length scale $\ell$ [nm]")
@@ -1306,6 +1789,107 @@ def plot_hmc_calibration_traces(args: argparse.Namespace) -> None:
     plt.close(fig)
 
 
+def plot_noise_comparison(args: argparse.Namespace) -> None:
+    """Export a paper-ready fixed-vs-inferred noise hyperposterior figure."""
+    results_dir = args.results_dir.resolve()
+    output_dir = figure_output_dir(args, "noise_comparison")
+    configure_main_text_matplotlib()
+
+    fixed_checkpoint = _load_noise_checkpoint(results_dir, noise_model="fixed", objective="LOO")
+    inferred_checkpoint = _load_noise_checkpoint(results_dir, noise_model="inferred", objective="LOO")
+    fixed_samples = _noise_physical_samples(fixed_checkpoint)
+    inferred_samples = _noise_physical_samples(inferred_checkpoint)
+
+    wham_path = args.noise_reference_wham_path
+    if not wham_path.is_absolute():
+        wham_path = Path.cwd() / wham_path
+    wham_x, wham_f = _load_wham_reference(wham_path)
+
+    fig_width = JCTC_DOUBLE_COLUMN_WIDTH_IN
+    fig_height = 3.78
+    fig = plt.figure(figsize=(fig_width, fig_height), constrained_layout=False)
+    corner_cell_in = 0.70
+    corner_gap_in = 0.055
+    corner_top_in = 3.35
+    left_column_in = 2.68
+    fixed_left_in = 0.35 + 0.5 * (left_column_in - (2 * corner_cell_in + corner_gap_in))
+    inferred_left_in = 3.72
+    fixed_bottom_in = corner_top_in - (2 * corner_cell_in + corner_gap_in)
+    inferred_bottom_in = corner_top_in - (4 * corner_cell_in + 3 * corner_gap_in)
+    left_bottom_in = inferred_bottom_in
+
+    _draw_noise_corner(
+        fig,
+        None,
+        fixed_samples,
+        color=NOISE_MODEL_COLORS["fixed"],
+        title="(a) Fixed noise",
+        origin_in=(fixed_left_in, fixed_bottom_in),
+        cell_size_in=corner_cell_in,
+        gap_in=corner_gap_in,
+    )
+    predictive_left_in = 0.62
+    predictive_width_in = left_column_in - 0.34
+    predictive_height_in = 0.51
+    predictive_gap_in = 0.05
+    inferred_pred_ax = fig.add_axes([
+        predictive_left_in / fig_width,
+        left_bottom_in / fig_height,
+        predictive_width_in / fig_width,
+        predictive_height_in / fig_height,
+    ])
+    fixed_pred_ax = fig.add_axes([
+        predictive_left_in / fig_width,
+        (left_bottom_in + predictive_height_in + predictive_gap_in) / fig_height,
+        predictive_width_in / fig_width,
+        predictive_height_in / fig_height,
+    ])
+    fixed_pred_ax.set_title("(c) Posterior predictive", pad=5, fontsize=PAPER_TITLE_SIZE)
+    _draw_noise_predictive(
+        fixed_pred_ax,
+        checkpoint=fixed_checkpoint,
+        color=NOISE_MODEL_COLORS["fixed"],
+        label="Fixed noise",
+        wham_x=wham_x,
+        wham_f=wham_f,
+    )
+    _draw_noise_predictive(
+        inferred_pred_ax,
+        checkpoint=inferred_checkpoint,
+        color=NOISE_MODEL_COLORS["inferred"],
+        label="Inferred noise",
+        wham_x=wham_x,
+        wham_f=wham_f,
+    )
+    fixed_pred_ax.tick_params(labelbottom=False)
+    fixed_pred_ax.set_xlabel("")
+    fixed_pred_ax.set_ylabel("")
+    inferred_pred_ax.set_ylabel("")
+    fig.text(
+        (predictive_left_in - 0.25) / fig_width,
+        (left_bottom_in + predictive_height_in + 0.5 * predictive_gap_in) / fig_height,
+        "Free Energy [kJ/mol]",
+        rotation=90,
+        va="center",
+        ha="center",
+        fontsize=PAPER_LABEL_SIZE,
+    )
+    _draw_noise_corner(
+        fig,
+        None,
+        inferred_samples,
+        color=NOISE_MODEL_COLORS["inferred"],
+        title="(b) Inferred noise",
+        parameters=["ell", "w", "sigma_f", "sigma_d"],
+        origin_in=(inferred_left_in, inferred_bottom_in),
+        cell_size_in=corner_cell_in,
+        gap_in=corner_gap_in,
+        y_label_x=-0.22,
+    )
+    _save_figure(fig, output_dir, "noise_comparison", args.formats, args.dpi, tight=False)
+    plt.close(fig)
+
+
 FIGURE_MODULES = {
     "ablation_heatmaps": plot_ablation_heatmaps,
     "main_text_ablation_grids": plot_main_text_ablation_grids,
@@ -1313,6 +1897,7 @@ FIGURE_MODULES = {
     "si_map_sampled_difference": plot_si_map_sampled_difference,
     "lengthscale_prior_sensitivity": plot_lengthscale_prior_sensitivity,
     "hmc_calibration_traces": plot_hmc_calibration_traces,
+    "noise_comparison": plot_noise_comparison,
 }
 
 

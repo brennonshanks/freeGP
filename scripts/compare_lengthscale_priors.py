@@ -724,9 +724,26 @@ def main() -> None:
         )
     else:
         ui_anchor_for_replot = 0.0
+    if refs.has_wham:
+        wham_anchor_for_replot = (
+            np.max(refs.wham_f)
+            if args.pmf_alignment == "max"
+            else np.min(refs.wham_f)
+        )
+    else:
+        wham_anchor_for_replot = 0.0
     replot_arrays: dict[str, np.ndarray] = {
         "ell_grid": ell_grid,
         "ell_kde_grid": ell_kde_grid,
+        "wham_x": np.asarray(refs.wham_x if refs.has_wham else [], dtype=float),
+        "wham_f": np.asarray(
+            refs.wham_f - wham_anchor_for_replot if refs.has_wham else [],
+            dtype=float,
+        ),
+        "wham_e": np.asarray(
+            refs.wham_e if refs.has_wham and refs.wham_e is not None else [],
+            dtype=float,
+        ),
         "ui_x": np.asarray(refs.umbrella_x if refs.has_ui else [], dtype=float),
         "ui_f": np.asarray(
             refs.umbrella_f - ui_anchor_for_replot if refs.has_ui else [],
