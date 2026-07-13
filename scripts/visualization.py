@@ -30,6 +30,8 @@ DEFAULT_FIGURES = ["ablation_heatmaps"]
 AVAILABLE_FIGURES = [
     "ablation_heatmaps",
     "main_text_ablation_grids",
+    "ablation_parity",
+    "metadynamics_convergence",
     "si_lml_loo_ablation",
     "si_map_sampled_difference",
     "lengthscale_prior_sensitivity",
@@ -72,6 +74,7 @@ METHOD_SPECS = {
 }
 DEFAULT_METHODS = ["ui", "fixed", "lml_map", "lml", "loo_map", "loo"]
 MAIN_TEXT_ABLATION_METHODS = ["ui", "fixed", "loo_map", "loo"]
+PARITY_METHODS = ["ui", "fixed", "loo_map", "loo"]
 SI_LML_LOO_METHODS = ["lml", "loo"]
 MAP_SAMPLED_PAIRS = [
     ("lml", "lml_map", "LML"),
@@ -90,6 +93,12 @@ LENGTHSCALE_PRIOR_LINESTYLES = {
     "ell_0p5_very_narrow": "--",
 }
 OKABE_ITO_CHAIN_COLORS = ["#999999", "#0072B2", "#E69F00", "#009E73"]
+PARITY_METHOD_COLORS = {
+    "ui": "#999999",
+    "fixed": "#0072B2",
+    "loo_map": "#E69F00",
+    "loo": "#009E73",
+}
 NOISE_MODEL_COLORS = {
     "fixed": "#0072B2",
     "inferred": "#E69F00",
@@ -199,6 +208,12 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         default=Path("reference_data/wham.dat"),
         help="WHAM reference used for the noise-comparison posterior predictive panel.",
+    )
+    parser.add_argument(
+        "--metadynamics-results-dir",
+        type=Path,
+        default=Path("results/metadynamics_ressults"),
+        help="Directory containing metadynamics convergence_data.csv.",
     )
     return parser
 
@@ -1890,9 +1905,326 @@ def plot_noise_comparison(args: argparse.Namespace) -> None:
     plt.close(fig)
 
 
+def plot_ablation_parity(args: argparse.Namespace) -> None:
+    """Plot RMS predictive SD against RMSE to WHAM for selected methods."""
+    results_dir = args.results_dir.resolve()
+    output_dir = figure_output_dir(args, "ablation_parity")
+    configure_main_text_matplotlib()
+
+    fig, ax = plt.subplots(figsize=(JCTC_SINGLE_COLUMN_WIDTH_IN, 2.75), constrained_layout=False)
+    summary_rows: list[dict[str, object]] = []
+    all_values: list[float] = []
+
+    for method_key in PARITY_METHODS:
+        spec = METHOD_SPECS[method_key]
+        csv_path = results_dir / spec.relative_csv
+        rows = _read_csv_rows(csv_path)
+        pred_rms_std = np.array(
+            [
+                math.sqrt(max(_metric_value(row, "avg_total_variance"), 0.0))
+                for row in rows
+            ],
+            dtype=float,
+        )
+        true_rmse = np.array([_metric_value(row, "rmse_wham") for row in rows], dtype=float)
+        mask = (
+            np.isfinite(pred_rms_std)
+            & np.isfinite(true_rmse)
+            & (pred_rms_std > 0.0)
+            & (true_rmse > 0.0)
+        )
+        pred_rms_std = pred_rms_std[mask]
+        true_rmse = true_rmse[mask]
+        all_values.extend(pred_rms_std.tolist())
+        all_values.extend(true_rmse.tolist())
+
+        ax.scatter(
+            true_rmse,
+            pred_rms_std,
+            s=13.0,
+            color=PARITY_METHOD_COLORS[method_key],
+            alpha=0.72,
+            linewidths=0.25,
+            edgecolors="white",
+            label=spec.label,
+        )
+        summary_rows.append(
+            {
+                "method": spec.label,
+                "n": int(mask.sum()),
+                "mean_rmse_wham": float(np.mean(true_rmse)),
+                "mean_rms_std": float(np.mean(pred_rms_std)),
+                "median_rmse_wham": float(np.median(true_rmse)),
+                "median_rms_std": float(np.median(pred_rms_std)),
+            }
+        )
+
+    finite = np.array([value for value in all_values if np.isfinite(value) and value >= 0.0])
+    upper = min(30.0, float(np.nanmax(finite) * 1.05))
+    upper = max(upper, 12.0)
+    lo = 0.0
+    hi = upper
+    ax.plot([lo, hi], [lo, hi], color="black", linestyle="--", linewidth=0.75, label="Parity")
+    ax.set_xlim(lo, hi)
+    ax.set_ylim(lo, hi)
+    ax.set_aspect("equal", adjustable="box")
+    ax.set_xlabel("RMSE vs WHAM [kJ/mol]", labelpad=2)
+    ax.set_ylabel("RMS Predictive SD [kJ/mol]", labelpad=2)
+    ax.tick_params(axis="both", which="both", direction="in", labelsize=PAPER_TICK_SIZE)
+    ax.grid(False)
+    for spine in ax.spines.values():
+        spine.set_linewidth(PAPER_LINE_WIDTH)
+    ax.legend(
+        fontsize=PAPER_TICK_SIZE,
+        frameon=False,
+        loc="lower right",
+        handlelength=1.0,
+        handletextpad=0.35,
+        borderpad=0.2,
+        labelspacing=0.25,
+    )
+    fig.subplots_adjust(left=0.18, right=0.98, bottom=0.17, top=0.98)
+
+    summary_path = output_dir / "ablation_parity_summary.csv"
+    with summary_path.open("w", newline="") as handle:
+        writer = csv.DictWriter(
+            handle,
+            fieldnames=[
+                "method",
+                "n",
+                "mean_rmse_wham",
+                "mean_rms_std",
+                "median_rmse_wham",
+                "median_rms_std",
+            ],
+        )
+        writer.writeheader()
+        writer.writerows(summary_rows)
+
+    _save_figure(fig, output_dir, "ablation_parity", args.formats, args.dpi, tight=False)
+    plt.close(fig)
+
+
+def _metadynamics_output_dir(args: argparse.Namespace, module_name: str) -> Path:
+    root = (args.output_dir or args.metadynamics_results_dir / "paper_figures").resolve()
+    out = root / module_name
+    out.mkdir(parents=True, exist_ok=True)
+    return out
+
+
+def _load_metadynamics_convergence(path: Path) -> list[dict[str, float]]:
+    rows = _read_csv_rows(path)
+    if not rows:
+        raise ValueError(f"No rows found in {path}")
+    correlation_key = next((key for key in rows[0] if key.lower().startswith("correlation")), None)
+    required = {"Time", "RMSE", "STD"}
+    missing = required.difference(rows[0])
+    if missing:
+        raise ValueError(f"{path} missing required columns: {', '.join(sorted(missing))}")
+    out: list[dict[str, float]] = []
+    for row in rows:
+        out.append(
+            {
+                "trajectory_fraction": float(row["Time"]),
+                "rmse": float(row["RMSE"]),
+                "std": float(row["STD"]),
+                "correlation": float(row[correlation_key]) if correlation_key else float("nan"),
+            }
+        )
+    return out
+
+
+def _load_metadynamics_reference(path: Path) -> tuple[np.ndarray, np.ndarray]:
+    data = np.loadtxt(path)
+    x = data[:, 0]
+    free_energy = data[:, 1]
+    mask = (x > 0.0) & (x < 4.5)
+    x = x[mask]
+    free_energy = free_energy[mask]
+    free_energy = free_energy - np.nanmax(free_energy)
+    return x, free_energy
+
+
+def _load_metadynamics_pmf(path: Path) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    data = np.genfromtxt(path, delimiter=",", names=True)
+    return np.asarray(data["x"]), np.asarray(data["mean"]), np.asarray(data["std"])
+
+
+def _metadynamics_pmf_metrics(
+    pmf_path: Path,
+    ref_x: np.ndarray,
+    ref_f: np.ndarray,
+) -> tuple[float, float]:
+    px, mean, pstdev = _load_metadynamics_pmf(pmf_path)
+    mean = mean + (float(ref_f[-1]) - float(mean[-1]))
+    ref_interp = np.interp(px, ref_x, ref_f)
+    rmse = float(np.sqrt(np.nanmean((mean - ref_interp) ** 2)))
+    avg_sd = float(np.nanmean(pstdev))
+    return rmse, avg_sd
+
+
+def plot_metadynamics_convergence(args: argparse.Namespace) -> None:
+    """Plot metadynamics convergence metrics and representative posterior predictives."""
+    metad_dir = args.metadynamics_results_dir.resolve()
+    output_dir = _metadynamics_output_dir(args, "metadynamics_convergence")
+    configure_main_text_matplotlib()
+
+    rows = _load_metadynamics_convergence(metad_dir / "convergence_data.csv")
+    selected = sorted(rows, key=lambda row: row["trajectory_fraction"])
+    if not selected:
+        raise ValueError("No metadynamics convergence rows found.")
+
+    x_percent = np.array([100.0 * row["trajectory_fraction"] for row in selected], dtype=float)
+    rmse = np.array([row["rmse"] for row in selected], dtype=float)
+    std = np.array([row["std"] for row in selected], dtype=float)
+    ref_x, ref_f = _load_metadynamics_reference(metad_dir / "fes.dat.csv")
+    ref_tail = float(ref_f[-1])
+    predictive_specs = [
+        (0.01, "1%", "#0072B2"),
+        (0.25, "25%", "#E69F00"),
+        (1.00, "100%", "#009E73"),
+    ]
+    fixed_metric_rows = []
+    for fraction, _, _ in predictive_specs:
+        fixed_path = metad_dir / f"{fraction:.2f}metadynamics_gprhd_pmf_fixed.csv"
+        if fixed_path.exists():
+            fixed_rmse, fixed_std = _metadynamics_pmf_metrics(fixed_path, ref_x, ref_f)
+            fixed_metric_rows.append((100.0 * fraction, fixed_rmse, fixed_std))
+    fixed_metric_rows = sorted(fixed_metric_rows)
+    fixed_x = np.array([row[0] for row in fixed_metric_rows], dtype=float)
+    fixed_rmse = np.array([row[1] for row in fixed_metric_rows], dtype=float)
+    fixed_std = np.array([row[2] for row in fixed_metric_rows], dtype=float)
+
+    fig, axes = plt.subplots(
+        4,
+        1,
+        figsize=(JCTC_SINGLE_COLUMN_WIDTH_IN, 4.85),
+        sharex=False,
+        constrained_layout=False,
+        gridspec_kw={"height_ratios": [1.3, 1.3, 0.85, 0.85]},
+    )
+
+    predictive_panels = [
+        (axes[0], "metadynamics_gprhd_pmf.csv", "(a) Hierarchical GP"),
+        (axes[1], "metadynamics_gprhd_pmf_fixed.csv", "(b) Fixed GP"),
+    ]
+    for ax, suffix, panel_label in predictive_panels:
+        ax.plot(ref_x, ref_f, color="0.15", linewidth=0.8, label="Reference", zorder=5)
+        for fraction, label, color in predictive_specs:
+            path = metad_dir / f"{fraction:.2f}{suffix}"
+            if not path.exists():
+                continue
+            px, mean, pstdev = _load_metadynamics_pmf(path)
+            mean = mean + (ref_tail - float(mean[-1]))
+            lower = mean - 2.0 * pstdev
+            upper = mean + 2.0 * pstdev
+            ax.plot(px, mean, color=color, linewidth=0.75, label=label)
+            ax.fill_between(px, lower, upper, color=color, alpha=0.14, linewidth=0.0)
+        ax.text(
+            0.03,
+            0.88,
+            panel_label,
+            transform=ax.transAxes,
+            ha="left",
+            va="top",
+            fontsize=PAPER_TITLE_SIZE,
+        )
+        ax.set_ylabel("Free Energy [kJ/mol]", labelpad=2)
+        ax.set_ylim(-35.0, 45.0)
+        ax.tick_params(axis="both", which="both", direction="in", labelsize=PAPER_TICK_SIZE)
+        ax.grid(False)
+        for spine in ax.spines.values():
+            spine.set_linewidth(PAPER_LINE_WIDTH)
+    axes[1].set_xlabel("Position [nm]", labelpad=2)
+    axes[1].xaxis.set_label_coords(0.5, -0.18)
+    axes[0].legend(
+        loc="lower right",
+        ncol=2,
+        frameon=False,
+        fontsize=PAPER_TICK_SIZE,
+        handlelength=1.1,
+        columnspacing=0.7,
+        handletextpad=0.35,
+        borderpad=0.1,
+        labelspacing=0.2,
+    )
+
+    series = [
+        (axes[2], rmse, fixed_rmse, "RMSE [kJ/mol]", "#0072B2", "(c)"),
+        (axes[3], std, fixed_std, "Avg. SD [kJ/mol]", "#E69F00", "(d)"),
+    ]
+    for ax, values, fixed_values, ylabel, color, panel_label in series:
+        ax.plot(x_percent, values, color=color, marker="o", markersize=2.2, linewidth=0.9, label="Hierarchical GP")
+        if len(fixed_x):
+            ax.plot(
+                fixed_x,
+                fixed_values,
+                color="0.25",
+                marker="s",
+                markersize=2.1,
+                linewidth=0.8,
+                linestyle="--",
+                label="Fixed GP",
+            )
+        ax.text(0.03, 0.88, panel_label, transform=ax.transAxes, ha="left", va="top", fontsize=PAPER_TITLE_SIZE)
+        ax.set_ylabel(ylabel, labelpad=2)
+        ax.tick_params(axis="both", which="both", direction="in", labelsize=PAPER_TICK_SIZE)
+        ax.grid(False)
+        for spine in ax.spines.values():
+            spine.set_linewidth(PAPER_LINE_WIDTH)
+
+    axes[3].set_xlabel("Trajectory Length [%]", labelpad=2)
+    shown_xticks = np.array([0.0, 25.0, 50.0, 75.0, 100.0], dtype=float)
+    shown_xticks = shown_xticks[(shown_xticks >= np.nanmin(x_percent)) & (shown_xticks <= np.nanmax(x_percent))]
+    for ax in axes[2:4]:
+        ax.set_xlim(float(np.nanmin(x_percent)) - 1.5, 101.0)
+        ax.set_xticks(shown_xticks)
+        ax.set_xticklabels([f"{value:g}" for value in shown_xticks])
+    for label in axes[3].get_xticklabels():
+        label.set_rotation(0)
+    axes[3].xaxis.set_label_coords(0.5, -0.18)
+    axes[2].tick_params(labelbottom=False)
+    axes[2].legend(
+        loc="upper right",
+        ncol=1,
+        frameon=False,
+        fontsize=PAPER_TICK_SIZE,
+        handlelength=1.2,
+        handletextpad=0.35,
+        borderpad=0.1,
+        labelspacing=0.2,
+    )
+
+    fig.align_ylabels(axes)
+    fig.subplots_adjust(left=0.19, right=0.985, bottom=0.085, top=0.985, hspace=0.48)
+
+    summary_path = output_dir / "metadynamics_convergence_summary.csv"
+    with summary_path.open("w", newline="") as handle:
+        writer = csv.DictWriter(
+            handle,
+            fieldnames=["trajectory_fraction", "trajectory_percent", "rmse", "std", "correlation"],
+        )
+        writer.writeheader()
+        for row in selected:
+            writer.writerow(
+                {
+                    "trajectory_fraction": row["trajectory_fraction"],
+                    "trajectory_percent": 100.0 * row["trajectory_fraction"],
+                    "rmse": row["rmse"],
+                    "std": row["std"],
+                    "correlation": row["correlation"],
+                }
+            )
+
+    _save_figure(fig, output_dir, "metadynamics_convergence", args.formats, args.dpi, tight=False)
+    plt.close(fig)
+
+
 FIGURE_MODULES = {
     "ablation_heatmaps": plot_ablation_heatmaps,
     "main_text_ablation_grids": plot_main_text_ablation_grids,
+    "ablation_parity": plot_ablation_parity,
+    "metadynamics_convergence": plot_metadynamics_convergence,
     "si_lml_loo_ablation": plot_si_lml_loo_ablation,
     "si_map_sampled_difference": plot_si_map_sampled_difference,
     "lengthscale_prior_sensitivity": plot_lengthscale_prior_sensitivity,
