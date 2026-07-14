@@ -3,15 +3,17 @@ requires = ["setuptools>=69", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "freegp-updated"
+name = "freegp"
 version = "0.1.0"
-description = "Gaussian-process free-energy tools and notebooks for umbrella-sampling analysis"
+description = "Gaussian-process free-energy tools for umbrella-sampling and metadynamics analysis"
 requires-python = ">=3.11"
 dependencies = [
   "numpy>=1.26",
   "torch>=2.2",
   "matplotlib>=3.8",
   "tqdm>=4.66",
+  "pyro-ppl>=1.9.1",
+  "corner>=2.2.2",
 ]
 
 [project.scripts]
@@ -19,11 +21,6 @@ freegp-gprhd-hmc = "freegp.run_gprhd_hmc:main"
 freegp-ablation-grid = "freegp.run_ablation_grid:main"
 
 [project.optional-dependencies]
-mcmc = [
-  "emcee>=3.1.6",
-  "corner>=2.2.2",
-  "pyro-ppl>=1.9.1",
-]
 notebook = [
   "ipykernel>=6.29",
   "jupyterlab>=4.2",
@@ -32,9 +29,6 @@ ui_semen = [
   "toml>=0.10.2",
 ]
 all = [
-  "emcee>=3.1.6",
-  "corner>=2.2.2",
-  "pyro-ppl>=1.9.1",
   "ipykernel>=6.29",
   "jupyterlab>=4.2",
   "toml>=0.10.2",
