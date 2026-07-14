@@ -32,6 +32,7 @@ reference_data/          WHAM/UI reference data bundled with the repo
 results/                 Generated analysis outputs and paper figures
 scripts/                 Paper-analysis scripts and visualization entry point
 src/freegp/              Installable Python package
+tutorials/               Small synthetic examples for new users
 ```
 
 Important package modules:
@@ -50,8 +51,8 @@ src/freegp/studies/ablation.py Ablation-grid study logic
 
 ## Data
 
-Simulation data are kept outside the repo. Point scripts either to a dataset
-directly with `--dataset-root` / `--data-root`, or set:
+Simulation data are kept outside the repo. Point scripts to a dataset directly
+with `--dataset-root` / `--data-root`, or set:
 
 ```bash
 export FREEGP_DATASETS=/path/to/freeGP-datasets
@@ -60,7 +61,129 @@ export FREEGP_DATASETS=/path/to/freeGP-datasets
 The current paper analyses use membrane umbrella-sampling data, sugar
 umbrella-sampling data, and a membrane metadynamics dataset.
 
+### Umbrella-Sampling Data Layout
+
+freeGP expects one-dimensional umbrella-sampling trajectories. Internally, the
+examples assume coordinates in nm, energies in kJ/mol, and umbrella force
+constants in kJ/mol/nm^2.
+
+The GPR(H+D) workflow builds histogram observations of the local biased
+distribution and derivative observations from the umbrella restoring force.
+Each window therefore needs a trajectory, an umbrella center, and a harmonic
+force constant.
+
+The simplest supported layout is:
+
+```text
+my_dataset/
+  README
+  window0-pullx.xvg
+  window1-pullx.xvg
+  ...
+```
+
+The `README` file contains whitespace-separated rows:
+
+```text
+window_id  umbrella_center_nm  force_constant_kJ_mol_nm2
+```
+
+Example:
+
+```text
+# window_id center_nm force_constant_kJ_mol_nm2
+w00 -1.50 1000.0
+w01 -1.25 1000.0
+w02 -1.00 1000.0
+```
+
+Each `*-pullx.xvg` file contains at least two columns:
+
+```text
+time  coordinate
+```
+
+Comment lines beginning with `#` or `@` are ignored. The `window_id` in the
+README must match the filename prefix before `-pullx.xvg`.
+
+Optional reference PMFs should contain at least two columns:
+
+```text
+x_nm  F_kJ_per_mol
+```
+
+Reference curves are only used for plotting/comparison; they are not required
+to fit the GP.
+
+If your simulation uses different units, convert the input files before running
+freeGP or add a small preprocessing wrapper. Common conversions:
+
+- Angstrom to nm: multiply coordinates and umbrella centers by `0.1`.
+- kJ/mol/A^2 to kJ/mol/nm^2: multiply force constants by `100`.
+- kcal/mol to kJ/mol: multiply energies and force constants by `4.184`.
+
+freeGP also supports a Gromacs-style directory layout:
+
+```text
+my_gromacs_dataset/
+  d_1.45/
+    step7_production_pullx.xvg
+    step7_production.mdp
+  d_1.60/
+    step7_production_pullx.xvg
+    step7_production.mdp
+  ...
+```
+
+The folder name must contain the umbrella center as `d_<center>`, and the MDP
+file must contain the force constant. If your data come from another simulation
+package, convert them to the flat layout above.
+
+### Metadynamics Data Layout
+
+The metadynamics scripts expect a PLUMED-style trajectory file, normally named
+`COLVAR`, with columns for time, metadynamics auxiliary coordinate, physical
+collective variable, and bias. The default column names used by the scripts are:
+
+```text
+time  MetaCV  CV  bias  lower  upper
+```
+
+An optional reference FES file, normally `fes.dat`, can be supplied for
+plotting/comparison. It is not required for fitting.
+
+Metadynamics trajectories are not naturally split into umbrella windows, so
+the code discretizes them after the run. The main controls are:
+
+```bash
+--interval 0 4.5
+--n-histogram-windows 120
+--n-derivative-bins 60
+--histogram-binning quantile
+--derivative-binning quantile
+```
+
+`--n-histogram-windows` controls the pseudo-window histogram observations, and
+`--n-derivative-bins` controls the binned mean-force observations. `quantile`
+binning gives approximately equal numbers of samples per bin; `uniform`
+binning gives equal spatial widths. Increase bin counts for more spatial
+resolution, but reduce them if each bin becomes too noisy or HMC becomes too
+slow.
+
 ## Main Workflows
+
+### Tutorials
+
+For a small self-contained example that does not require the paper datasets:
+
+```bash
+cd tutorials/synthetic_umbrella
+python make_dataset.py
+python run_reconstruction.py
+```
+
+The tutorial creates pseudo-umbrella trajectories from a known synthetic
+surface and reconstructs them with fixed, MAP, and short HMC-NUTS GP models.
 
 ### Single GP/HMC Run
 
