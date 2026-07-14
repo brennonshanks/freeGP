@@ -52,7 +52,7 @@ freeGP-dev/
     posterior.py               Hyperposterior predictive summaries
     metrics.py                 RMSE and uncertainty summaries
     studies/ablation.py        Ablation-grid experiment logic
-    cli/run_gprhd_hmc.py       Single-run CLI
+    run_gprhd_hmc.py           Single-run CLI
     cli/run_ablation_grid.py   Ablation-study CLI
 ```
 
