@@ -54,10 +54,12 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--interval", type=float, nargs=2, default=None)
     parser.add_argument("--time-fraction", type=float, default=1.0)
     parser.add_argument("--histogram-bin-width", type=float, default=None)
-    parser.add_argument("--n-histogram-windows", type=int, default=40)
+    parser.add_argument("--n-histogram-windows", type=int, default=180)
+    parser.add_argument("--histogram-binning", choices=("uniform", "quantile"), default="quantile")
     parser.add_argument("--histogram-radius-bins", type=float, default=5.0)
     parser.add_argument("--derivative-bin-width", type=float, default=None)
-    parser.add_argument("--n-derivative-bins", type=int, default=80)
+    parser.add_argument("--n-derivative-bins", type=int, default=60)
+    parser.add_argument("--derivative-binning", choices=("uniform", "quantile"), default="quantile")
     parser.add_argument("--min-window-samples", type=int, default=5)
     parser.add_argument("--min-derivative-samples", type=int, default=5)
     parser.add_argument("--num-test-points", type=int, default=400)
@@ -224,9 +226,11 @@ def main() -> None:
         interval=interval,
         histogram_bin_width=args.histogram_bin_width,
         n_histogram_windows=args.n_histogram_windows,
+        histogram_binning=args.histogram_binning,
         histogram_radius_bins=args.histogram_radius_bins,
         derivative_bin_width=args.derivative_bin_width,
         n_derivative_bins=args.n_derivative_bins,
+        derivative_binning=args.derivative_binning,
         time_fraction=args.time_fraction,
         min_window_samples=args.min_window_samples,
         min_derivative_samples=args.min_derivative_samples,
@@ -333,6 +337,10 @@ def main() -> None:
         "force_constant": args.force_constant,
         "interval": interval,
         "time_fraction": args.time_fraction,
+        "histogram_binning": args.histogram_binning,
+        "n_histogram_windows": args.n_histogram_windows,
+        "derivative_binning": args.derivative_binning,
+        "n_derivative_bins": args.n_derivative_bins,
         "n_pseudo_windows": int(processed.window_centers.numel()),
         "n_function_observations": int(observations.x_obs.numel()),
         "n_derivative_observations": int(observations.x_der.numel()),

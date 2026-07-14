@@ -55,14 +55,16 @@ def _parser() -> argparse.ArgumentParser:
         "--results-dir", default="results/metadynamics-trajectory-length-comparison"
     )
     parser.add_argument("--force-constant", type=float, default=10000.0)
-    parser.add_argument("--interval", type=float, nargs=2, default=(-1.0, 5.0))
+    parser.add_argument("--interval", type=float, nargs=2, default=(0.0, 4.5))
     parser.add_argument(
         "--trajectory-fractions",
         default="0.05,0.10,0.25,0.50,1.00",
         help="Comma-separated fractions of the trajectory to retain.",
     )
-    parser.add_argument("--n-histogram-windows", type=int, default=60)
-    parser.add_argument("--n-derivative-bins", type=int, default=120)
+    parser.add_argument("--n-histogram-windows", type=int, default=180)
+    parser.add_argument("--histogram-binning", choices=("uniform", "quantile"), default="quantile")
+    parser.add_argument("--n-derivative-bins", type=int, default=60)
+    parser.add_argument("--derivative-binning", choices=("uniform", "quantile"), default="quantile")
     parser.add_argument("--histogram-radius-bins", type=float, default=5.0)
     parser.add_argument("--min-window-samples", type=int, default=10)
     parser.add_argument("--min-derivative-samples", type=int, default=10)
@@ -86,6 +88,8 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--opt-learning-rate", type=float, default=0.05)
     parser.add_argument("--warmup-steps", type=int, default=500)
     parser.add_argument("--num-samples", type=int, default=1000)
+    parser.add_argument("--num-chains", type=int, default=1)
+    parser.add_argument("--max-tree-depth", type=int, default=10)
     parser.add_argument("--predictive-samples", type=int, default=100)
     parser.add_argument("--target-accept-prob", type=float, default=0.8)
     parser.add_argument(
@@ -93,7 +97,17 @@ def _parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Skip HMC-NUTS to make a quick MAP/fixed/standard comparison.",
     )
+    parser.add_argument(
+        "--skip-map",
+        action="store_true",
+        help="Skip MAP optimization and run only fixed GP plus HMC-NUTS.",
+    )
     parser.add_argument("--hills-chunk-size", type=int, default=25_000)
+    parser.add_argument(
+        "--resume",
+        action="store_true",
+        help="Skip fractions whose requested GP PMF CSV outputs already exist.",
+    )
     parser.add_argument("--seed", type=int, default=42)
     return parser
 
@@ -182,8 +196,10 @@ def _fit_gp_methods(args, trajectory, x_test: torch.Tensor, fraction: float):
         force_constant=args.force_constant,
         interval=(float(args.interval[0]), float(args.interval[1])),
         n_histogram_windows=args.n_histogram_windows,
+        histogram_binning=args.histogram_binning,
         histogram_radius_bins=args.histogram_radius_bins,
         n_derivative_bins=args.n_derivative_bins,
+        derivative_binning=args.derivative_binning,
         time_fraction=fraction,
         min_window_samples=args.min_window_samples,
         min_derivative_samples=args.min_derivative_samples,
@@ -208,16 +224,19 @@ def _fit_gp_methods(args, trajectory, x_test: torch.Tensor, fraction: float):
     fixed_summary = summarize_fixed_posterior_predictive(fixed_posterior, x_test)
 
     priors = HyperPriorConfig()
-    optimized = optimize_stationary_hyperparameters(
-        observations,
-        priors=priors,
-        objective=args.objective,
-        steps=args.opt_steps,
-        learning_rate=args.opt_learning_rate,
-        restarts=args.opt_restarts,
-        seed=args.seed,
-    )
-    map_summary = summarize_fixed_posterior_predictive(optimized.posterior, x_test)
+    optimized = None
+    map_summary = None
+    if not args.skip_map:
+        optimized = optimize_stationary_hyperparameters(
+            observations,
+            priors=priors,
+            objective=args.objective,
+            steps=args.opt_steps,
+            learning_rate=args.opt_learning_rate,
+            restarts=args.opt_restarts,
+            seed=args.seed,
+        )
+        map_summary = summarize_fixed_posterior_predictive(optimized.posterior, x_test)
 
     hmc_summary = None
     hmc_diagnostics = {}
@@ -225,7 +244,9 @@ def _fit_gp_methods(args, trajectory, x_test: torch.Tensor, fraction: float):
         nuts_config = NUTSConfig(
             num_samples=args.num_samples,
             warmup_steps=args.warmup_steps,
+            num_chains=args.num_chains,
             target_accept_prob=args.target_accept_prob,
+            max_tree_depth=args.max_tree_depth,
             objective=args.objective,
             kernel="stationary",
         )
@@ -256,9 +277,9 @@ def _fit_gp_methods(args, trajectory, x_test: torch.Tensor, fraction: float):
         "hmc": hmc_summary,
         "map_hyperparameters": {
             name: float(value.detach().cpu().item())
-            for name, value in optimized.params.items()
+            for name, value in (optimized.params.items() if optimized is not None else [])
         },
-        "map_objective_value": float(optimized.objective_value),
+        "map_objective_value": None if optimized is None else float(optimized.objective_value),
         "hmc_diagnostics": hmc_diagnostics,
     }
 
@@ -283,6 +304,51 @@ def _write_metrics(output_dir: Path, rows: list[dict[str, object]]) -> None:
         writer.writeheader()
         for row in rows:
             writer.writerow({name: row.get(name, "") for name in fieldnames})
+
+
+def _read_metrics(path: Path) -> list[dict[str, object]]:
+    if not path.exists():
+        return []
+    with path.open(newline="") as handle:
+        return list(csv.DictReader(handle))
+
+
+def _dedupe_metrics(rows: list[dict[str, object]]) -> list[dict[str, object]]:
+    deduped: dict[tuple[str, str], dict[str, object]] = {}
+    for row in rows:
+        try:
+            fraction = f"{float(row['fraction']):.12g}"
+        except (KeyError, TypeError, ValueError):
+            fraction = str(row.get("fraction", ""))
+        method = str(row.get("method", ""))
+        deduped[(fraction, method)] = row
+    return list(deduped.values())
+
+
+def _expected_pmf_outputs(output_dir: Path, fraction: float, args) -> list[Path]:
+    outputs = [output_dir / f"{fraction:.3f}_fixed_gp_pmf.csv"]
+    if not args.skip_map:
+        outputs.append(output_dir / f"{fraction:.3f}_map_gp_pmf.csv")
+    if not args.skip_hmc:
+        outputs.append(output_dir / f"{fraction:.3f}_hmc_gp_pmf.csv")
+    return outputs
+
+
+def _fraction_complete(output_dir: Path, fraction: float, args) -> bool:
+    return all(path.exists() for path in _expected_pmf_outputs(output_dir, fraction, args))
+
+
+def _write_summary_pmf_csv(output_dir: Path, fraction: float, method: str, summary) -> None:
+    if summary is None:
+        return
+    x = summary.x_test.detach().cpu().numpy()
+    mean = summary.mean.detach().cpu().numpy()
+    std = np.sqrt(np.clip(summary.total_variance.detach().cpu().numpy(), 0.0, None))
+    path = output_dir / f"{fraction:.3f}_{method}_pmf.csv"
+    with path.open("w", newline="") as handle:
+        writer = csv.writer(handle)
+        writer.writerow(["x", "mean", "std"])
+        writer.writerows(zip(x, mean, std))
 
 
 def _plot_fit_grid(
@@ -438,20 +504,32 @@ def main() -> None:
     reference_values = _reference_on_grid(reference, x_np, interval)
 
     predictions: dict[float, dict[str, object]] = {}
-    metric_rows: list[dict[str, object]] = []
+    metrics_path = output_dir / "trajectory_length_metrics.csv"
+    metric_rows: list[dict[str, object]] = _read_metrics(metrics_path) if args.resume else []
     run_metadata = {
         "data_root": str(root),
         "fractions": fractions,
         "interval": interval,
         "force_constant": args.force_constant,
+        "n_histogram_windows": args.n_histogram_windows,
+        "histogram_binning": args.histogram_binning,
+        "n_derivative_bins": args.n_derivative_bins,
+        "derivative_binning": args.derivative_binning,
         "objective": args.objective,
         "skip_hmc": args.skip_hmc,
+        "skip_map": args.skip_map,
+        "num_chains": args.num_chains,
+        "max_tree_depth": args.max_tree_depth,
+        "resume": args.resume,
         "pmf_alignment": args.pmf_alignment,
         "fes_y_margin": args.fes_y_margin,
         "metrics_yscale": args.metrics_yscale,
     }
 
     for fraction in fractions:
+        if args.resume and _fraction_complete(output_dir, fraction, args):
+            print(f"fraction {fraction:g} already complete; skipping", flush=True)
+            continue
         print(f"fraction {fraction:g}", flush=True)
         standard = _standard_well_tempered_fes(
             hills,
@@ -486,6 +564,7 @@ def main() -> None:
             ("map_gp", gp_results["map"]),
             ("hmc_gp", gp_results["hmc"]),
         ):
+            _write_summary_pmf_csv(output_dir, fraction, method, summary)
             if summary is None:
                 continue
             row = {
@@ -505,17 +584,21 @@ def main() -> None:
                 row.update(gp_results["map_hyperparameters"])
                 row["objective_value"] = gp_results["map_objective_value"]
             metric_rows.append(row)
+        metric_rows = _dedupe_metrics(metric_rows)
+        _write_metrics(output_dir, metric_rows)
 
-    _write_metrics(output_dir, metric_rows)
-    _plot_fit_grid(
-        output_dir,
-        x_grid=x_np,
-        reference=reference_values,
-        fractions=fractions,
-        predictions=predictions,
-        alignment=args.pmf_alignment,
-        y_margin_fraction=args.fes_y_margin,
-    )
+    _write_metrics(output_dir, _dedupe_metrics(metric_rows))
+    completed_this_run = [fraction for fraction in fractions if fraction in predictions]
+    if completed_this_run:
+        _plot_fit_grid(
+            output_dir,
+            x_grid=x_np,
+            reference=reference_values,
+            fractions=completed_this_run,
+            predictions=predictions,
+            alignment=args.pmf_alignment,
+            y_margin_fraction=args.fes_y_margin,
+        )
     _plot_metrics(output_dir, metric_rows, yscale=args.metrics_yscale)
 
     with (output_dir / "run_summary.json").open("w") as handle:

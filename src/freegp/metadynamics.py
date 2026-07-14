@@ -206,9 +206,11 @@ def process_lagrangian_metadynamics(
     interval: tuple[float, float],
     histogram_bin_width: float | None = None,
     n_histogram_windows: int | None = None,
+    histogram_binning: str = "quantile",
     histogram_radius_bins: float = 5.0,
     derivative_bin_width: float | None = None,
     n_derivative_bins: int | None = None,
+    derivative_binning: str = "quantile",
     time_fraction: float = 1.0,
     min_window_samples: int = 5,
     min_derivative_samples: int = 5,
@@ -231,10 +233,17 @@ def process_lagrangian_metadynamics(
     if traj.cv.size == 0:
         raise ValueError("No metadynamics samples remain after filtering.")
 
-    hist_edges = _bin_edges_from_interval(
-        interval, bin_width=histogram_bin_width, n_bins=n_histogram_windows
-    )
-    hist_bin_width = float(np.mean(np.diff(hist_edges)))
+    if histogram_binning == "uniform":
+        hist_edges = _bin_edges_from_interval(
+            interval, bin_width=histogram_bin_width, n_bins=n_histogram_windows
+        )
+    elif histogram_binning == "quantile":
+        if histogram_bin_width is not None:
+            raise ValueError("histogram_bin_width cannot be used with quantile binning.")
+        z_values = traj.meta_cv[(traj.meta_cv >= interval[0]) & (traj.meta_cv <= interval[1])]
+        hist_edges = _quantile_bin_edges(z_values, interval, n_bins=n_histogram_windows)
+    else:
+        raise ValueError("histogram_binning must be 'uniform' or 'quantile'.")
     centers = 0.5 * (hist_edges[:-1] + hist_edges[1:])
 
     histogram_counts: list[torch.Tensor] = []
@@ -247,7 +256,7 @@ def process_lagrangian_metadynamics(
     for index, center in enumerate(centers):
         left, right = hist_edges[index], hist_edges[index + 1]
         mask = (traj.meta_cv >= left) & (traj.meta_cv < right)
-        radius = histogram_radius_bins * hist_bin_width
+        radius = histogram_radius_bins * float(right - left)
         mask &= np.abs(traj.cv - center) <= radius
         cv_window = traj.cv[mask]
         if cv_window.size < min_window_samples:
@@ -282,9 +291,16 @@ def process_lagrangian_metadynamics(
     if not histogram_counts:
         raise ValueError("No pseudo-window histograms passed the sample filters.")
 
-    derivative_edges = _bin_edges_from_interval(
-        interval, bin_width=derivative_bin_width, n_bins=n_derivative_bins
-    )
+    if derivative_binning == "uniform":
+        derivative_edges = _bin_edges_from_interval(
+            interval, bin_width=derivative_bin_width, n_bins=n_derivative_bins
+        )
+    elif derivative_binning == "quantile":
+        if derivative_bin_width is not None:
+            raise ValueError("derivative_bin_width cannot be used with quantile binning.")
+        derivative_edges = _quantile_bin_edges(traj.cv, interval, n_bins=n_derivative_bins)
+    else:
+        raise ValueError("derivative_binning must be 'uniform' or 'quantile'.")
     derivative_centers = 0.5 * (derivative_edges[:-1] + derivative_edges[1:])
     restraint_derivative = force_constant * (traj.meta_cv - traj.cv)
 

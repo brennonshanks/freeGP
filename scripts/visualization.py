@@ -20,6 +20,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
+from matplotlib.patches import Patch
 from matplotlib.ticker import FixedFormatter, FixedLocator, FormatStrFormatter, NullFormatter
 from matplotlib import rc
 import numpy as np
@@ -212,7 +213,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--metadynamics-results-dir",
         type=Path,
-        default=Path("results/metadynamics_ressults"),
+        default=Path("results/metadynamics"),
         help="Directory containing metadynamics convergence_data.csv.",
     )
     return parser
@@ -2063,6 +2064,73 @@ def _metadynamics_pmf_metrics(
     return rmse, avg_sd
 
 
+def _load_metadynamics_method_metrics(
+    metad_dir: Path,
+    *,
+    fallback_rows: list[dict[str, float]],
+) -> dict[str, tuple[np.ndarray, np.ndarray, np.ndarray]]:
+    metrics_path = metad_dir / "trajectory_length_metrics.csv"
+    if not metrics_path.exists():
+        rows = sorted(fallback_rows, key=lambda row: row["trajectory_fraction"])
+        return {
+            "hierarchical": (
+                np.array([100.0 * row["trajectory_fraction"] for row in rows], dtype=float),
+                np.array([row["rmse"] for row in rows], dtype=float),
+                np.array([row["std"] for row in rows], dtype=float),
+            )
+        }
+
+    rows = _read_csv_rows(metrics_path)
+    raw: dict[str, list[tuple[float, float, float]]] = {}
+    for row in rows:
+        method = row.get("method", "")
+        if method not in {"hmc_gp", "map_gp", "fixed_gp"}:
+            continue
+        try:
+            x = 100.0 * float(row["fraction"])
+            rmse = float(row["rmse_kj_mol"])
+            std = float(row["avg_std_kj_mol"])
+        except (KeyError, TypeError, ValueError):
+            continue
+        raw.setdefault(method, []).append((x, rmse, std))
+
+    out: dict[str, list[tuple[float, float, float]]] = {}
+    if raw.get("hmc_gp"):
+        out["hierarchical"] = raw["hmc_gp"]
+    elif raw.get("map_gp"):
+        out["hierarchical"] = raw["map_gp"]
+    if raw.get("fixed_gp"):
+        out["fixed"] = raw["fixed_gp"]
+    packed: dict[str, tuple[np.ndarray, np.ndarray, np.ndarray]] = {}
+    for method, values in out.items():
+        values = sorted(values)
+        packed[method] = (
+            np.array([value[0] for value in values], dtype=float),
+            np.array([value[1] for value in values], dtype=float),
+            np.array([value[2] for value in values], dtype=float),
+        )
+    return packed
+
+
+def _metadynamics_pmf_path(metad_dir: Path, fraction: float, method: str) -> Path | None:
+    candidates = []
+    if method == "hierarchical":
+        candidates.extend([
+            metad_dir / f"{fraction:.3f}_hmc_gp_pmf.csv",
+            metad_dir / f"{fraction:.3f}_map_gp_pmf.csv",
+            metad_dir / f"{fraction:.2f}metadynamics_gprhd_pmf.csv",
+        ])
+    elif method == "fixed":
+        candidates.extend([
+            metad_dir / f"{fraction:.3f}_fixed_gp_pmf.csv",
+            metad_dir / f"{fraction:.2f}metadynamics_gprhd_pmf_fixed.csv",
+        ])
+    for path in candidates:
+        if path.exists():
+            return path
+    return None
+
+
 def plot_metadynamics_convergence(args: argparse.Namespace) -> None:
     """Plot metadynamics convergence metrics and representative posterior predictives."""
     metad_dir = args.metadynamics_results_dir.resolve()
@@ -2074,99 +2142,125 @@ def plot_metadynamics_convergence(args: argparse.Namespace) -> None:
     if not selected:
         raise ValueError("No metadynamics convergence rows found.")
 
-    x_percent = np.array([100.0 * row["trajectory_fraction"] for row in selected], dtype=float)
-    rmse = np.array([row["rmse"] for row in selected], dtype=float)
-    std = np.array([row["std"] for row in selected], dtype=float)
     ref_x, ref_f = _load_metadynamics_reference(metad_dir / "fes.dat.csv")
     ref_tail = float(ref_f[-1])
+    method_metrics = _load_metadynamics_method_metrics(metad_dir, fallback_rows=selected)
+    hierarchical_metrics = method_metrics.get("hierarchical")
+    if hierarchical_metrics is None:
+        raise ValueError("No hierarchical/metadynamics GP metrics found.")
+    x_percent, rmse, std = hierarchical_metrics
+    fixed_metrics = method_metrics.get("fixed")
+    predictive_cmap = plt.get_cmap("viridis")
     predictive_specs = [
-        (0.01, "1%", "#0072B2"),
-        (0.25, "25%", "#E69F00"),
-        (1.00, "100%", "#009E73"),
+        (0.01, "1%", predictive_cmap(0.12)),
+        (0.25, "25%", predictive_cmap(0.55)),
+        (1.00, "100%", predictive_cmap(0.88)),
     ]
-    fixed_metric_rows = []
-    for fraction, _, _ in predictive_specs:
-        fixed_path = metad_dir / f"{fraction:.2f}metadynamics_gprhd_pmf_fixed.csv"
-        if fixed_path.exists():
-            fixed_rmse, fixed_std = _metadynamics_pmf_metrics(fixed_path, ref_x, ref_f)
-            fixed_metric_rows.append((100.0 * fraction, fixed_rmse, fixed_std))
-    fixed_metric_rows = sorted(fixed_metric_rows)
-    fixed_x = np.array([row[0] for row in fixed_metric_rows], dtype=float)
-    fixed_rmse = np.array([row[1] for row in fixed_metric_rows], dtype=float)
-    fixed_std = np.array([row[2] for row in fixed_metric_rows], dtype=float)
+    if fixed_metrics is None:
+        fixed_x = fixed_rmse = fixed_std = np.array([], dtype=float)
+    else:
+        fixed_x, fixed_rmse, fixed_std = fixed_metrics
 
-    fig, axes = plt.subplots(
-        4,
-        1,
-        figsize=(JCTC_SINGLE_COLUMN_WIDTH_IN, 4.85),
-        sharex=False,
+    fig = plt.figure(
+        figsize=(JCTC_SINGLE_COLUMN_WIDTH_IN, 4.75),
         constrained_layout=False,
-        gridspec_kw={"height_ratios": [1.3, 1.3, 0.85, 0.85]},
     )
+    gs = fig.add_gridspec(
+        5,
+        1,
+        height_ratios=[1.28, 1.28, 0.22, 0.82, 0.82],
+        hspace=0.15,
+    )
+    axes = [fig.add_subplot(gs[index]) for index in (0, 1, 3, 4)]
 
     predictive_panels = [
-        (axes[0], "metadynamics_gprhd_pmf.csv", "(a) Hierarchical GP"),
-        (axes[1], "metadynamics_gprhd_pmf_fixed.csv", "(b) Fixed GP"),
+        (axes[0], "fixed", "Fixed GP"),
+        (axes[1], "hierarchical", "Hierarchical GP"),
     ]
-    for ax, suffix, panel_label in predictive_panels:
-        ax.plot(ref_x, ref_f, color="0.15", linewidth=0.8, label="Reference", zorder=5)
+    for ax, method_key, panel_label in predictive_panels:
+        ax.plot(
+            ref_x,
+            ref_f,
+            color="0.15",
+            linewidth=0.8,
+            linestyle=(0, (3, 2)),
+            label="Reference",
+            zorder=5,
+        )
         for fraction, label, color in predictive_specs:
-            path = metad_dir / f"{fraction:.2f}{suffix}"
-            if not path.exists():
+            path = _metadynamics_pmf_path(metad_dir, fraction, method_key)
+            if path is None:
                 continue
             px, mean, pstdev = _load_metadynamics_pmf(path)
             mean = mean + (ref_tail - float(mean[-1]))
-            lower = mean - 2.0 * pstdev
-            upper = mean + 2.0 * pstdev
-            ax.plot(px, mean, color=color, linewidth=0.75, label=label)
-            ax.fill_between(px, lower, upper, color=color, alpha=0.14, linewidth=0.0)
+            lower = mean - pstdev
+            upper = mean + pstdev
+            ax.plot(px, mean, color=color, linewidth=0.8, label=label)
+            ax.fill_between(px, lower, upper, color=color, alpha=0.13, linewidth=0.0)
+        ax.set_ylabel("Free Energy [kJ/mol]", labelpad=2)
+        ax.set_ylim(-30.0, 30.0)
+        ax.set_xlim(float(np.nanmin(ref_x)), float(np.nanmax(ref_x)))
         ax.text(
-            0.03,
-            0.88,
+            0.97,
+            0.91,
             panel_label,
             transform=ax.transAxes,
-            ha="left",
+            ha="right",
             va="top",
             fontsize=PAPER_TITLE_SIZE,
         )
-        ax.set_ylabel("Free Energy [kJ/mol]", labelpad=2)
-        ax.set_ylim(-35.0, 45.0)
         ax.tick_params(axis="both", which="both", direction="in", labelsize=PAPER_TICK_SIZE)
         ax.grid(False)
         for spine in ax.spines.values():
             spine.set_linewidth(PAPER_LINE_WIDTH)
     axes[1].set_xlabel("Position [nm]", labelpad=2)
     axes[1].xaxis.set_label_coords(0.5, -0.18)
+    axes[0].tick_params(labelbottom=False)
+    handles, labels = axes[0].get_legend_handles_labels()
+    handles.extend([
+        plt.Line2D([0], [0], color="0.25", linewidth=0.8),
+        Patch(facecolor="0.5", alpha=0.18, edgecolor="none"),
+    ])
+    labels.extend(["Mean", r"$\pm 1\sigma$"])
     axes[0].legend(
+        handles,
+        labels,
         loc="lower right",
-        ncol=2,
+        ncol=3,
         frameon=False,
         fontsize=PAPER_TICK_SIZE,
         handlelength=1.1,
-        columnspacing=0.7,
+        columnspacing=0.55,
         handletextpad=0.35,
         borderpad=0.1,
         labelspacing=0.2,
     )
 
     series = [
-        (axes[2], rmse, fixed_rmse, "RMSE [kJ/mol]", "#0072B2", "(c)"),
-        (axes[3], std, fixed_std, "Avg. SD [kJ/mol]", "#E69F00", "(d)"),
+        (axes[2], rmse, fixed_rmse, "RMSE [kJ/mol]", "#0072B2"),
+        (axes[3], std, fixed_std, "Avg. SD [kJ/mol]", "#0072B2"),
     ]
-    for ax, values, fixed_values, ylabel, color, panel_label in series:
-        ax.plot(x_percent, values, color=color, marker="o", markersize=2.2, linewidth=0.9, label="Hierarchical GP")
+    for ax, values, fixed_values, ylabel, color in series:
         if len(fixed_x):
             ax.plot(
                 fixed_x,
                 fixed_values,
-                color="0.25",
+                color="#CC79A7",
                 marker="s",
-                markersize=2.1,
-                linewidth=0.8,
+                markersize=2.25,
+                linewidth=1.05,
                 linestyle="--",
                 label="Fixed GP",
             )
-        ax.text(0.03, 0.88, panel_label, transform=ax.transAxes, ha="left", va="top", fontsize=PAPER_TITLE_SIZE)
+        ax.plot(
+            x_percent,
+            values,
+            color=color,
+            marker="o",
+            markersize=2.4,
+            linewidth=1.05,
+            label="Hierarchical GP",
+        )
         ax.set_ylabel(ylabel, labelpad=2)
         ax.tick_params(axis="both", which="both", direction="in", labelsize=PAPER_TICK_SIZE)
         ax.grid(False)
@@ -2196,7 +2290,7 @@ def plot_metadynamics_convergence(args: argparse.Namespace) -> None:
     )
 
     fig.align_ylabels(axes)
-    fig.subplots_adjust(left=0.19, right=0.985, bottom=0.085, top=0.985, hspace=0.48)
+    fig.subplots_adjust(left=0.145, right=0.99, bottom=0.065, top=0.99)
 
     summary_path = output_dir / "metadynamics_convergence_summary.csv"
     with summary_path.open("w", newline="") as handle:
