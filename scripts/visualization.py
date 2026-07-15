@@ -2014,6 +2014,27 @@ def _metadynamics_output_dir(args: argparse.Namespace, module_name: str) -> Path
 
 
 def _load_metadynamics_convergence(path: Path) -> list[dict[str, float]]:
+    if not path.exists():
+        metrics_path = path.with_name("trajectory_length_metrics.csv")
+        if metrics_path.exists():
+            rows = _read_csv_rows(metrics_path)
+            out = []
+            for row in rows:
+                if row.get("method") not in {"hmc_gp", "map_gp"}:
+                    continue
+                try:
+                    out.append(
+                        {
+                            "trajectory_fraction": float(row["fraction"]),
+                            "rmse": float(row["rmse_kj_mol"]),
+                            "std": float(row["avg_std_kj_mol"]),
+                            "correlation": float("nan"),
+                        }
+                    )
+                except (KeyError, TypeError, ValueError):
+                    continue
+            if out:
+                return out
     rows = _read_csv_rows(path)
     if not rows:
         raise ValueError(f"No rows found in {path}")
@@ -2142,7 +2163,12 @@ def plot_metadynamics_convergence(args: argparse.Namespace) -> None:
     if not selected:
         raise ValueError("No metadynamics convergence rows found.")
 
-    ref_x, ref_f = _load_metadynamics_reference(metad_dir / "fes.dat.csv")
+    reference_path = metad_dir / "fes.dat.csv"
+    if not reference_path.exists():
+        fallback_reference = Path("results/metadynamics/fes.dat.csv").resolve()
+        if fallback_reference.exists():
+            reference_path = fallback_reference
+    ref_x, ref_f = _load_metadynamics_reference(reference_path)
     ref_tail = float(ref_f[-1])
     method_metrics = _load_metadynamics_method_metrics(metad_dir, fallback_rows=selected)
     hierarchical_metrics = method_metrics.get("hierarchical")
