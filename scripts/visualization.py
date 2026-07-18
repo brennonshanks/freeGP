@@ -1221,7 +1221,7 @@ def _draw_noise_corner(
                 )
                 ax.set_ylim(0.0, max_density * 1.12 if max_density > 0.0 else 1.0)
                 ax.set_yticks([])
-                if row == 0:
+                if row == 0 and origin_in is None:
                     ax.set_title(title, pad=5, fontsize=PAPER_TITLE_SIZE)
             else:
                 x_values = samples[x_parameter]
@@ -1297,6 +1297,18 @@ def _draw_noise_corner(
 
             ax.tick_params(axis="both", which="both", direction="in", labelsize=PAPER_TICK_SIZE)
 
+    if origin_in is not None:
+        block_width_in = n_params * cell_size_in + (n_params - 1) * gap_in
+        block_top_in = bottom_in + block_width_in
+        fig.text(
+            (left_in + 0.5 * block_width_in) / fig_width,
+            (block_top_in + 0.08) / fig_height,
+            title,
+            ha="center",
+            va="bottom",
+            fontsize=PAPER_TITLE_SIZE,
+        )
+
 
 def _draw_noise_predictive(
     ax,
@@ -1307,7 +1319,7 @@ def _draw_noise_predictive(
     wham_x: np.ndarray,
     wham_f: np.ndarray,
 ) -> None:
-    ax.plot(wham_x, wham_f, color="black", linewidth=0.85, label="WHAM")
+    ax.plot(wham_x, wham_f, color="black", linestyle=(0, (3, 2)), linewidth=0.85, label="WHAM")
     pred = _noise_predictive(checkpoint)
     reference = np.interp(pred["x"], wham_x, wham_f)
     mean = _align_to_reference_tail(pred["mean"], reference)
@@ -1563,6 +1575,16 @@ def plot_lengthscale_prior_sensitivity(args: argparse.Namespace) -> None:
     data = np.load(data_path)
     summary = json.loads(summary_path.read_text())
     cases = summary["lengthscale_prior_cases"]
+    for case in cases:
+        case["label"] = (
+            case["label"]
+            .replace(r"\mathregular{N}", r"\mathcal{N}")
+            .replace(r"\mathrm{N}", r"\mathcal{N}")
+            .replace(r"\operatorname{N}", r"\mathcal{N}")
+            .replace(r"\rm N", r"\mathcal{N}")
+            .replace(r"\dot", r"\mathcal{N}")
+            .replace(r"(\log 4, 1)", r"(\log 4, 1^2)")
+        )
     log_bounds = tuple(float(value) for value in data["flat_log_ell_bounds"])
     ell_grid = np.asarray(data["ell_grid"], dtype=float)
     ell_kde_grid = np.asarray(data["ell_kde_grid"], dtype=float)
@@ -1671,6 +1693,7 @@ def plot_lengthscale_prior_sensitivity(args: argparse.Namespace) -> None:
             wham_x,
             wham_f,
             color="black",
+            linestyle=(0, (3, 2)),
             linewidth=0.8,
             label="WHAM",
         )
@@ -1822,14 +1845,15 @@ def plot_noise_comparison(args: argparse.Namespace) -> None:
     wham_x, wham_f = _load_wham_reference(wham_path)
 
     fig_width = JCTC_DOUBLE_COLUMN_WIDTH_IN
-    fig_height = 3.78
+    fig_height = 4.22
     fig = plt.figure(figsize=(fig_width, fig_height), constrained_layout=False)
-    corner_cell_in = 0.70
-    corner_gap_in = 0.055
-    corner_top_in = 3.35
-    left_column_in = 2.68
-    fixed_left_in = 0.35 + 0.5 * (left_column_in - (2 * corner_cell_in + corner_gap_in))
-    inferred_left_in = 3.72
+    corner_cell_in = 0.86
+    corner_gap_in = 0.05
+    corner_top_in = 3.95
+    fixed_block_width_in = 2 * corner_cell_in + corner_gap_in
+    left_column_in = fixed_block_width_in
+    fixed_left_in = 0.58
+    inferred_left_in = 3.18
     fixed_bottom_in = corner_top_in - (2 * corner_cell_in + corner_gap_in)
     inferred_bottom_in = corner_top_in - (4 * corner_cell_in + 3 * corner_gap_in)
     left_bottom_in = inferred_bottom_in
@@ -1844,10 +1868,10 @@ def plot_noise_comparison(args: argparse.Namespace) -> None:
         cell_size_in=corner_cell_in,
         gap_in=corner_gap_in,
     )
-    predictive_left_in = 0.62
-    predictive_width_in = left_column_in - 0.34
-    predictive_height_in = 0.51
-    predictive_gap_in = 0.05
+    predictive_left_in = fixed_left_in
+    predictive_width_in = fixed_block_width_in
+    predictive_height_in = 0.55
+    predictive_gap_in = 0.04
     inferred_pred_ax = fig.add_axes([
         predictive_left_in / fig_width,
         left_bottom_in / fig_height,
@@ -1860,7 +1884,15 @@ def plot_noise_comparison(args: argparse.Namespace) -> None:
         predictive_width_in / fig_width,
         predictive_height_in / fig_height,
     ])
-    fixed_pred_ax.set_title("(c) Posterior predictive", pad=5, fontsize=PAPER_TITLE_SIZE)
+    predictive_top_in = left_bottom_in + 2 * predictive_height_in + predictive_gap_in
+    fig.text(
+        (predictive_left_in + 0.5 * predictive_width_in) / fig_width,
+        (predictive_top_in + 0.08) / fig_height,
+        "(c) Posterior predictive",
+        ha="center",
+        va="bottom",
+        fontsize=PAPER_TITLE_SIZE,
+    )
     _draw_noise_predictive(
         fixed_pred_ax,
         checkpoint=fixed_checkpoint,
@@ -2057,13 +2089,13 @@ def _load_metadynamics_convergence(path: Path) -> list[dict[str, float]]:
 
 
 def _load_metadynamics_reference(path: Path) -> tuple[np.ndarray, np.ndarray]:
-    data = np.loadtxt(path)
+    data = np.loadtxt(path, comments=("#", "@", ";"))
     x = data[:, 0]
     free_energy = data[:, 1]
-    mask = (x > 0.0) & (x < 4.5)
+    mask = (x >= 0.0) & (x <= 4.5)
     x = x[mask]
     free_energy = free_energy[mask]
-    free_energy = free_energy - np.nanmax(free_energy)
+    free_energy = free_energy - free_energy[-1]
     return x, free_energy
 
 
@@ -2168,8 +2200,11 @@ def plot_metadynamics_convergence(args: argparse.Namespace) -> None:
         fallback_reference = Path("results/metadynamics/fes.dat.csv").resolve()
         if fallback_reference.exists():
             reference_path = fallback_reference
+    if not reference_path.exists():
+        fallback_reference = Path("/home/bshanks/freeGP-datasets/membranes/zuzka_metadynamics/metad/fes.dat")
+        if fallback_reference.exists():
+            reference_path = fallback_reference
     ref_x, ref_f = _load_metadynamics_reference(reference_path)
-    ref_tail = float(ref_f[-1])
     method_metrics = _load_metadynamics_method_metrics(metad_dir, fallback_rows=selected)
     hierarchical_metrics = method_metrics.get("hierarchical")
     if hierarchical_metrics is None:
@@ -2200,10 +2235,10 @@ def plot_metadynamics_convergence(args: argparse.Namespace) -> None:
     axes = [fig.add_subplot(gs[index]) for index in (0, 1, 3, 4)]
 
     predictive_panels = [
-        (axes[0], "fixed", "Fixed GP"),
-        (axes[1], "hierarchical", "Hierarchical GP"),
+        (axes[0], "fixed", "(a)", "Fixed GP"),
+        (axes[1], "hierarchical", "(b)", "Hierarchical GP (LOO)"),
     ]
-    for ax, method_key, panel_label in predictive_panels:
+    for ax, method_key, panel_label, method_label in predictive_panels:
         ax.plot(
             ref_x,
             ref_f,
@@ -2218,20 +2253,20 @@ def plot_metadynamics_convergence(args: argparse.Namespace) -> None:
             if path is None:
                 continue
             px, mean, pstdev = _load_metadynamics_pmf(path)
-            mean = mean + (ref_tail - float(mean[-1]))
+            mean = mean + (float(ref_f[-1]) - float(mean[-1]))
             lower = mean - pstdev
             upper = mean + pstdev
             ax.plot(px, mean, color=color, linewidth=0.8, label=label)
             ax.fill_between(px, lower, upper, color=color, alpha=0.13, linewidth=0.0)
         ax.set_ylabel("Free Energy [kJ/mol]", labelpad=2)
-        ax.set_ylim(-30.0, 30.0)
+        ax.set_ylim(-25.0, 35.0)
         ax.set_xlim(float(np.nanmin(ref_x)), float(np.nanmax(ref_x)))
         ax.text(
-            0.97,
-            0.91,
-            panel_label,
+            0.03,
+            0.93,
+            f"{panel_label} {method_label}",
             transform=ax.transAxes,
-            ha="right",
+            ha="left",
             va="top",
             fontsize=PAPER_TITLE_SIZE,
         )
@@ -2263,10 +2298,10 @@ def plot_metadynamics_convergence(args: argparse.Namespace) -> None:
     )
 
     series = [
-        (axes[2], rmse, fixed_rmse, "RMSE [kJ/mol]", "#0072B2"),
-        (axes[3], std, fixed_std, "Avg. SD [kJ/mol]", "#0072B2"),
+        (axes[2], rmse, fixed_rmse, "RMSE [kJ/mol]", "#0072B2", "(c)"),
+        (axes[3], std, fixed_std, "Avg. SD [kJ/mol]", "#0072B2", ""),
     ]
-    for ax, values, fixed_values, ylabel, color in series:
+    for ax, values, fixed_values, ylabel, color, panel_label in series:
         if len(fixed_x):
             ax.plot(
                 fixed_x,
@@ -2285,8 +2320,18 @@ def plot_metadynamics_convergence(args: argparse.Namespace) -> None:
             marker="o",
             markersize=2.4,
             linewidth=1.05,
-            label="Hierarchical GP",
+            label="Hierarchical GP (LOO)",
         )
+        if panel_label:
+            ax.text(
+                0.03,
+                0.93,
+                panel_label,
+                transform=ax.transAxes,
+                ha="left",
+                va="top",
+                fontsize=PAPER_TITLE_SIZE,
+            )
         ax.set_ylabel(ylabel, labelpad=2)
         ax.tick_params(axis="both", which="both", direction="in", labelsize=PAPER_TICK_SIZE)
         ax.grid(False)

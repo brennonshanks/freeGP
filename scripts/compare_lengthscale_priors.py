@@ -65,7 +65,7 @@ PRIOR_CASES = (
     PriorCase("flat", r"Flat in $\log \ell$", math.log(0.5), None, "tab:gray"),
     PriorCase(
         "current",
-        r"Default: $\log \ell \sim \mathcal{N}(\log 4, 1)$",
+        r"Default: $\log \ell \sim \mathcal{N}(\log 4, 1^2)$",
         math.log(4.0),
         1.0,
         "tab:blue",
