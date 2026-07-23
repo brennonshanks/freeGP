@@ -1326,8 +1326,8 @@ def _draw_noise_predictive(
     std = pred["std"]
     ax.fill_between(
         pred["x"],
-        mean - 2.0 * std,
-        mean + 2.0 * std,
+        mean - std,
+        mean + std,
         color=color,
         alpha=0.12,
         linewidth=0.0,
@@ -1622,8 +1622,8 @@ def plot_lengthscale_prior_sensitivity(args: argparse.Namespace) -> None:
         )
         ax_pmf.fill_between(
             x,
-            mean - 2.0 * std,
-            mean + 2.0 * std,
+            mean - std,
+            mean + std,
             color=color,
             alpha=band_alpha,
             linewidth=0.0,
