@@ -31,7 +31,7 @@ OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 MPLCONFIGDIR=/tmp/mpl
 configs/                 TOML configs for ablation and single-run studies
 docs/                    SI method notes and draft text
 reference_data/          WHAM/UI reference data bundled with the repo
-results/                 Generated analysis outputs and paper figures
+results/                 Generated analysis outputs (ignored by Git)
 scripts/                 Paper-analysis scripts and visualization entry point
 src/freegp/              Installable Python package
 tutorials/               Small synthetic examples for new users
@@ -264,12 +264,13 @@ This compares length-scale priors while keeping the other hyperpriors fixed.
 
 ## Paper Figures
 
-The repository includes the final lightweight figure outputs and summary data.
-Regenerating panels that depend on saved model checkpoints requires the full
-`v0.1.0` paper snapshot archived at
+Generated paper figures and intermediate calculation outputs are not included
+in the lightweight source repository. The complete `v0.1.0` paper snapshot is
+archived at
 [10.5281/zenodo.22145218](https://doi.org/10.5281/zenodo.22145218).
 
-Figure groups backed by the retained summaries can be regenerated with:
+After generating the required local results, figure groups can be rendered
+with commands such as:
 
 ```bash
 python scripts/visualization.py --figures main_ablation
@@ -283,10 +284,7 @@ Figures are saved as vector outputs under `results/**/paper_figures/`.
 
 - Prefer running package entry points through `python -m freegp...` or the
   installed console scripts.
-- Large checkpoints and per-cell intermediate artifacts are excluded from Git.
-  The complete `v0.1.0` paper snapshot is archived at
-  [10.5281/zenodo.22145218](https://doi.org/10.5281/zenodo.22145218).
-- Keep large generated artifacts in `results/`; do not add new analysis logic
-  inside result folders unless it is temporary.
+- Generated results and checkpoints are excluded from Git. Keep analysis logic
+  in `src/` or `scripts/`, not inside generated result directories.
 - Use `scripts/visualization.py` for manuscript figure formatting so fonts,
   sizes, labels, and output paths stay consistent.
