@@ -13,5 +13,7 @@ dist/
 
 .DS_Store
 
-results/**/checkpoint*
+results/**/artifacts/
+results/**/*checkpoint*/
+results/**/*.pt
 *.log

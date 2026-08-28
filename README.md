@@ -264,19 +264,17 @@ This compares length-scale priors while keeping the other hyperpriors fixed.
 
 ## Paper Figures
 
-Paper-ready figures are generated from saved result summaries with:
+The repository includes the final lightweight figure outputs and summary data.
+Regenerating panels that depend on saved model checkpoints requires the full
+`v0.1.0` paper snapshot archived at
+[10.5281/zenodo.22145218](https://doi.org/10.5281/zenodo.22145218).
 
-```bash
-python scripts/visualization.py --figures all
-```
-
-To regenerate only one group:
+Figure groups backed by the retained summaries can be regenerated with:
 
 ```bash
 python scripts/visualization.py --figures main_ablation
 python scripts/visualization.py --figures metadynamics_convergence
 python scripts/visualization.py --figures lengthscale_prior_sensitivity
-python scripts/visualization.py --figures noise_comparison
 ```
 
 Figures are saved as vector outputs under `results/**/paper_figures/`.
@@ -285,6 +283,9 @@ Figures are saved as vector outputs under `results/**/paper_figures/`.
 
 - Prefer running package entry points through `python -m freegp...` or the
   installed console scripts.
+- Large checkpoints and per-cell intermediate artifacts are excluded from Git.
+  The complete `v0.1.0` paper snapshot is archived at
+  [10.5281/zenodo.22145218](https://doi.org/10.5281/zenodo.22145218).
 - Keep large generated artifacts in `results/`; do not add new analysis logic
   inside result folders unless it is temporary.
 - Use `scripts/visualization.py` for manuscript figure formatting so fonts,
