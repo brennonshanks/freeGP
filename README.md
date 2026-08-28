@@ -1,5 +1,7 @@
 # freeGP
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22145218.svg)](https://doi.org/10.5281/zenodo.22145218)
+
 Gaussian-process tools for reconstructing one-dimensional free-energy surfaces
 from enhanced-sampling data. The code supports umbrella-sampling workflows,
 metadynamics trajectory-length comparisons, fixed-hyperparameter GP baselines,
