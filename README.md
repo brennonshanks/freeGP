@@ -53,8 +53,12 @@ src/freegp/studies/ablation.py Ablation-grid study logic
 
 ## Data
 
-Simulation data are kept outside the repo. Point scripts to a dataset directly
-with `--dataset-root` / `--data-root`, or set:
+Simulation data are kept outside the repo. The datasets used for the
+accompanying paper are archived on Zenodo:
+[10.5281/zenodo.21358802](https://doi.org/10.5281/zenodo.21358802).
+
+Point scripts to a dataset directly with `--dataset-root` / `--data-root`, or
+set:
 
 ```bash
 export FREEGP_DATASETS=/path/to/freeGP-datasets
