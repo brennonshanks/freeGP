@@ -2,7 +2,7 @@ cff-version: 1.2.0
 message: "If you use this software, please cite it using the metadata below."
 type: software
 title: "freeGP: Uncertainty Quantification for Free Energy Calculations by Generalized Hierarchical Bayesian Inference"
-version: 0.1.0
+version: 0.2.0
 license: MIT
 abstract: >-
   Gaussian-process tools for uncertainty-aware reconstruction of
