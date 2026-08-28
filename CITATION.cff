@@ -1,0 +1,41 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using the metadata below."
+type: software
+title: "freeGP: Uncertainty Quantification for Free Energy Calculations by Generalized Hierarchical Bayesian Inference"
+version: 0.1.0
+license: MIT
+abstract: >-
+  Gaussian-process tools for uncertainty-aware reconstruction of
+  one-dimensional free-energy surfaces from enhanced-sampling data.
+authors:
+  - given-names: Martin
+    family-names: Skorna
+    orcid: "https://orcid.org/0009-0000-2059-7877"
+    affiliation: "Institute of Organic Chemistry and Biochemistry of the Czech Academy of Sciences, Prague, Czech Republic"
+  - given-names: Adam
+    family-names: Gottfried
+    orcid: "https://orcid.org/0009-0002-3132-166X"
+    affiliation: "Institute of Organic Chemistry and Biochemistry of the Czech Academy of Sciences, Prague, Czech Republic"
+  - given-names: Zuzana
+    family-names: Janackova
+    orcid: "https://orcid.org/0009-0000-5190-354X"
+    affiliation: "Institute of Organic Chemistry and Biochemistry of the Czech Academy of Sciences, Prague, Czech Republic"
+  - given-names: Katarina
+    family-names: Baxova
+    orcid: "https://orcid.org/0009-0001-5705-5315"
+    affiliation: "Institute of Organic Chemistry and Biochemistry of the Czech Academy of Sciences, Prague, Czech Republic"
+  - given-names: Pavel
+    family-names: Jungwirth
+    orcid: "https://orcid.org/0000-0002-6892-3288"
+    affiliation: "Institute of Organic Chemistry and Biochemistry of the Czech Academy of Sciences, Prague, Czech Republic"
+  - given-names: Brennon L.
+    family-names: Shanks
+    orcid: "https://orcid.org/0000-0002-3453-7258"
+    affiliation: "Institute of Organic Chemistry and Biochemistry of the Czech Academy of Sciences, Prague, Czech Republic"
+keywords:
+  - Gaussian processes
+  - free-energy calculations
+  - uncertainty quantification
+  - Bayesian inference
+  - enhanced sampling
+repository-code: "https://github.com/brennonshanks/freeGP"
