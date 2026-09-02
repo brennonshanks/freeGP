@@ -1,0 +1,265 @@
+Warmup [1]:   0%|          | 0/800 [00:00, ?it/s]
+Warmup [2]:   0%|          | 0/800 [00:00, ?it/s][AWarmup [1]:   0%|          | 1/800 [00:00,  1.06it/s, step size=3.62e-01, acc. prob=0.500]
+Warmup [2]:   0%|          | 1/800 [00:00,  1.06it/s, step size=4.90e-01, acc. prob=0.667][AWarmup [1]:   1%|▏         | 10/800 [00:01, 12.23it/s, step size=1.26e-02, acc. prob=0.677]
+Warmup [2]:   2%|▏         | 17/800 [00:01, 20.91it/s, step size=3.27e-02, acc. prob=0.743][A
+Warmup [2]:   3%|▎         | 24/800 [00:01, 24.37it/s, step size=9.66e-03, acc. prob=0.740][AWarmup [1]:   2%|▏         | 15/800 [00:01,  8.91it/s, step size=9.07e-03, acc. prob=0.709]Warmup [1]:   2%|▏         | 18/800 [00:02,  7.97it/s, step size=3.43e-02, acc. prob=0.747]
+Warmup [2]:   4%|▍         | 30/800 [00:02,  9.57it/s, step size=1.48e-02, acc. prob=0.754][AWarmup [1]:   2%|▎         | 20/800 [00:02,  6.12it/s, step size=6.55e-03, acc. prob=0.724]Warmup [1]:   3%|▎         | 22/800 [00:03,  5.77it/s, step size=1.60e-02, acc. prob=0.743]Warmup [1]:   3%|▎         | 23/800 [00:03,  5.93it/s, step size=2.36e-02, acc. prob=0.751]
+Warmup [2]:   4%|▍         | 34/800 [00:03,  7.56it/s, step size=9.38e-03, acc. prob=0.753][AWarmup [1]:   3%|▎         | 24/800 [00:03,  6.11it/s, step size=1.25e-02, acc. prob=0.743]Warmup [1]:   3%|▎         | 25/800 [00:03,  5.40it/s, step size=1.42e-02, acc. prob=0.747]
+Warmup [2]:   5%|▍         | 37/800 [00:04,  7.01it/s, step size=1.74e-02, acc. prob=0.763][AWarmup [1]:   3%|▎         | 26/800 [00:04,  4.88it/s, step size=1.29e-02, acc. prob=0.747]Warmup [1]:   3%|▎         | 27/800 [00:04,  4.51it/s, step size=2.00e-02, acc. prob=0.755]
+Warmup [2]:   5%|▍         | 39/800 [00:04,  6.54it/s, step size=1.76e-02, acc. prob=0.764][AWarmup [1]:   4%|▎         | 28/800 [00:04,  4.98it/s, step size=1.48e-02, acc. prob=0.752]Warmup [1]:   4%|▎         | 29/800 [00:04,  5.42it/s, step size=2.16e-02, acc. prob=0.758]
+Warmup [2]:   5%|▌         | 41/800 [00:04,  6.65it/s, step size=3.11e-02, acc. prob=0.771][AWarmup [1]:   4%|▍         | 30/800 [00:04,  5.82it/s, step size=1.81e-02, acc. prob=0.757]Warmup [1]:   4%|▍         | 31/800 [00:05,  6.16it/s, step size=1.66e-02, acc. prob=0.757]
+Warmup [2]:   5%|▌         | 43/800 [00:05,  7.11it/s, step size=7.56e-03, acc. prob=0.759][AWarmup [1]:   4%|▍         | 32/800 [00:05,  6.43it/s, step size=1.97e-02, acc. prob=0.760]Warmup [1]:   4%|▍         | 33/800 [00:05,  6.64it/s, step size=2.26e-02, acc. prob=0.762]Warmup [1]:   4%|▍         | 34/800 [00:05,  6.75it/s, step size=1.13e-02, acc. prob=0.755]
+Warmup [2]:   6%|▌         | 45/800 [00:05,  5.80it/s, step size=1.91e-02, acc. prob=0.768][AWarmup [1]:   4%|▍         | 35/800 [00:05,  5.35it/s, step size=1.64e-02, acc. prob=0.760]
+Warmup [2]:   6%|▌         | 46/800 [00:05,  5.96it/s, step size=1.95e-02, acc. prob=0.769][AWarmup [1]:   4%|▍         | 36/800 [00:05,  5.78it/s, step size=2.81e-02, acc. prob=0.767]
+Warmup [2]:   6%|▌         | 47/800 [00:05,  6.14it/s, step size=1.69e-02, acc. prob=0.768][AWarmup [1]:   5%|▍         | 38/800 [00:06,  7.95it/s, step size=3.63e-02, acc. prob=0.771]
+Warmup [2]:   6%|▌         | 48/800 [00:06,  6.32it/s, step size=1.07e-02, acc. prob=0.765][A
+Warmup [2]:   6%|▌         | 49/800 [00:06,  5.44it/s, step size=1.67e-02, acc. prob=0.769][A
+Warmup [2]:   6%|▋         | 50/800 [00:06,  5.77it/s, step size=2.34e-02, acc. prob=0.772][A
+Warmup [2]:   6%|▋         | 51/800 [00:06,  6.08it/s, step size=6.25e-03, acc. prob=0.761][AWarmup [1]:   5%|▌         | 40/800 [00:06,  5.01it/s, step size=8.29e-03, acc. prob=0.757]Warmup [1]:   5%|▌         | 41/800 [00:06,  4.61it/s, step size=1.03e-02, acc. prob=0.760]
+Warmup [2]:   6%|▋         | 52/800 [00:07,  3.74it/s, step size=9.76e-03, acc. prob=0.766][AWarmup [1]:   5%|▌         | 42/800 [00:07,  4.32it/s, step size=1.26e-02, acc. prob=0.763]Warmup [1]:   5%|▌         | 43/800 [00:07,  4.81it/s, step size=1.68e-02, acc. prob=0.766]
+Warmup [2]:   7%|▋         | 53/800 [00:07,  3.70it/s, step size=1.56e-02, acc. prob=0.770][AWarmup [1]:   6%|▌         | 44/800 [00:07,  5.28it/s, step size=2.67e-02, acc. prob=0.771]
+Warmup [2]:   7%|▋         | 54/800 [00:07,  4.29it/s, step size=1.09e-02, acc. prob=0.767][AWarmup [1]:   6%|▌         | 46/800 [00:07,  5.48it/s, step size=1.05e-02, acc. prob=0.763]
+Warmup [2]:   7%|▋         | 55/800 [00:07,  4.07it/s, step size=1.69e-02, acc. prob=0.771][A
+Warmup [2]:   7%|▋         | 56/800 [00:08,  4.66it/s, step size=1.87e-02, acc. prob=0.772][AWarmup [1]:   6%|▌         | 47/800 [00:08,  4.88it/s, step size=1.71e-02, acc. prob=0.768]
+Warmup [2]:   7%|▋         | 57/800 [00:08,  5.20it/s, step size=2.41e-02, acc. prob=0.775][AWarmup [1]:   6%|▌         | 48/800 [00:08,  5.31it/s, step size=8.80e-03, acc. prob=0.763]
+Warmup [2]:   7%|▋         | 59/800 [00:08,  7.34it/s, step size=2.17e-02, acc. prob=0.774][A
+Warmup [2]:   8%|▊         | 60/800 [00:08,  7.31it/s, step size=1.22e-02, acc. prob=0.770][AWarmup [1]:   6%|▌         | 49/800 [00:08,  4.66it/s, step size=1.44e-02, acc. prob=0.768]Warmup [1]:   6%|▋         | 50/800 [00:08,  5.13it/s, step size=2.36e-02, acc. prob=0.772]
+Warmup [2]:   8%|▊         | 61/800 [00:08,  5.66it/s, step size=1.94e-02, acc. prob=0.774][AWarmup [1]:   6%|▋         | 51/800 [00:08,  5.59it/s, step size=3.84e-02, acc. prob=0.777]
+Warmup [2]:   8%|▊         | 62/800 [00:08,  6.02it/s, step size=2.72e-02, acc. prob=0.777][A
+Warmup [2]:   8%|▊         | 63/800 [00:08,  6.32it/s, step size=1.58e-02, acc. prob=0.773][AWarmup [1]:   7%|▋         | 53/800 [00:09,  6.19it/s, step size=1.11e-02, acc. prob=0.767]
+Warmup [2]:   8%|▊         | 64/800 [00:09,  6.43it/s, step size=2.06e-02, acc. prob=0.775][A
+Warmup [2]:   8%|▊         | 65/800 [00:09,  6.59it/s, step size=1.50e-02, acc. prob=0.773][AWarmup [1]:   7%|▋         | 54/800 [00:09,  5.18it/s, step size=1.06e-02, acc. prob=0.767]
+Warmup [2]:   8%|▊         | 66/800 [00:09,  5.32it/s, step size=2.11e-02, acc. prob=0.776][AWarmup [1]:   7%|▋         | 55/800 [00:09,  4.67it/s, step size=1.12e-02, acc. prob=0.768]
+Warmup [2]:   8%|▊         | 67/800 [00:09,  5.78it/s, step size=2.39e-02, acc. prob=0.777][A
+Warmup [2]:   8%|▊         | 68/800 [00:09,  6.16it/s, step size=1.26e-02, acc. prob=0.773][AWarmup [1]:   7%|▋         | 56/800 [00:09,  4.33it/s, step size=1.44e-02, acc. prob=0.770]Warmup [1]:   7%|▋         | 57/800 [00:10,  4.88it/s, step size=1.36e-02, acc. prob=0.770]
+Warmup [2]:   9%|▊         | 69/800 [00:10,  5.10it/s, step size=1.90e-02, acc. prob=0.776][AWarmup [1]:   7%|▋         | 58/800 [00:10,  5.37it/s, step size=1.82e-02, acc. prob=0.773]
+Warmup [2]:   9%|▉         | 70/800 [00:10,  5.60it/s, step size=1.18e-02, acc. prob=0.773][AWarmup [1]:   7%|▋         | 59/800 [00:10,  5.81it/s, step size=2.65e-02, acc. prob=0.776]
+Warmup [2]:   9%|▉         | 71/800 [00:10,  6.01it/s, step size=1.76e-02, acc. prob=0.776][A
+Warmup [2]:   9%|▉         | 72/800 [00:10,  6.33it/s, step size=1.89e-02, acc. prob=0.777][AWarmup [1]:   8%|▊         | 61/800 [00:10,  7.08it/s, step size=2.38e-02, acc. prob=0.776]
+Warmup [2]:   9%|▉         | 73/800 [00:10,  6.59it/s, step size=1.64e-02, acc. prob=0.776][A
+Warmup [2]:   9%|▉         | 74/800 [00:10,  6.78it/s, step size=2.08e-02, acc. prob=0.778][A
+Warmup [2]:   9%|▉         | 75/800 [00:10,  6.92it/s, step size=2.92e-02, acc. prob=0.780][AWarmup [1]:   8%|▊         | 63/800 [00:11,  4.82it/s, step size=9.34e-03, acc. prob=0.769]
+Warmup [2]:  10%|▉         | 77/800 [00:11,  6.36it/s, step size=1.43e-02, acc. prob=0.776][A
+Warmup [2]:  10%|▉         | 78/800 [00:11,  6.55it/s, step size=2.17e-02, acc. prob=0.779][AWarmup [1]:   8%|▊         | 64/800 [00:11,  4.49it/s, step size=1.34e-02, acc. prob=0.772]
+Warmup [2]:  10%|▉         | 79/800 [00:11,  6.72it/s, step size=1.17e-02, acc. prob=0.775][AWarmup [1]:   8%|▊         | 65/800 [00:11,  4.94it/s, step size=1.82e-02, acc. prob=0.775]Warmup [1]:   8%|▊         | 66/800 [00:11,  5.37it/s, step size=2.49e-02, acc. prob=0.777]
+Warmup [2]:  10%|█         | 80/800 [00:11,  5.45it/s, step size=1.43e-02, acc. prob=0.776][AWarmup [1]:   8%|▊         | 67/800 [00:11,  5.77it/s, step size=1.53e-02, acc. prob=0.774]
+Warmup [2]:  10%|█         | 81/800 [00:11,  5.86it/s, step size=1.54e-02, acc. prob=0.777][AWarmup [1]:   8%|▊         | 68/800 [00:11,  6.10it/s, step size=1.31e-02, acc. prob=0.773]
+Warmup [2]:  10%|█         | 82/800 [00:12,  6.20it/s, step size=2.09e-02, acc. prob=0.779][A
+Warmup [2]:  10%|█         | 83/800 [00:12,  6.47it/s, step size=1.75e-02, acc. prob=0.778][AWarmup [1]:   9%|▊         | 69/800 [00:12,  5.12it/s, step size=1.99e-02, acc. prob=0.776]
+Warmup [2]:  10%|█         | 84/800 [00:12,  6.68it/s, step size=1.75e-02, acc. prob=0.778][AWarmup [1]:   9%|▉         | 70/800 [00:12,  5.59it/s, step size=7.91e-03, acc. prob=0.770]
+Warmup [2]:  11%|█         | 85/800 [00:12,  6.84it/s, step size=2.17e-02, acc. prob=0.780][A
+Warmup [2]:  11%|█         | 86/800 [00:12,  6.96it/s, step size=2.44e-02, acc. prob=0.780][AWarmup [1]:   9%|▉         | 71/800 [00:12,  4.83it/s, step size=1.22e-02, acc. prob=0.773]
+Warmup [2]:  11%|█         | 87/800 [00:12,  7.04it/s, step size=1.53e-02, acc. prob=0.778][AWarmup [1]:   9%|▉         | 72/800 [00:12,  5.35it/s, step size=1.47e-02, acc. prob=0.775]
+Warmup [2]:  11%|█         | 88/800 [00:12,  7.10it/s, step size=2.27e-02, acc. prob=0.780][AWarmup [1]:   9%|▉         | 73/800 [00:12,  5.80it/s, step size=2.07e-02, acc. prob=0.777]
+Warmup [2]:  11%|█         | 89/800 [00:13,  7.14it/s, step size=1.77e-02, acc. prob=0.779][AWarmup [1]:   9%|▉         | 74/800 [00:13,  6.16it/s, step size=9.12e-03, acc. prob=0.772]
+Warmup [2]:  11%|█▏        | 90/800 [00:13,  7.18it/s, step size=2.54e-02, acc. prob=0.781][AWarmup [1]:   9%|▉         | 75/800 [00:13,  5.09it/s, step size=1.38e-02, acc. prob=0.775]
+Warmup [2]:  12%|█▏        | 92/800 [00:13,  8.14it/s, step size=2.13e-02, acc. prob=0.780][A
+Warmup [2]:  12%|█▏        | 94/800 [00:13,  8.69it/s, step size=9.38e-03, acc. prob=0.776][AWarmup [1]:  10%|▉         | 76/800 [00:13,  4.54it/s, step size=2.05e-02, acc. prob=0.778]Warmup [1]:  10%|▉         | 77/800 [00:13,  5.11it/s, step size=1.87e-02, acc. prob=0.777]
+Warmup [2]:  12%|█▏        | 95/800 [00:13,  6.64it/s, step size=1.22e-02, acc. prob=0.778][AWarmup [1]:  10%|▉         | 78/800 [00:13,  5.61it/s, step size=1.97e-02, acc. prob=0.778]
+Warmup [2]:  12%|█▏        | 96/800 [00:14,  6.78it/s, step size=1.54e-02, acc. prob=0.779][AWarmup [1]:  10%|▉         | 79/800 [00:14,  6.01it/s, step size=2.99e-02, acc. prob=0.781]
+Warmup [2]:  12%|█▏        | 97/800 [00:14,  6.90it/s, step size=1.44e-02, acc. prob=0.779][A
+Warmup [2]:  12%|█▏        | 98/800 [00:14,  7.00it/s, step size=1.81e-02, acc. prob=0.780][AWarmup [1]:  10%|█         | 81/800 [00:14,  5.91it/s, step size=1.16e-02, acc. prob=0.775]
+Warmup [2]:  12%|█▏        | 99/800 [00:14,  7.01it/s, step size=1.79e-01, acc. prob=0.782][A
+Warmup [2]:  13%|█▎        | 104/800 [00:14, 14.41it/s, step size=5.55e-02, acc. prob=0.771][AWarmup [1]:  10%|█         | 82/800 [00:14,  5.11it/s, step size=1.15e-02, acc. prob=0.775]
+Warmup [2]:  14%|█▎        | 108/800 [00:14, 19.07it/s, step size=1.28e-01, acc. prob=0.775][A
+Warmup [2]:  14%|█▍        | 111/800 [00:14, 18.82it/s, step size=3.70e-02, acc. prob=0.772][AWarmup [1]:  10%|█         | 83/800 [00:14,  4.61it/s, step size=1.52e-02, acc. prob=0.777]
+Warmup [2]:  14%|█▍        | 113/800 [00:15, 18.89it/s, step size=1.11e-01, acc. prob=0.776][AWarmup [1]:  10%|█         | 84/800 [00:15,  5.11it/s, step size=1.89e-02, acc. prob=0.779]
+Warmup [2]:  14%|█▍        | 116/800 [00:15, 21.34it/s, step size=3.05e-01, acc. prob=0.779][A
+Warmup [2]:  15%|█▍        | 119/800 [00:15, 23.08it/s, step size=1.15e-01, acc. prob=0.777][AWarmup [1]:  11%|█         | 85/800 [00:15,  5.57it/s, step size=1.05e-02, acc. prob=0.775]
+Warmup [2]:  16%|█▌        | 125/800 [00:15, 32.44it/s, step size=2.45e-01, acc. prob=0.780][AWarmup [1]:  11%|█         | 86/800 [00:15,  4.83it/s, step size=1.47e-02, acc. prob=0.777]Warmup [1]:  11%|█         | 87/800 [00:15,  5.34it/s, step size=1.56e-02, acc. prob=0.778]
+Warmup [2]:  16%|█▌        | 129/800 [00:15, 19.44it/s, step size=1.41e-01, acc. prob=0.779][AWarmup [1]:  11%|█         | 88/800 [00:15,  5.76it/s, step size=1.90e-02, acc. prob=0.779]
+Warmup [2]:  17%|█▋        | 134/800 [00:15, 24.66it/s, step size=2.59e-01, acc. prob=0.781][AWarmup [1]:  11%|█         | 89/800 [00:15,  6.12it/s, step size=1.64e-02, acc. prob=0.779]
+Warmup [2]:  17%|█▋        | 138/800 [00:15, 25.51it/s, step size=1.43e-01, acc. prob=0.780][AWarmup [1]:  11%|█▏        | 90/800 [00:16,  6.41it/s, step size=2.28e-02, acc. prob=0.781]
+Warmup [2]:  18%|█▊        | 145/800 [00:16, 31.19it/s, step size=6.50e-02, acc. prob=0.778][AWarmup [1]:  12%|█▏        | 92/800 [00:16,  8.61it/s, step size=1.11e-02, acc. prob=0.777]
+Warmup [2]:  19%|█▊        | 149/800 [00:16, 32.65it/s, step size=3.38e-01, acc. prob=0.781][A
+Warmup [2]:  19%|█▉        | 155/800 [00:16, 38.31it/s, step size=2.05e-01, acc. prob=0.776][AWarmup [1]:  12%|█▏        | 93/800 [00:16,  6.41it/s, step size=1.61e-02, acc. prob=0.779]
+Warmup [2]:  20%|██        | 160/800 [00:16, 34.84it/s, step size=1.83e-01, acc. prob=0.777][AWarmup [1]:  12%|█▏        | 94/800 [00:16,  6.60it/s, step size=1.73e-02, acc. prob=0.780]
+Warmup [2]:  20%|██        | 164/800 [00:16, 33.14it/s, step size=2.19e-01, acc. prob=0.777][A
+Warmup [2]:  21%|██        | 168/800 [00:16, 33.64it/s, step size=1.19e-01, acc. prob=0.777][AWarmup [1]:  12%|█▏        | 95/800 [00:16,  6.76it/s, step size=2.48e-02, acc. prob=0.782]Warmup [1]:  12%|█▏        | 96/800 [00:16,  6.88it/s, step size=8.94e-03, acc. prob=0.776]
+Warmup [2]:  22%|██▏       | 172/800 [00:16, 29.67it/s, step size=4.58e-02, acc. prob=0.775][A
+Warmup [2]:  22%|██▏       | 176/800 [00:17, 28.42it/s, step size=1.35e-01, acc. prob=0.777][AWarmup [1]:  12%|█▏        | 97/800 [00:17,  5.47it/s, step size=1.31e-02, acc. prob=0.778]
+Warmup [2]:  23%|██▎       | 182/800 [00:17, 31.59it/s, step size=4.81e-02, acc. prob=0.776][AWarmup [1]:  12%|█▏        | 98/800 [00:17,  5.89it/s, step size=1.43e-02, acc. prob=0.779]
+Warmup [2]:  23%|██▎       | 186/800 [00:17, 33.22it/s, step size=1.94e-01, acc. prob=0.779][A
+Warmup [2]:  24%|██▍       | 190/800 [00:17, 33.02it/s, step size=1.06e-01, acc. prob=0.778][A
+Warmup [2]:  24%|██▍       | 196/800 [00:17, 39.30it/s, step size=7.34e-02, acc. prob=0.777][AWarmup [1]:  12%|█▏        | 99/800 [00:17,  4.94it/s, step size=3.15e-01, acc. prob=0.781]
+Warmup [2]:  25%|██▌       | 201/800 [00:17, 41.68it/s, step size=1.55e-01, acc. prob=0.779][AWarmup [1]:  13%|█▎        | 106/800 [00:17, 15.81it/s, step size=1.27e-01, acc. prob=0.772]
+Warmup [2]:  26%|██▌       | 207/800 [00:17, 44.13it/s, step size=1.08e-01, acc. prob=0.779][AWarmup [1]:  14%|█▍        | 114/800 [00:17, 25.82it/s, step size=6.04e-02, acc. prob=0.772]
+Warmup [2]:  26%|██▋       | 212/800 [00:17, 41.49it/s, step size=1.95e-01, acc. prob=0.780][AWarmup [1]:  15%|█▍        | 119/800 [00:17, 29.98it/s, step size=1.46e-01, acc. prob=0.775]
+Warmup [2]:  27%|██▋       | 218/800 [00:18, 45.84it/s, step size=1.66e-01, acc. prob=0.780][AWarmup [1]:  16%|█▌        | 124/800 [00:18, 34.14it/s, step size=3.54e-01, acc. prob=0.779]
+Warmup [2]:  28%|██▊       | 224/800 [00:18, 49.17it/s, step size=5.86e-02, acc. prob=0.779][AWarmup [1]:  16%|█▌        | 128/800 [00:18, 33.54it/s, step size=1.80e-01, acc. prob=0.777]
+Warmup [2]:  29%|██▉       | 230/800 [00:18, 46.38it/s, step size=9.69e-02, acc. prob=0.780][AWarmup [1]:  16%|█▋        | 132/800 [00:18, 31.54it/s, step size=9.98e-02, acc. prob=0.776]
+Warmup [2]:  29%|██▉       | 235/800 [00:18, 40.63it/s, step size=7.17e-02, acc. prob=0.779][AWarmup [1]:  17%|█▋        | 138/800 [00:18, 37.18it/s, step size=1.87e-01, acc. prob=0.778]
+Warmup [2]:  30%|███       | 240/800 [00:18, 42.53it/s, step size=1.43e-01, acc. prob=0.781][AWarmup [1]:  18%|█▊        | 144/800 [00:18, 42.47it/s, step size=9.72e-02, acc. prob=0.777]Warmup [1]:  19%|█▉        | 152/800 [00:18, 51.59it/s, step size=4.37e-02, acc. prob=0.768]
+Warmup [2]:  31%|███       | 245/800 [00:18, 42.25it/s, step size=1.00e-01, acc. prob=0.781][A
+Warmup [2]:  31%|███▏      | 250/800 [00:18, 41.78it/s, step size=9.94e-01, acc. prob=0.782][AWarmup [1]:  20%|█▉        | 158/800 [00:18, 43.36it/s, step size=7.36e-02, acc. prob=0.772]
+Warmup [2]:  32%|███▏      | 256/800 [00:18, 41.43it/s, step size=4.76e-02, acc. prob=0.779][AWarmup [1]:  20%|██        | 164/800 [00:18, 44.21it/s, step size=1.49e-01, acc. prob=0.774]
+Warmup [2]:  33%|███▎      | 261/800 [00:19, 35.65it/s, step size=1.34e-01, acc. prob=0.781][AWarmup [1]:  21%|██        | 169/800 [00:19, 39.82it/s, step size=1.55e-01, acc. prob=0.775]Warmup [1]:  22%|██▏       | 175/800 [00:19, 44.12it/s, step size=2.16e-01, acc. prob=0.776]
+Warmup [2]:  33%|███▎      | 267/800 [00:19, 36.45it/s, step size=5.75e-02, acc. prob=0.780][A
+Warmup [2]:  34%|███▍      | 271/800 [00:19, 36.92it/s, step size=1.69e-01, acc. prob=0.781][AWarmup [1]:  22%|██▎       | 180/800 [00:19, 39.79it/s, step size=1.68e-01, acc. prob=0.776]
+Warmup [2]:  34%|███▍      | 275/800 [00:19, 37.33it/s, step size=1.48e-01, acc. prob=0.781][AWarmup [1]:  23%|██▎       | 185/800 [00:19, 40.24it/s, step size=1.75e-01, acc. prob=0.777]
+Warmup [2]:  35%|███▍      | 279/800 [00:19, 35.93it/s, step size=8.75e-02, acc. prob=0.781][AWarmup [1]:  24%|██▍       | 190/800 [00:19, 36.23it/s, step size=1.19e-01, acc. prob=0.776]
+Warmup [2]:  35%|███▌      | 283/800 [00:19, 35.12it/s, step size=1.57e-01, acc. prob=0.782][AWarmup [1]:  24%|██▍       | 195/800 [00:19, 38.79it/s, step size=1.22e-01, acc. prob=0.777]
+Warmup [2]:  36%|███▌      | 287/800 [00:19, 35.45it/s, step size=6.96e-02, acc. prob=0.781][AWarmup [1]:  25%|██▌       | 201/800 [00:19, 42.65it/s, step size=1.73e-01, acc. prob=0.778]
+Warmup [2]:  36%|███▋      | 291/800 [00:19, 34.75it/s, step size=8.24e-02, acc. prob=0.781][AWarmup [1]:  26%|██▌       | 206/800 [00:20, 40.31it/s, step size=9.84e-02, acc. prob=0.777]
+Warmup [2]:  37%|███▋      | 295/800 [00:20, 35.80it/s, step size=1.65e-01, acc. prob=0.783][AWarmup [1]:  26%|██▋       | 212/800 [00:20, 42.98it/s, step size=1.19e-01, acc. prob=0.778]
+Warmup [2]:  37%|███▋      | 299/800 [00:20, 34.80it/s, step size=9.57e-02, acc. prob=0.782][A
+Sample [2]:  37%|███▋      | 299/800 [00:20, 34.80it/s, step size=9.57e-02, acc. prob=0.782][AWarmup [1]:  27%|██▋       | 219/800 [00:20, 47.92it/s, step size=8.22e-02, acc. prob=0.778]
+Sample [2]:  38%|███▊      | 303/800 [00:20, 31.92it/s, step size=9.57e-02, acc. prob=0.958][AWarmup [1]:  28%|██▊       | 224/800 [00:20, 47.94it/s, step size=1.10e-01, acc. prob=0.779]
+Sample [2]:  38%|███▊      | 307/800 [00:20, 31.37it/s, step size=9.57e-02, acc. prob=0.935][AWarmup [1]:  29%|██▉       | 230/800 [00:20, 50.66it/s, step size=2.55e-01, acc. prob=0.781]
+Sample [2]:  39%|███▉      | 311/800 [00:20, 32.72it/s, step size=9.57e-02, acc. prob=0.923][AWarmup [1]:  30%|██▉       | 236/800 [00:20, 49.26it/s, step size=1.78e-01, acc. prob=0.781]Warmup [1]:  30%|███       | 242/800 [00:20, 51.67it/s, step size=2.14e-01, acc. prob=0.781]
+Sample [2]:  39%|███▉      | 315/800 [00:20, 28.94it/s, step size=9.57e-02, acc. prob=0.931][AWarmup [1]:  31%|███       | 248/800 [00:20, 47.83it/s, step size=1.10e-01, acc. prob=0.780]
+Sample [2]:  40%|███▉      | 319/800 [00:20, 29.31it/s, step size=9.57e-02, acc. prob=0.927][AWarmup [1]:  32%|███▏      | 253/800 [00:20, 47.51it/s, step size=8.30e-02, acc. prob=0.778]
+Sample [2]:  40%|████      | 323/800 [00:21, 25.84it/s, step size=9.57e-02, acc. prob=0.917][AWarmup [1]:  32%|███▏      | 258/800 [00:21, 46.68it/s, step size=1.04e-01, acc. prob=0.779]
+Sample [2]:  41%|████      | 326/800 [00:21, 26.18it/s, step size=9.57e-02, acc. prob=0.912][A
+Sample [2]:  41%|████      | 329/800 [00:21, 25.20it/s, step size=9.57e-02, acc. prob=0.913][AWarmup [1]:  33%|███▎      | 263/800 [00:21, 34.28it/s, step size=7.03e-02, acc. prob=0.779]Warmup [1]:  33%|███▎      | 267/800 [00:21, 35.23it/s, step size=1.95e-01, acc. prob=0.781]
+Sample [2]:  42%|████▏     | 332/800 [00:21, 24.44it/s, step size=9.57e-02, acc. prob=0.913][AWarmup [1]:  34%|███▍      | 273/800 [00:21, 39.96it/s, step size=1.74e-01, acc. prob=0.781]
+Sample [2]:  42%|████▏     | 337/800 [00:21, 29.81it/s, step size=9.57e-02, acc. prob=0.915][AWarmup [1]:  35%|███▍      | 278/800 [00:21, 38.66it/s, step size=1.62e-01, acc. prob=0.781]
+Sample [2]:  43%|████▎     | 341/800 [00:21, 27.18it/s, step size=9.57e-02, acc. prob=0.919][AWarmup [1]:  35%|███▌      | 283/800 [00:21, 40.26it/s, step size=1.65e-01, acc. prob=0.781]
+Sample [2]:  43%|████▎     | 344/800 [00:21, 25.89it/s, step size=9.57e-02, acc. prob=0.919][AWarmup [1]:  36%|███▌      | 288/800 [00:21, 42.37it/s, step size=1.85e-01, acc. prob=0.782]
+Sample [2]:  44%|████▎     | 349/800 [00:22, 30.76it/s, step size=9.57e-02, acc. prob=0.917][AWarmup [1]:  37%|███▋      | 293/800 [00:22, 43.71it/s, step size=1.32e-01, acc. prob=0.781]Warmup [1]:  37%|███▋      | 298/800 [00:22, 44.01it/s, step size=1.94e-01, acc. prob=0.782]
+Sample [2]:  44%|████▍     | 353/800 [00:22, 29.15it/s, step size=9.57e-02, acc. prob=0.920][ASample [1]:  37%|███▋      | 299/800 [00:22, 44.01it/s, step size=1.16e-01, acc. prob=0.782]Sample [1]:  38%|███▊      | 303/800 [00:22, 45.58it/s, step size=1.16e-01, acc. prob=0.927]
+Sample [2]:  45%|████▍     | 357/800 [00:22, 29.48it/s, step size=9.57e-02, acc. prob=0.920][ASample [1]:  38%|███▊      | 308/800 [00:22, 45.57it/s, step size=1.16e-01, acc. prob=0.920]
+Sample [2]:  45%|████▌     | 362/800 [00:22, 33.53it/s, step size=9.57e-02, acc. prob=0.917][ASample [1]:  39%|███▉      | 313/800 [00:22, 45.42it/s, step size=1.16e-01, acc. prob=0.888]
+Sample [2]:  46%|████▌     | 366/800 [00:22, 30.94it/s, step size=9.57e-02, acc. prob=0.918][ASample [1]:  40%|███▉      | 318/800 [00:22, 45.46it/s, step size=1.16e-01, acc. prob=0.910]Sample [1]:  40%|████      | 323/800 [00:22, 45.48it/s, step size=1.16e-01, acc. prob=0.913]
+Sample [2]:  46%|████▋     | 370/800 [00:22, 30.76it/s, step size=9.57e-02, acc. prob=0.921][ASample [1]:  41%|████      | 328/800 [00:22, 45.51it/s, step size=1.16e-01, acc. prob=0.905]
+Sample [2]:  47%|████▋     | 374/800 [00:22, 29.20it/s, step size=9.57e-02, acc. prob=0.922][ASample [1]:  42%|████▏     | 333/800 [00:22, 45.48it/s, step size=1.16e-01, acc. prob=0.905]
+Sample [2]:  47%|████▋     | 378/800 [00:22, 29.50it/s, step size=9.57e-02, acc. prob=0.922][ASample [1]:  42%|████▏     | 338/800 [00:23, 45.47it/s, step size=1.16e-01, acc. prob=0.905]Sample [1]:  43%|████▎     | 343/800 [00:23, 45.47it/s, step size=1.16e-01, acc. prob=0.904]
+Sample [2]:  48%|████▊     | 382/800 [00:23, 28.34it/s, step size=9.57e-02, acc. prob=0.920][ASample [1]:  44%|████▎     | 348/800 [00:23, 45.49it/s, step size=1.16e-01, acc. prob=0.903]
+Sample [2]:  48%|████▊     | 386/800 [00:23, 30.36it/s, step size=9.57e-02, acc. prob=0.921][ASample [1]:  44%|████▍     | 353/800 [00:23, 45.50it/s, step size=1.16e-01, acc. prob=0.896]
+Sample [2]:  49%|████▉     | 390/800 [00:23, 30.31it/s, step size=9.57e-02, acc. prob=0.916][ASample [1]:  45%|████▍     | 358/800 [00:23, 45.37it/s, step size=1.16e-01, acc. prob=0.893]
+Sample [2]:  49%|████▉     | 394/800 [00:23, 31.89it/s, step size=9.57e-02, acc. prob=0.917][ASample [1]:  45%|████▌     | 363/800 [00:23, 45.46it/s, step size=1.16e-01, acc. prob=0.893]
+Sample [2]:  50%|████▉     | 398/800 [00:23, 33.14it/s, step size=9.57e-02, acc. prob=0.917][ASample [1]:  46%|████▌     | 368/800 [00:23, 45.43it/s, step size=1.16e-01, acc. prob=0.895]
+Sample [2]:  50%|█████     | 403/800 [00:23, 36.57it/s, step size=9.57e-02, acc. prob=0.919][ASample [1]:  47%|████▋     | 373/800 [00:23, 45.43it/s, step size=1.16e-01, acc. prob=0.894]
+Sample [2]:  51%|█████     | 407/800 [00:23, 32.74it/s, step size=9.57e-02, acc. prob=0.919][ASample [1]:  47%|████▋     | 378/800 [00:23, 45.42it/s, step size=1.16e-01, acc. prob=0.894]
+Sample [2]:  51%|█████▏    | 411/800 [00:23, 31.95it/s, step size=9.57e-02, acc. prob=0.915][ASample [1]:  48%|████▊     | 383/800 [00:24, 42.84it/s, step size=1.16e-01, acc. prob=0.890]Sample [1]:  48%|████▊     | 388/800 [00:24, 43.60it/s, step size=1.16e-01, acc. prob=0.891]
+Sample [2]:  52%|█████▏    | 415/800 [00:24, 29.92it/s, step size=9.57e-02, acc. prob=0.915][ASample [1]:  49%|████▉     | 393/800 [00:24, 44.10it/s, step size=1.16e-01, acc. prob=0.893]
+Sample [2]:  52%|█████▏    | 419/800 [00:24, 30.03it/s, step size=9.57e-02, acc. prob=0.916][ASample [1]:  50%|████▉     | 398/800 [00:24, 44.54it/s, step size=1.16e-01, acc. prob=0.891]
+Sample [2]:  53%|█████▎    | 423/800 [00:24, 30.08it/s, step size=9.57e-02, acc. prob=0.918][ASample [1]:  50%|█████     | 403/800 [00:24, 44.74it/s, step size=1.16e-01, acc. prob=0.891]
+Sample [2]:  53%|█████▎    | 427/800 [00:24, 30.11it/s, step size=9.57e-02, acc. prob=0.916][ASample [1]:  51%|█████     | 408/800 [00:24, 44.95it/s, step size=1.16e-01, acc. prob=0.889]Sample [1]:  52%|█████▏    | 413/800 [00:24, 45.16it/s, step size=1.16e-01, acc. prob=0.892]
+Sample [2]:  54%|█████▍    | 431/800 [00:24, 28.77it/s, step size=9.57e-02, acc. prob=0.918][ASample [1]:  52%|█████▏    | 418/800 [00:24, 45.30it/s, step size=1.16e-01, acc. prob=0.892]
+Sample [2]:  54%|█████▍    | 434/800 [00:24, 28.41it/s, step size=9.57e-02, acc. prob=0.917][ASample [1]:  53%|█████▎    | 423/800 [00:24, 45.29it/s, step size=1.16e-01, acc. prob=0.890]
+Sample [2]:  55%|█████▍    | 437/800 [00:24, 28.08it/s, step size=9.57e-02, acc. prob=0.918][ASample [1]:  54%|█████▎    | 428/800 [00:25, 45.34it/s, step size=1.16e-01, acc. prob=0.891]
+Sample [2]:  55%|█████▌    | 441/800 [00:25, 28.78it/s, step size=9.57e-02, acc. prob=0.917][ASample [1]:  54%|█████▍    | 433/800 [00:25, 45.38it/s, step size=1.16e-01, acc. prob=0.892]
+Sample [2]:  56%|█████▌    | 444/800 [00:25, 28.37it/s, step size=9.57e-02, acc. prob=0.915][ASample [1]:  55%|█████▍    | 438/800 [00:25, 45.39it/s, step size=1.16e-01, acc. prob=0.891]
+Sample [2]:  56%|█████▌    | 447/800 [00:25, 28.04it/s, step size=9.57e-02, acc. prob=0.916][ASample [1]:  55%|█████▌    | 443/800 [00:25, 45.41it/s, step size=1.16e-01, acc. prob=0.891]
+Sample [2]:  56%|█████▋    | 450/800 [00:25, 27.82it/s, step size=9.57e-02, acc. prob=0.916][ASample [1]:  56%|█████▌    | 448/800 [00:25, 45.41it/s, step size=1.16e-01, acc. prob=0.892]
+Sample [2]:  57%|█████▋    | 453/800 [00:25, 27.65it/s, step size=9.57e-02, acc. prob=0.916][ASample [1]:  57%|█████▋    | 453/800 [00:25, 45.49it/s, step size=1.16e-01, acc. prob=0.893]
+Sample [2]:  57%|█████▋    | 456/800 [00:25, 23.42it/s, step size=9.57e-02, acc. prob=0.913][ASample [1]:  57%|█████▋    | 458/800 [00:25, 45.52it/s, step size=1.16e-01, acc. prob=0.895]Sample [1]:  58%|█████▊    | 463/800 [00:25, 45.53it/s, step size=1.16e-01, acc. prob=0.896]
+Sample [2]:  57%|█████▊    | 460/800 [00:25, 25.47it/s, step size=9.57e-02, acc. prob=0.910][ASample [1]:  58%|█████▊    | 468/800 [00:25, 45.41it/s, step size=1.16e-01, acc. prob=0.896]
+Sample [2]:  58%|█████▊    | 463/800 [00:25, 23.42it/s, step size=9.57e-02, acc. prob=0.910][ASample [1]:  59%|█████▉    | 473/800 [00:26, 42.85it/s, step size=1.16e-01, acc. prob=0.896]
+Sample [2]:  58%|█████▊    | 466/800 [00:26, 23.23it/s, step size=9.57e-02, acc. prob=0.911][ASample [1]:  60%|█████▉    | 478/800 [00:26, 43.62it/s, step size=1.16e-01, acc. prob=0.897]
+Sample [2]:  59%|█████▊    | 469/800 [00:26, 23.08it/s, step size=9.57e-02, acc. prob=0.909][ASample [1]:  60%|██████    | 483/800 [00:26, 44.15it/s, step size=1.16e-01, acc. prob=0.896]
+Sample [2]:  59%|█████▉    | 472/800 [00:26, 24.16it/s, step size=9.57e-02, acc. prob=0.909][ASample [1]:  61%|██████    | 488/800 [00:26, 44.51it/s, step size=1.16e-01, acc. prob=0.894]
+Sample [2]:  60%|█████▉    | 476/800 [00:26, 27.39it/s, step size=9.57e-02, acc. prob=0.909][ASample [1]:  62%|██████▏   | 493/800 [00:26, 44.73it/s, step size=1.16e-01, acc. prob=0.896]
+Sample [2]:  60%|█████▉    | 479/800 [00:26, 27.35it/s, step size=9.57e-02, acc. prob=0.908][ASample [1]:  62%|██████▏   | 498/800 [00:26, 44.86it/s, step size=1.16e-01, acc. prob=0.897]Sample [1]:  63%|██████▎   | 503/800 [00:26, 45.00it/s, step size=1.16e-01, acc. prob=0.897]
+Sample [2]:  60%|██████    | 483/800 [00:26, 25.52it/s, step size=9.57e-02, acc. prob=0.909][ASample [1]:  64%|██████▎   | 508/800 [00:26, 45.12it/s, step size=1.16e-01, acc. prob=0.898]
+Sample [2]:  61%|██████    | 486/800 [00:26, 25.95it/s, step size=9.57e-02, acc. prob=0.911][ASample [1]:  64%|██████▍   | 513/800 [00:26, 45.20it/s, step size=1.16e-01, acc. prob=0.897]
+Sample [2]:  61%|██████    | 489/800 [00:26, 26.29it/s, step size=9.57e-02, acc. prob=0.911][ASample [1]:  65%|██████▍   | 518/800 [00:27, 45.25it/s, step size=1.16e-01, acc. prob=0.898]
+Sample [2]:  62%|██████▏   | 492/800 [00:27, 26.55it/s, step size=9.57e-02, acc. prob=0.911][ASample [1]:  65%|██████▌   | 523/800 [00:27, 45.32it/s, step size=1.16e-01, acc. prob=0.899]
+Sample [2]:  62%|██████▏   | 495/800 [00:27, 24.02it/s, step size=9.57e-02, acc. prob=0.911][ASample [1]:  66%|██████▌   | 528/800 [00:27, 45.42it/s, step size=1.16e-01, acc. prob=0.896]
+Sample [2]:  62%|██████▏   | 498/800 [00:27, 24.90it/s, step size=9.57e-02, acc. prob=0.911][ASample [1]:  67%|██████▋   | 533/800 [00:27, 45.50it/s, step size=1.16e-01, acc. prob=0.897]
+Sample [2]:  63%|██████▎   | 501/800 [00:27, 24.17it/s, step size=9.57e-02, acc. prob=0.912][ASample [1]:  67%|██████▋   | 538/800 [00:27, 45.39it/s, step size=1.16e-01, acc. prob=0.895]Sample [1]:  68%|██████▊   | 543/800 [00:27, 45.42it/s, step size=1.16e-01, acc. prob=0.894]
+Sample [2]:  63%|██████▎   | 505/800 [00:27, 26.06it/s, step size=9.57e-02, acc. prob=0.912][ASample [1]:  68%|██████▊   | 548/800 [00:27, 45.41it/s, step size=1.16e-01, acc. prob=0.893]
+Sample [2]:  64%|██████▎   | 508/800 [00:27, 26.38it/s, step size=9.57e-02, acc. prob=0.913][ASample [1]:  69%|██████▉   | 553/800 [00:27, 45.41it/s, step size=1.16e-01, acc. prob=0.894]
+Sample [2]:  64%|██████▍   | 512/800 [00:27, 29.13it/s, step size=9.57e-02, acc. prob=0.912][ASample [1]:  70%|██████▉   | 558/800 [00:27, 45.33it/s, step size=1.16e-01, acc. prob=0.893]
+Sample [2]:  64%|██████▍   | 516/800 [00:27, 31.16it/s, step size=9.57e-02, acc. prob=0.912][ASample [1]:  70%|███████   | 563/800 [00:28, 45.36it/s, step size=1.16e-01, acc. prob=0.894]
+Sample [2]:  65%|██████▌   | 520/800 [00:28, 30.87it/s, step size=9.57e-02, acc. prob=0.913][ASample [1]:  71%|███████   | 568/800 [00:28, 45.39it/s, step size=1.16e-01, acc. prob=0.895]
+Sample [2]:  66%|██████▌   | 524/800 [00:28, 30.68it/s, step size=9.57e-02, acc. prob=0.913][ASample [1]:  72%|███████▏  | 573/800 [00:28, 45.39it/s, step size=1.16e-01, acc. prob=0.895]
+Sample [2]:  66%|██████▌   | 528/800 [00:28, 32.21it/s, step size=9.57e-02, acc. prob=0.913][ASample [1]:  72%|███████▏  | 578/800 [00:28, 45.46it/s, step size=1.16e-01, acc. prob=0.896]
+Sample [2]:  66%|██████▋   | 532/800 [00:28, 31.59it/s, step size=9.57e-02, acc. prob=0.913][ASample [1]:  73%|███████▎  | 583/800 [00:28, 45.43it/s, step size=1.16e-01, acc. prob=0.896]
+Sample [2]:  67%|██████▋   | 536/800 [00:28, 32.92it/s, step size=9.57e-02, acc. prob=0.913][ASample [1]:  74%|███████▎  | 588/800 [00:28, 45.41it/s, step size=1.16e-01, acc. prob=0.896]
+Sample [2]:  68%|██████▊   | 540/800 [00:28, 33.88it/s, step size=9.57e-02, acc. prob=0.914][ASample [1]:  74%|███████▍  | 593/800 [00:28, 45.41it/s, step size=1.16e-01, acc. prob=0.895]Sample [1]:  75%|███████▍  | 598/800 [00:28, 45.46it/s, step size=1.16e-01, acc. prob=0.893]
+Sample [2]:  68%|██████▊   | 544/800 [00:28, 29.53it/s, step size=9.57e-02, acc. prob=0.914][ASample [1]:  75%|███████▌  | 603/800 [00:28, 45.44it/s, step size=1.16e-01, acc. prob=0.894]
+Sample [2]:  68%|██████▊   | 548/800 [00:28, 29.72it/s, step size=9.57e-02, acc. prob=0.912][ASample [1]:  76%|███████▌  | 608/800 [00:28, 45.40it/s, step size=1.16e-01, acc. prob=0.893]
+Sample [2]:  69%|██████▉   | 552/800 [00:29, 29.88it/s, step size=9.57e-02, acc. prob=0.911][ASample [1]:  77%|███████▋  | 613/800 [00:29, 42.89it/s, step size=1.16e-01, acc. prob=0.893]
+Sample [2]:  70%|██████▉   | 556/800 [00:29, 28.56it/s, step size=9.57e-02, acc. prob=0.912][ASample [1]:  77%|███████▋  | 618/800 [00:29, 43.63it/s, step size=1.16e-01, acc. prob=0.893]
+Sample [2]:  70%|███████   | 560/800 [00:29, 30.51it/s, step size=9.57e-02, acc. prob=0.912][ASample [1]:  78%|███████▊  | 623/800 [00:29, 44.14it/s, step size=1.16e-01, acc. prob=0.893]Sample [1]:  78%|███████▊  | 628/800 [00:29, 44.47it/s, step size=1.16e-01, acc. prob=0.894]
+Sample [2]:  70%|███████   | 564/800 [00:29, 30.36it/s, step size=9.57e-02, acc. prob=0.913][ASample [1]:  79%|███████▉  | 633/800 [00:29, 44.75it/s, step size=1.16e-01, acc. prob=0.894]
+Sample [2]:  71%|███████   | 568/800 [00:29, 30.30it/s, step size=9.57e-02, acc. prob=0.913][ASample [1]:  80%|███████▉  | 638/800 [00:29, 44.96it/s, step size=1.16e-01, acc. prob=0.893]
+Sample [2]:  72%|███████▏  | 572/800 [00:29, 30.27it/s, step size=9.57e-02, acc. prob=0.914][ASample [1]:  80%|████████  | 643/800 [00:29, 45.11it/s, step size=1.16e-01, acc. prob=0.892]
+Sample [2]:  72%|███████▏  | 577/800 [00:29, 34.27it/s, step size=9.57e-02, acc. prob=0.913][ASample [1]:  81%|████████  | 648/800 [00:29, 45.17it/s, step size=1.16e-01, acc. prob=0.893]
+Sample [2]:  73%|███████▎  | 581/800 [00:29, 34.68it/s, step size=9.57e-02, acc. prob=0.914][ASample [1]:  82%|████████▏ | 653/800 [00:30, 45.21it/s, step size=1.16e-01, acc. prob=0.893]
+Sample [2]:  73%|███████▎  | 585/800 [00:30, 33.28it/s, step size=9.57e-02, acc. prob=0.914][ASample [1]:  82%|████████▏ | 658/800 [00:30, 45.25it/s, step size=1.16e-01, acc. prob=0.893]
+Sample [2]:  74%|███████▎  | 589/800 [00:30, 32.30it/s, step size=9.57e-02, acc. prob=0.914][ASample [1]:  83%|████████▎ | 663/800 [00:30, 45.30it/s, step size=1.16e-01, acc. prob=0.894]Sample [1]:  84%|████████▎ | 668/800 [00:30, 45.32it/s, step size=1.16e-01, acc. prob=0.894]
+Sample [2]:  74%|███████▍  | 593/800 [00:30, 28.65it/s, step size=9.57e-02, acc. prob=0.914][ASample [1]:  84%|████████▍ | 673/800 [00:30, 42.76it/s, step size=1.16e-01, acc. prob=0.894]
+Sample [2]:  74%|███████▍  | 596/800 [00:30, 26.92it/s, step size=9.57e-02, acc. prob=0.914][ASample [1]:  85%|████████▍ | 678/800 [00:30, 43.48it/s, step size=1.16e-01, acc. prob=0.893]
+Sample [2]:  75%|███████▌  | 600/800 [00:30, 27.89it/s, step size=9.57e-02, acc. prob=0.914][ASample [1]:  85%|████████▌ | 683/800 [00:30, 44.09it/s, step size=1.16e-01, acc. prob=0.893]Sample [1]:  86%|████████▌ | 688/800 [00:30, 42.04it/s, step size=1.16e-01, acc. prob=0.893]
+Sample [2]:  76%|███████▌  | 605/800 [00:30, 28.05it/s, step size=9.57e-02, acc. prob=0.915][ASample [1]:  87%|████████▋ | 693/800 [00:30, 42.96it/s, step size=1.16e-01, acc. prob=0.894]
+Sample [2]:  76%|███████▌  | 608/800 [00:30, 26.53it/s, step size=9.57e-02, acc. prob=0.916][ASample [1]:  87%|████████▋ | 698/800 [00:31, 43.64it/s, step size=1.16e-01, acc. prob=0.893]
+Sample [2]:  76%|███████▋  | 612/800 [00:31, 27.60it/s, step size=9.57e-02, acc. prob=0.916][ASample [1]:  88%|████████▊ | 703/800 [00:31, 44.17it/s, step size=1.16e-01, acc. prob=0.894]
+Sample [2]:  77%|███████▋  | 615/800 [00:31, 26.18it/s, step size=9.57e-02, acc. prob=0.916][ASample [1]:  88%|████████▊ | 708/800 [00:31, 44.54it/s, step size=1.16e-01, acc. prob=0.894]Sample [1]:  89%|████████▉ | 713/800 [00:31, 44.74it/s, step size=1.16e-01, acc. prob=0.893]
+Sample [2]:  77%|███████▋  | 619/800 [00:31, 26.08it/s, step size=9.57e-02, acc. prob=0.916][ASample [1]:  90%|████████▉ | 718/800 [00:31, 44.92it/s, step size=1.16e-01, acc. prob=0.893]
+Sample [2]:  78%|███████▊  | 623/800 [00:31, 28.62it/s, step size=9.57e-02, acc. prob=0.915][ASample [1]:  90%|█████████ | 723/800 [00:31, 45.04it/s, step size=1.16e-01, acc. prob=0.892]
+Sample [2]:  78%|███████▊  | 626/800 [00:31, 28.25it/s, step size=9.57e-02, acc. prob=0.916][ASample [1]:  91%|█████████ | 728/800 [00:31, 45.21it/s, step size=1.16e-01, acc. prob=0.893]
+Sample [2]:  79%|███████▊  | 629/800 [00:31, 26.53it/s, step size=9.57e-02, acc. prob=0.916][ASample [1]:  92%|█████████▏| 733/800 [00:31, 45.34it/s, step size=1.16e-01, acc. prob=0.893]
+Sample [2]:  79%|███████▉  | 633/800 [00:31, 29.15it/s, step size=9.57e-02, acc. prob=0.916][ASample [1]:  92%|█████████▏| 738/800 [00:31, 45.32it/s, step size=1.16e-01, acc. prob=0.893]
+Sample [2]:  80%|███████▉  | 636/800 [00:31, 28.58it/s, step size=9.57e-02, acc. prob=0.916][ASample [1]:  93%|█████████▎| 743/800 [00:32, 42.78it/s, step size=1.16e-01, acc. prob=0.894]
+Sample [2]:  80%|████████  | 640/800 [00:32, 29.11it/s, step size=9.57e-02, acc. prob=0.916][ASample [1]:  94%|█████████▎| 748/800 [00:32, 43.58it/s, step size=1.16e-01, acc. prob=0.893]
+Sample [2]:  80%|████████  | 643/800 [00:32, 27.10it/s, step size=9.57e-02, acc. prob=0.917][ASample [1]:  94%|█████████▍| 753/800 [00:32, 44.15it/s, step size=1.16e-01, acc. prob=0.892]
+Sample [2]:  81%|████████  | 646/800 [00:32, 27.16it/s, step size=9.57e-02, acc. prob=0.917][ASample [1]:  95%|█████████▍| 758/800 [00:32, 44.45it/s, step size=1.16e-01, acc. prob=0.891]
+Sample [2]:  81%|████████▏ | 650/800 [00:32, 28.08it/s, step size=9.57e-02, acc. prob=0.917][ASample [1]:  95%|█████████▌| 763/800 [00:32, 44.74it/s, step size=1.16e-01, acc. prob=0.892]
+Sample [2]:  82%|████████▏ | 654/800 [00:32, 30.33it/s, step size=9.57e-02, acc. prob=0.917][ASample [1]:  96%|█████████▌| 768/800 [00:32, 44.94it/s, step size=1.16e-01, acc. prob=0.892]Sample [1]:  97%|█████████▋| 773/800 [00:32, 45.05it/s, step size=1.16e-01, acc. prob=0.892]
+Sample [2]:  82%|████████▏ | 658/800 [00:32, 30.27it/s, step size=9.57e-02, acc. prob=0.918][ASample [1]:  97%|█████████▋| 778/800 [00:32, 45.11it/s, step size=1.16e-01, acc. prob=0.892]
+Sample [2]:  83%|████████▎ | 662/800 [00:32, 28.73it/s, step size=9.57e-02, acc. prob=0.918][ASample [1]:  98%|█████████▊| 783/800 [00:32, 45.10it/s, step size=1.16e-01, acc. prob=0.892]
+Sample [2]:  83%|████████▎ | 665/800 [00:33, 26.90it/s, step size=9.57e-02, acc. prob=0.918][ASample [1]:  98%|█████████▊| 788/800 [00:33, 45.20it/s, step size=1.16e-01, acc. prob=0.892]
+Sample [2]:  84%|████████▎ | 669/800 [00:33, 29.36it/s, step size=9.57e-02, acc. prob=0.919][ASample [1]:  99%|█████████▉| 793/800 [00:33, 45.31it/s, step size=1.16e-01, acc. prob=0.893]
+Sample [2]:  84%|████████▍ | 672/800 [00:33, 27.28it/s, step size=9.57e-02, acc. prob=0.919][ASample [1]: 100%|█████████▉| 798/800 [00:33, 45.38it/s, step size=1.16e-01, acc. prob=0.892]
+Sample [2]:  84%|████████▍ | 675/800 [00:33, 25.94it/s, step size=9.57e-02, acc. prob=0.918][A
+Sample [2]:  85%|████████▍ | 678/800 [00:33, 25.19it/s, step size=9.57e-02, acc. prob=0.918][A
+Sample [2]:  85%|████████▌ | 681/800 [00:33, 26.12it/s, step size=9.57e-02, acc. prob=0.919][A
+Sample [2]:  86%|████████▌ | 684/800 [00:33, 26.86it/s, step size=9.57e-02, acc. prob=0.918][A
+Sample [2]:  86%|████████▌ | 688/800 [00:33, 28.52it/s, step size=9.57e-02, acc. prob=0.918][A
+Sample [2]:  86%|████████▋ | 692/800 [00:33, 29.59it/s, step size=9.57e-02, acc. prob=0.919][A
+Sample [2]:  87%|████████▋ | 695/800 [00:34, 29.42it/s, step size=9.57e-02, acc. prob=0.919][A
+Sample [2]:  87%|████████▋ | 698/800 [00:34, 27.78it/s, step size=9.57e-02, acc. prob=0.919][A
+Sample [2]:  88%|████████▊ | 701/800 [00:34, 28.13it/s, step size=9.57e-02, acc. prob=0.919][A
+Sample [2]:  88%|████████▊ | 704/800 [00:34, 26.81it/s, step size=9.57e-02, acc. prob=0.920][A
+Sample [2]:  88%|████████▊ | 707/800 [00:34, 27.40it/s, step size=9.57e-02, acc. prob=0.920][A
+Sample [2]:  89%|████████▉ | 711/800 [00:34, 30.56it/s, step size=9.57e-02, acc. prob=0.920][A
+Sample [2]:  89%|████████▉ | 715/800 [00:34, 32.89it/s, step size=9.57e-02, acc. prob=0.920][A
+Sample [2]:  90%|████████▉ | 719/800 [00:34, 34.56it/s, step size=9.57e-02, acc. prob=0.920][A
+Sample [2]:  90%|█████████ | 723/800 [00:34, 35.67it/s, step size=9.57e-02, acc. prob=0.920][A
+Sample [2]:  91%|█████████ | 727/800 [00:35, 36.58it/s, step size=9.57e-02, acc. prob=0.919][A
+Sample [2]:  91%|█████████▏| 731/800 [00:35, 31.60it/s, step size=9.57e-02, acc. prob=0.919][A
+Sample [2]:  92%|█████████▏| 735/800 [00:35, 27.63it/s, step size=9.57e-02, acc. prob=0.920][A
+Sample [2]:  92%|█████████▏| 738/800 [00:35, 27.96it/s, step size=9.57e-02, acc. prob=0.919][A
+Sample [2]:  93%|█████████▎| 741/800 [00:35, 28.23it/s, step size=9.57e-02, acc. prob=0.919][A
+Sample [2]:  93%|█████████▎| 744/800 [00:35, 25.73it/s, step size=9.57e-02, acc. prob=0.918][A
+Sample [2]:  93%|█████████▎| 747/800 [00:35, 26.56it/s, step size=9.57e-02, acc. prob=0.918][A
+Sample [2]:  94%|█████████▍| 750/800 [00:35, 27.18it/s, step size=9.57e-02, acc. prob=0.918][A
+Sample [2]:  94%|█████████▍| 753/800 [00:36, 27.70it/s, step size=9.57e-02, acc. prob=0.918][A
+Sample [2]:  95%|█████████▍| 758/800 [00:36, 33.58it/s, step size=9.57e-02, acc. prob=0.918][A
+Sample [2]:  95%|█████████▌| 762/800 [00:36, 27.19it/s, step size=9.57e-02, acc. prob=0.918][A
+Sample [2]:  96%|█████████▌| 765/800 [00:36, 27.58it/s, step size=9.57e-02, acc. prob=0.918][A
+Sample [2]:  96%|█████████▌| 769/800 [00:36, 28.93it/s, step size=9.57e-02, acc. prob=0.918][A
+Sample [2]:  97%|█████████▋| 774/800 [00:36, 33.94it/s, step size=9.57e-02, acc. prob=0.919][A
+Sample [2]:  97%|█████████▋| 778/800 [00:36, 35.21it/s, step size=9.57e-02, acc. prob=0.919][A
+Sample [2]:  98%|█████████▊| 782/800 [00:36, 34.21it/s, step size=9.57e-02, acc. prob=0.919][A
+Sample [2]:  98%|█████████▊| 786/800 [00:37, 30.44it/s, step size=9.57e-02, acc. prob=0.919][A
+Sample [2]:  99%|█████████▉| 791/800 [00:37, 34.93it/s, step size=9.57e-02, acc. prob=0.919][A
+Sample [2]:  99%|█████████▉| 795/800 [00:37, 32.50it/s, step size=9.57e-02, acc. prob=0.919][A
+Sample [2]: 100%|█████████▉| 799/800 [00:37, 33.95it/s, step size=9.57e-02, acc. prob=0.919][ASample [1]: 100%|██████████| 800/800 [00:37, 21.34it/s, step size=1.16e-01, acc. prob=0.892]
+Sample [2]: 100%|██████████| 800/800 [00:37, 21.34it/s, step size=9.57e-02, acc. prob=0.919]
+
+
+{
+  "probability_model": "BayesWHAM with uniform Dirichlet(1) simplex prior",
+  "sampler": "Pyro NUTS",
+  "warmup_steps_per_chain": 300,
+  "samples_per_chain": 500,
+  "num_chains": 2,
+  "target_accept_probability": 0.8,
+  "seed": 20261168,
+  "max_r_hat": 1.0098101459618591,
+  "median_r_hat": 0.9994621906308246,
+  "min_effective_sample_size": 199.01091919735794,
+  "median_effective_sample_size": 241.36140336683232,
+  "divergences": {
+    "chain 0": [],
+    "chain 1": []
+  },
+  "acceptance_rate": {
+    "chain 0": 1.0,
+    "chain 1": 1.0
+  }
+}

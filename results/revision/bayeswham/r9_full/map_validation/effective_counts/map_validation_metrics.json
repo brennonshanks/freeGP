@@ -1,0 +1,10 @@
+{
+  "alignment": "each profile shifted so its maximum is zero",
+  "temperature_k": 303.15,
+  "points_compared": 80,
+  "rmse_kj_mol": 0.2205978476084517,
+  "mean_difference_kj_mol": -0.17107036434051195,
+  "max_absolute_difference_kj_mol": 0.4801187467363164,
+  "bayeswham_barrier_kj_mol": 50.47707527221651,
+  "reference_barrier_kj_mol": 50.24796
+}

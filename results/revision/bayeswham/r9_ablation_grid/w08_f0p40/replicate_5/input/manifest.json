@@ -1,0 +1,68 @@
+{
+  "archived_cell": "w08_f0p40.pt",
+  "replicate_index": 4,
+  "is_canonical": false,
+  "window_selection_mode": "random_subset",
+  "trajectory_selection_mode": "contiguous",
+  "random_seed": 112690,
+  "count_treatment": "counts divided by archived per-window AR(1) autocorrelation times",
+  "windows": [
+    {
+      "index": 1,
+      "center_nm": 2.2,
+      "retained_frames": 152000,
+      "ar1_autocorrelation_time_frames": 7.280569910352313,
+      "effective_histogrammed_frames": 20877.48649784541
+    },
+    {
+      "index": 2,
+      "center_nm": 2.5,
+      "retained_frames": 152000,
+      "ar1_autocorrelation_time_frames": 7.184159539604766,
+      "effective_histogrammed_frames": 21157.659314503784
+    },
+    {
+      "index": 3,
+      "center_nm": 2.95,
+      "retained_frames": 152000,
+      "ar1_autocorrelation_time_frames": 7.177552239380319,
+      "effective_histogrammed_frames": 21177.136011081555
+    },
+    {
+      "index": 4,
+      "center_nm": 3.1,
+      "retained_frames": 152000,
+      "ar1_autocorrelation_time_frames": 7.286039582687998,
+      "effective_histogrammed_frames": 20861.81364717806
+    },
+    {
+      "index": 5,
+      "center_nm": 3.7,
+      "retained_frames": 152000,
+      "ar1_autocorrelation_time_frames": 7.344319229422782,
+      "effective_histogrammed_frames": 20696.268129394244
+    },
+    {
+      "index": 6,
+      "center_nm": 4.2,
+      "retained_frames": 152000,
+      "ar1_autocorrelation_time_frames": 7.360000302065661,
+      "effective_histogrammed_frames": 20652.173065446696
+    },
+    {
+      "index": 7,
+      "center_nm": 4.4,
+      "retained_frames": 152000,
+      "ar1_autocorrelation_time_frames": 7.357667749608977,
+      "effective_histogrammed_frames": 20658.720286476382
+    },
+    {
+      "index": 8,
+      "center_nm": 4.8,
+      "retained_frames": 152000,
+      "ar1_autocorrelation_time_frames": 7.352778644373143,
+      "effective_histogrammed_frames": 20672.456951539123
+    }
+  ],
+  "effective_histogrammed_frames_total": 166753.71390346525
+}

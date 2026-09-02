@@ -1,0 +1,21 @@
+{
+  "probability_model": "BayesWHAM with uniform Dirichlet(1) simplex prior",
+  "sampler": "Pyro NUTS",
+  "warmup_steps_per_chain": 300,
+  "samples_per_chain": 500,
+  "num_chains": 2,
+  "target_accept_probability": 0.8,
+  "seed": 20261372,
+  "max_r_hat": 1.0161862313972365,
+  "median_r_hat": 1.0077180659446103,
+  "min_effective_sample_size": 161.07500867830097,
+  "median_effective_sample_size": 372.9178464471273,
+  "divergences": {
+    "chain 0": [],
+    "chain 1": []
+  },
+  "acceptance_rate": {
+    "chain 0": 1.0,
+    "chain 1": 1.0
+  }
+}

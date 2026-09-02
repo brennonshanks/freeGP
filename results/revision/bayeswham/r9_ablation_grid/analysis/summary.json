@@ -1,0 +1,16 @@
+{
+  "cells": 100,
+  "replicate_calculations": 460,
+  "cells_with_valid_replicates": 100,
+  "cells_masked_no_valid_replicates": 0,
+  "valid_replicate_calculations": 283,
+  "pearson_r_rmse_vs_mean_sd": 0.9420266591641392,
+  "mean_crps_kj_mol": 8.607241987180968,
+  "mean_wham_inclusion_68_percent": 7.14375,
+  "mean_wham_inclusion_95_percent": 14.777708333333333,
+  "underconfident_cells_rmse_le_5_sd_gt_5": 0,
+  "overconfident_cells_rmse_gt_5_sd_le_5": 71,
+  "maximum_r_hat": 1.046517950943694,
+  "minimum_effective_sample_size": 100.37791192611138,
+  "total_divergences": 0
+}

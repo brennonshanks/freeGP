@@ -1,0 +1,265 @@
+{
+  "w03_f0p04/replicate_5": {
+    "status": "complete",
+    "skipped_existing": true
+  },
+  "w03_f0p25/replicate_3": {
+    "status": "complete",
+    "skipped_existing": true
+  },
+  "w03_f0p90/replicate_2": {
+    "status": "complete",
+    "skipped_existing": true
+  },
+  "w04_f0p16/replicate_1": {
+    "status": "complete",
+    "skipped_existing": true
+  },
+  "w04_f0p60/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 150.8144972500013,
+    "ordinal": 5,
+    "total": 44
+  },
+  "w04_f0p90/replicate_4": {
+    "status": "complete",
+    "skipped_existing": true
+  },
+  "w06_f0p40/replicate_2": {
+    "status": "failed",
+    "return_code": 1,
+    "wall_time_seconds": 2.3227507080009673,
+    "ordinal": 7,
+    "total": 44
+  },
+  "w06_f0p40/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 88.28065591699851,
+    "ordinal": 8,
+    "total": 44
+  },
+  "w06_f0p60/replicate_4": {
+    "status": "complete",
+    "skipped_existing": true
+  },
+  "w08_f0p04/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 40.9632630420092,
+    "ordinal": 10,
+    "total": 44
+  },
+  "w08_f0p40/replicate_2": {
+    "status": "failed",
+    "return_code": 1,
+    "wall_time_seconds": 2.1121515419945354,
+    "ordinal": 11,
+    "total": 44
+  },
+  "w08_f0p60/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 154.724765166,
+    "ordinal": 12,
+    "total": 44
+  },
+  "w08_f0p60/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 109.76889662499889,
+    "ordinal": 13,
+    "total": 44
+  },
+  "w08_f1p00/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 281.44466229199315,
+    "ordinal": 14,
+    "total": 44
+  },
+  "w10_f0p06/replicate_2": {
+    "status": "failed",
+    "return_code": 1,
+    "wall_time_seconds": 2.217426417002571,
+    "ordinal": 15,
+    "total": 44
+  },
+  "w10_f0p10/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 60.00141400001303,
+    "ordinal": 16,
+    "total": 44
+  },
+  "w10_f0p16/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 74.41158241700032,
+    "ordinal": 17,
+    "total": 44
+  },
+  "w10_f0p60/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 122.20993750001071,
+    "ordinal": 18,
+    "total": 44
+  },
+  "w10_f0p60/replicate_5": {
+    "status": "failed",
+    "return_code": 1,
+    "wall_time_seconds": 2.32349479199911,
+    "ordinal": 19,
+    "total": 44
+  },
+  "w10_f0p80/replicate_5": {
+    "status": "complete",
+    "skipped_existing": true
+  },
+  "w10_f1p00/replicate_4": {
+    "status": "failed",
+    "return_code": 1,
+    "wall_time_seconds": 2.111018833995331,
+    "ordinal": 21,
+    "total": 44
+  },
+  "w13_f0p06/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 34.752125958999386,
+    "ordinal": 22,
+    "total": 44
+  },
+  "w13_f0p16/replicate_2": {
+    "status": "failed",
+    "return_code": 1,
+    "wall_time_seconds": 2.2660632920014905,
+    "ordinal": 23,
+    "total": 44
+  },
+  "w13_f0p16/replicate_3": {
+    "status": "failed",
+    "return_code": 1,
+    "wall_time_seconds": 2.1329259170015575,
+    "ordinal": 24,
+    "total": 44
+  },
+  "w13_f0p40/replicate_4": {
+    "status": "failed",
+    "return_code": 1,
+    "wall_time_seconds": 2.1399688749952475,
+    "ordinal": 25,
+    "total": 44
+  },
+  "w13_f0p60/replicate_5": {
+    "status": "failed",
+    "return_code": 1,
+    "wall_time_seconds": 2.093748458995833,
+    "ordinal": 26,
+    "total": 44
+  },
+  "w13_f0p80/replicate_5": {
+    "status": "failed",
+    "return_code": 1,
+    "wall_time_seconds": 2.2766277080081636,
+    "ordinal": 27,
+    "total": 44
+  },
+  "w13_f1p00/replicate_2": {
+    "status": "failed",
+    "return_code": 1,
+    "wall_time_seconds": 2.153300040998147,
+    "ordinal": 28,
+    "total": 44
+  },
+  "w13_f1p00/replicate_3": {
+    "status": "complete",
+    "skipped_existing": true
+  },
+  "w13_f1p00/replicate_4": {
+    "status": "complete",
+    "skipped_existing": true
+  },
+  "w13_f1p00/replicate_5": {
+    "status": "failed",
+    "return_code": 1,
+    "wall_time_seconds": 2.1004052920034155,
+    "ordinal": 31,
+    "total": 44
+  },
+  "w16_f0p04/replicate_5": {
+    "status": "failed",
+    "return_code": 1,
+    "wall_time_seconds": 2.3266000830044504,
+    "ordinal": 32,
+    "total": 44
+  },
+  "w16_f0p16/replicate_5": {
+    "status": "failed",
+    "return_code": 1,
+    "wall_time_seconds": 2.356508083001245,
+    "ordinal": 33,
+    "total": 44
+  },
+  "w16_f0p40/replicate_3": {
+    "status": "complete",
+    "skipped_existing": true
+  },
+  "w16_f0p40/replicate_4": {
+    "status": "complete",
+    "skipped_existing": true
+  },
+  "w16_f0p60/replicate_5": {
+    "status": "complete",
+    "skipped_existing": true
+  },
+  "w16_f0p80/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 184.96952825000335,
+    "ordinal": 37,
+    "total": 44
+  },
+  "w16_f0p90/replicate_1": {
+    "status": "complete",
+    "skipped_existing": true
+  },
+  "w16_f1p00/replicate_3": {
+    "status": "failed",
+    "return_code": 1,
+    "wall_time_seconds": 2.322791625003447,
+    "ordinal": 39,
+    "total": 44
+  },
+  "w19_f0p10/replicate_5": {
+    "status": "complete",
+    "skipped_existing": true
+  },
+  "w19_f0p90/replicate_2": {
+    "status": "failed",
+    "return_code": 1,
+    "wall_time_seconds": 2.329105041004368,
+    "ordinal": 41,
+    "total": 44
+  },
+  "w22_f0p06/replicate_3": {
+    "status": "complete",
+    "skipped_existing": true
+  },
+  "w22_f0p40/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 51.521973083988996,
+    "ordinal": 43,
+    "total": 44
+  },
+  "w22_f1p00/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 35.180723083991325,
+    "ordinal": 44,
+    "total": 44
+  }
+}

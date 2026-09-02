@@ -1,0 +1,45 @@
+method,method_label,scope,window_count,n,pearson_r
+ui,UI + block averaging,window_count,3,10,0.7352449553474757
+ui,UI + block averaging,window_count,4,10,0.787885009114861
+ui,UI + block averaging,window_count,6,10,0.9728341365278217
+ui,UI + block averaging,window_count,8,10,0.6331052294755151
+ui,UI + block averaging,window_count,10,10,0.9629839531910134
+ui,UI + block averaging,window_count,13,10,0.6857313739066665
+ui,UI + block averaging,window_count,16,10,0.6750602823141002
+ui,UI + block averaging,window_count,19,10,0.6510367953742305
+ui,UI + block averaging,window_count,22,10,0.6263359497076956
+ui,UI + block averaging,window_count,25,10,0.9108696505015123
+ui,UI + block averaging,all_cells,,100,0.922291886752892
+fixed,Fixed GP,window_count,3,10,-0.19116413877785546
+fixed,Fixed GP,window_count,4,10,-0.13640878630245978
+fixed,Fixed GP,window_count,6,10,0.34546899277932763
+fixed,Fixed GP,window_count,8,10,0.6185045324041912
+fixed,Fixed GP,window_count,10,10,0.6942723591881348
+fixed,Fixed GP,window_count,13,10,0.6970803998195843
+fixed,Fixed GP,window_count,16,10,0.8862879722483358
+fixed,Fixed GP,window_count,19,10,0.9074938947083877
+fixed,Fixed GP,window_count,22,10,0.8203478013610179
+fixed,Fixed GP,window_count,25,10,0.9159150199182069
+fixed,Fixed GP,all_cells,,100,0.6636485030089183
+loo_map,Optimized GP (LOO),window_count,3,10,-0.42055958094509716
+loo_map,Optimized GP (LOO),window_count,4,10,-0.2193294179491048
+loo_map,Optimized GP (LOO),window_count,6,10,0.6805425010133526
+loo_map,Optimized GP (LOO),window_count,8,10,0.5079364559790023
+loo_map,Optimized GP (LOO),window_count,10,10,0.18939051708913607
+loo_map,Optimized GP (LOO),window_count,13,10,-0.07354067035474286
+loo_map,Optimized GP (LOO),window_count,16,10,0.6247064147478232
+loo_map,Optimized GP (LOO),window_count,19,10,-0.46674281757301017
+loo_map,Optimized GP (LOO),window_count,22,10,-0.28716382497143156
+loo_map,Optimized GP (LOO),window_count,25,10,-0.03425297170730232
+loo_map,Optimized GP (LOO),all_cells,,100,0.5905336669727693
+loo,Hierarchical GP (LOO),window_count,3,10,-0.42982073889106687
+loo,Hierarchical GP (LOO),window_count,4,10,0.1018981750801036
+loo,Hierarchical GP (LOO),window_count,6,10,0.4881156074311914
+loo,Hierarchical GP (LOO),window_count,8,10,0.5074914631558592
+loo,Hierarchical GP (LOO),window_count,10,10,-0.013163086149825783
+loo,Hierarchical GP (LOO),window_count,13,10,0.28115643571062876
+loo,Hierarchical GP (LOO),window_count,16,10,0.7075011207737085
+loo,Hierarchical GP (LOO),window_count,19,10,-0.4386575782317839
+loo,Hierarchical GP (LOO),window_count,22,10,0.31746003824674235
+loo,Hierarchical GP (LOO),window_count,25,10,0.048636734125956024
+loo,Hierarchical GP (LOO),all_cells,,100,0.778770039663536

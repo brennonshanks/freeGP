@@ -1,0 +1,18 @@
+method: optimized_gp
+kernel: stationary
+device: cpu
+objective: loo
+ell: 1.5707963267948966
+w: 13.230969730144501
+window_counts: [3]
+trajectory_fractions: [0.1]
+test_grid_mode: full_dataset
+window_selection_mode: evenly_spaced
+trajectory_selection_mode: contiguous
+random_seed: 42
+default_selection_replicates: 1
+uncertainty_summary: average total standard deviation on the prediction grid
+artifacts_dir: /Users/brennonshanks/freeGP/results/revision/benchmarks/runs/20260830-172751-smoke/outputs/sparse/map/repeat_1/artifacts
+opt_steps: 2
+opt_restarts: 1
+opt_learning_rate: 0.05

@@ -1,0 +1,129 @@
+Warmup [1]:   0%|          | 0/1500 [00:00, ?it/s]
+Warmup [2]:   0%|          | 0/1500 [00:00, ?it/s][A
+
+Warmup [3]:   0%|          | 0/1500 [00:00, ?it/s][A[A
+
+
+Warmup [4]:   0%|          | 0/1500 [00:00, ?it/s][A[A[AWarmup [1]:   0%|          | 0/1500 [00:00, ?it/s]
+Warmup [2]:   0%|          | 0/1500 [00:00, ?it/s]
+Warmup [3]:   0%|          | 0/1500 [00:00, ?it/s]
+Warmup [4]:   0%|          | 0/1500 [00:00, ?it/s]
+
+
+
+
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/brennonshanks/freeGP/src/freegp/cli/run_ablation_grid.py", line 338, in <module>
+    main()
+  File "/Users/brennonshanks/freeGP/src/freegp/cli/run_ablation_grid.py", line 331, in main
+    result = _run(model_cfg, figure_dir)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/brennonshanks/freeGP/src/freegp/cli/run_ablation_grid.py", line 280, in _run
+    return run_ablation_study(
+           ^^^^^^^^^^^^^^^^^^^
+  File "/Users/brennonshanks/freeGP/src/freegp/studies/ablation.py", line 746, in run_ablation_study
+    summary, diagnostics, multi_chain_diagnostics, nuts_samples, nuts_grouped_samples = _nuts_summary(
+                                                                                        ^^^^^^^^^^^^^^
+  File "/Users/brennonshanks/freeGP/src/freegp/studies/ablation.py", line 529, in _nuts_summary
+    mcmc, samples = run_hmc_nuts(bundle.observations, config=config)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/brennonshanks/freeGP/src/freegp/hmc.py", line 619, in run_hmc_nuts
+    mcmc.run()
+  File "/Users/brennonshanks/freeGP/.venv/lib/python3.11/site-packages/pyro/poutine/messenger.py", line 32, in _context_wrap
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/Users/brennonshanks/freeGP/.venv/lib/python3.11/site-packages/pyro/infer/mcmc/api.py", line 565, in run
+    for x, chain_id in self.sampler.run(*args, **kwargs):
+  File "/Users/brennonshanks/freeGP/.venv/lib/python3.11/site-packages/pyro/infer/mcmc/api.py", line 335, in run
+    w.start()
+  File "/opt/homebrew/Cellar/python@3.11/3.11.16/Frameworks/Python.framework/Versions/3.11/lib/python3.11/multiprocessing/process.py", line 121, in start
+    self._popen = self._Popen(self)
+                  ^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.11/3.11.16/Frameworks/Python.framework/Versions/3.11/lib/python3.11/multiprocessing/context.py", line 288, in _Popen
+    return Popen(process_obj)
+           ^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.11/3.11.16/Frameworks/Python.framework/Versions/3.11/lib/python3.11/multiprocessing/popen_spawn_posix.py", line 32, in __init__
+    super().__init__(process_obj)
+  File "/opt/homebrew/Cellar/python@3.11/3.11.16/Frameworks/Python.framework/Versions/3.11/lib/python3.11/multiprocessing/popen_fork.py", line 19, in __init__
+    self._launch(process_obj)
+  File "/opt/homebrew/Cellar/python@3.11/3.11.16/Frameworks/Python.framework/Versions/3.11/lib/python3.11/multiprocessing/popen_spawn_posix.py", line 47, in _launch
+    reduction.dump(process_obj, fp)
+  File "/opt/homebrew/Cellar/python@3.11/3.11.16/Frameworks/Python.framework/Versions/3.11/lib/python3.11/multiprocessing/reduction.py", line 60, in dump
+    ForkingPickler(file, protocol).dump(obj)
+  File "/Users/brennonshanks/freeGP/.venv/lib/python3.11/site-packages/torch/multiprocessing/reductions.py", line 602, in reduce_storage
+    metadata = storage._share_filename_cpu_()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/brennonshanks/freeGP/.venv/lib/python3.11/site-packages/torch/storage.py", line 449, in wrapper
+    return fn(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/brennonshanks/freeGP/.venv/lib/python3.11/site-packages/torch/storage.py", line 531, in _share_filename_cpu_
+    return super()._share_filename_cpu_(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: torch_shm_manager at "/Users/brennonshanks/freeGP/.venv/lib/python3.11/site-packages/torch/bin/torch_shm_manager": Operation not permitted
+Exception raised from start_manager at /Users/runner/work/pytorch/pytorch/torch/lib/libshm/core.cpp:67 (most recent call first):
+frame #0: c10::Error::Error(c10::SourceLocation, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>) + 52 (0x107c34b10 in libc10.dylib)
+frame #1: c10::detail::torchCheckFail(char const*, char const*, unsigned int, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>> const&) + 120 (0x107c31f44 in libc10.dylib)
+frame #2: THManagedMapAllocatorInit::THManagedMapAllocatorInit(char const*, char const*) + 2104 (0x107abbb14 in libshm.dylib)
+frame #3: THManagedMapAllocator::makeDataPtr(char const*, char const*, int, unsigned long) + 68 (0x107abc114 in libshm.dylib)
+frame #4: THPStorage_shareFilename(_object*, _object*) + 156 (0x109c3987c in libtorch_python.dylib)
+frame #5: cfunction_vectorcall_NOARGS + 88 (0x102b3d238 in Python)
+frame #6: _PyEval_EvalFrameDefault + 44420 (0x102bcf6b4 in Python)
+frame #7: _PyEval_Vector + 116 (0x102bd1b04 in Python)
+frame #8: _PyEval_EvalFrameDefault + 44420 (0x102bcf6b4 in Python)
+frame #9: _PyEval_Vector + 116 (0x102bd1b04 in Python)
+frame #10: PyObject_CallOneArg + 96 (0x102af3400 in Python)
+frame #11: _Pickle_FastCall + 20 (0x107895404 in _pickle.cpython-311-darwin.so)
+frame #12: save + 1448 (0x107897d2c in _pickle.cpython-311-darwin.so)
+frame #13: save + 1104 (0x107897bd4 in _pickle.cpython-311-darwin.so)
+frame #14: save_reduce + 432 (0x10789b1a8 in _pickle.cpython-311-darwin.so)
+frame #15: save + 1488 (0x107897d54 in _pickle.cpython-311-darwin.so)
+frame #16: save + 1104 (0x107897bd4 in _pickle.cpython-311-darwin.so)
+frame #17: save_reduce + 432 (0x10789b1a8 in _pickle.cpython-311-darwin.so)
+frame #18: save + 1488 (0x107897d54 in _pickle.cpython-311-darwin.so)
+frame #19: save + 5208 (0x107898bdc in _pickle.cpython-311-darwin.so)
+frame #20: save_reduce + 648 (0x10789b280 in _pickle.cpython-311-darwin.so)
+frame #21: save + 1488 (0x107897d54 in _pickle.cpython-311-darwin.so)
+frame #22: save + 5208 (0x107898bdc in _pickle.cpython-311-darwin.so)
+frame #23: save_reduce + 648 (0x10789b280 in _pickle.cpython-311-darwin.so)
+frame #24: save + 1488 (0x107897d54 in _pickle.cpython-311-darwin.so)
+frame #25: save + 5208 (0x107898bdc in _pickle.cpython-311-darwin.so)
+frame #26: save_reduce + 648 (0x10789b280 in _pickle.cpython-311-darwin.so)
+frame #27: save + 1488 (0x107897d54 in _pickle.cpython-311-darwin.so)
+frame #28: save + 5208 (0x107898bdc in _pickle.cpython-311-darwin.so)
+frame #29: save_reduce + 648 (0x10789b280 in _pickle.cpython-311-darwin.so)
+frame #30: save + 1488 (0x107897d54 in _pickle.cpython-311-darwin.so)
+frame #31: save + 1104 (0x107897bd4 in _pickle.cpython-311-darwin.so)
+frame #32: save_reduce + 432 (0x10789b1a8 in _pickle.cpython-311-darwin.so)
+frame #33: save + 1488 (0x107897d54 in _pickle.cpython-311-darwin.so)
+frame #34: save + 5208 (0x107898bdc in _pickle.cpython-311-darwin.so)
+frame #35: save_reduce + 648 (0x10789b280 in _pickle.cpython-311-darwin.so)
+frame #36: save + 1488 (0x107897d54 in _pickle.cpython-311-darwin.so)
+frame #37: dump + 188 (0x107897330 in _pickle.cpython-311-darwin.so)
+frame #38: _pickle_Pickler_dump + 56 (0x1078970dc in _pickle.cpython-311-darwin.so)
+frame #39: method_vectorcall_O + 100 (0x102aff7e8 in Python)
+frame #40: _PyEval_EvalFrameDefault + 37272 (0x102bcdac8 in Python)
+frame #41: _PyEval_Vector + 116 (0x102bd1b04 in Python)
+frame #42: _PyObject_FastCallDictTstate + 96 (0x102af2770 in Python)
+frame #43: slot_tp_init + 188 (0x102b5bb4c in Python)
+frame #44: type_call + 136 (0x102b5416c in Python)
+frame #45: _PyObject_MakeTpCall + 280 (0x102af2424 in Python)
+frame #46: _PyEval_EvalFrameDefault + 37452 (0x102bcdb7c in Python)
+frame #47: gen_send_ex2 + 200 (0x102b099f8 in Python)
+frame #48: gen_iternext + 36 (0x102b08940 in Python)
+frame #49: _PyEval_EvalFrameDefault + 33956 (0x102bccdd4 in Python)
+frame #50: _PyEval_Vector + 116 (0x102bd1b04 in Python)
+frame #51: _PyEval_EvalFrameDefault + 44420 (0x102bcf6b4 in Python)
+frame #52: _PyEval_Vector + 116 (0x102bd1b04 in Python)
+frame #53: partial_vectorcall + 576 (0x102c8a37c in Python)
+frame #54: _PyEval_EvalFrameDefault + 37272 (0x102bcdac8 in Python)
+frame #55: _PyEval_Vector + 116 (0x102bd1b04 in Python)
+frame #56: _PyVectorcall_Call + 152 (0x102af2f70 in Python)
+frame #57: _PyEval_EvalFrameDefault + 44420 (0x102bcf6b4 in Python)
+frame #58: PyEval_EvalCode + 168 (0x102bc3d1c in Python)
+frame #59: builtin_exec + 428 (0x102bc0260 in Python)
+frame #60: cfunction_vectorcall_FASTCALL_KEYWORDS + 76 (0x102b3d188 in Python)
+frame #61: _PyEval_EvalFrameDefault + 37272 (0x102bcdac8 in Python)
+frame #62: _PyEval_Vector + 116 (0x102bd1b04 in Python)
+

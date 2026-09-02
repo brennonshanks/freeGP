@@ -1,0 +1,82 @@
+{
+  "archived_cell": "w10_f0p80.pt",
+  "replicate_index": 4,
+  "is_canonical": false,
+  "window_selection_mode": "random_subset",
+  "trajectory_selection_mode": "contiguous",
+  "random_seed": 147883,
+  "count_treatment": "counts divided by archived per-window AR(1) autocorrelation times",
+  "windows": [
+    {
+      "index": 1,
+      "center_nm": 2.05,
+      "retained_frames": 304000,
+      "ar1_autocorrelation_time_frames": 7.178989495081421,
+      "effective_histogrammed_frames": 42345.79256708498
+    },
+    {
+      "index": 2,
+      "center_nm": 2.65,
+      "retained_frames": 304000,
+      "ar1_autocorrelation_time_frames": 7.183848342014748,
+      "effective_histogrammed_frames": 42317.15168902655
+    },
+    {
+      "index": 3,
+      "center_nm": 2.8,
+      "retained_frames": 304000,
+      "ar1_autocorrelation_time_frames": 7.1639546812626085,
+      "effective_histogrammed_frames": 42434.66263056004
+    },
+    {
+      "index": 4,
+      "center_nm": 3.1,
+      "retained_frames": 304000,
+      "ar1_autocorrelation_time_frames": 7.278723836457327,
+      "effective_histogrammed_frames": 41765.56314409667
+    },
+    {
+      "index": 5,
+      "center_nm": 3.4,
+      "retained_frames": 304000,
+      "ar1_autocorrelation_time_frames": 7.282716973965842,
+      "effective_histogrammed_frames": 41742.662949382095
+    },
+    {
+      "index": 6,
+      "center_nm": 3.7,
+      "retained_frames": 304000,
+      "ar1_autocorrelation_time_frames": 7.341342382250528,
+      "effective_histogrammed_frames": 41409.32055355347
+    },
+    {
+      "index": 7,
+      "center_nm": 4.2,
+      "retained_frames": 304000,
+      "ar1_autocorrelation_time_frames": 7.362816444767802,
+      "effective_histogrammed_frames": 41288.54797351765
+    },
+    {
+      "index": 8,
+      "center_nm": 4.4,
+      "retained_frames": 304000,
+      "ar1_autocorrelation_time_frames": 7.354833848307431,
+      "effective_histogrammed_frames": 41333.360653682146
+    },
+    {
+      "index": 9,
+      "center_nm": 4.6,
+      "retained_frames": 304000,
+      "ar1_autocorrelation_time_frames": 7.357076244441737,
+      "effective_histogrammed_frames": 41320.762474042815
+    },
+    {
+      "index": 10,
+      "center_nm": 4.8,
+      "retained_frames": 304000,
+      "ar1_autocorrelation_time_frames": 7.352272905197703,
+      "effective_histogrammed_frames": 41347.75788655596
+    }
+  ],
+  "effective_histogrammed_frames_total": 417305.58252150234
+}

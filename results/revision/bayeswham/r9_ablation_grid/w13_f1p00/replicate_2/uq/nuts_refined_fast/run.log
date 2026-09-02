@@ -1,0 +1,9 @@
+Traceback (most recent call last):
+  File "/Users/brennonshanks/freeGP/results/revision/bayeswham/run_r9_bayeswham_nuts.py", line 194, in <module>
+    main()
+  File "/Users/brennonshanks/freeGP/results/revision/bayeswham/run_r9_bayeswham_nuts.py", line 121, in main
+    p_map = wham_map(c_il, n_i, m_l)
+            ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/brennonshanks/freeGP/results/revision/bayeswham/run_r9_bayeswham_nuts.py", line 90, in wham_map
+    raise RuntimeError("Cell-specific WHAM MAP did not converge")
+RuntimeError: Cell-specific WHAM MAP did not converge

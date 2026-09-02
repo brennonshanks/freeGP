@@ -1,0 +1,54 @@
+{
+  "archived_cell": "w06_f0p25.pt",
+  "replicate_index": 1,
+  "is_canonical": false,
+  "window_selection_mode": "random_subset",
+  "trajectory_selection_mode": "contiguous",
+  "random_seed": 86367,
+  "count_treatment": "counts divided by archived per-window AR(1) autocorrelation times",
+  "windows": [
+    {
+      "index": 1,
+      "center_nm": 1.9,
+      "retained_frames": 95000,
+      "ar1_autocorrelation_time_frames": 7.169858491294481,
+      "effective_histogrammed_frames": 13249.912828174694
+    },
+    {
+      "index": 2,
+      "center_nm": 2.5,
+      "retained_frames": 95000,
+      "ar1_autocorrelation_time_frames": 7.177547482207938,
+      "effective_histogrammed_frames": 13235.718779358927
+    },
+    {
+      "index": 3,
+      "center_nm": 2.95,
+      "retained_frames": 95000,
+      "ar1_autocorrelation_time_frames": 7.172875816037813,
+      "effective_histogrammed_frames": 13244.339151611934
+    },
+    {
+      "index": 4,
+      "center_nm": 3.25,
+      "retained_frames": 95000,
+      "ar1_autocorrelation_time_frames": 7.299059170612617,
+      "effective_histogrammed_frames": 13015.376061409097
+    },
+    {
+      "index": 5,
+      "center_nm": 4.2,
+      "retained_frames": 95000,
+      "ar1_autocorrelation_time_frames": 7.360827388181996,
+      "effective_histogrammed_frames": 12906.157825752716
+    },
+    {
+      "index": 6,
+      "center_nm": 4.8,
+      "retained_frames": 95000,
+      "ar1_autocorrelation_time_frames": 7.354784673544327,
+      "effective_histogrammed_frames": 12916.761566347635
+    }
+  ],
+  "effective_histogrammed_frames_total": 78568.266212655
+}

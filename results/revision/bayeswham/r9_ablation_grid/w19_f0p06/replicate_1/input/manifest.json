@@ -1,0 +1,145 @@
+{
+  "archived_cell": "w19_f0p06.pt",
+  "replicate_index": 0,
+  "is_canonical": true,
+  "window_selection_mode": "evenly_spaced",
+  "trajectory_selection_mode": "contiguous",
+  "random_seed": 166739,
+  "count_treatment": "counts divided by archived per-window AR(1) autocorrelation times",
+  "windows": [
+    {
+      "index": 1,
+      "center_nm": 1.45,
+      "retained_frames": 23940,
+      "ar1_autocorrelation_time_frames": 7.200482035151587,
+      "effective_histogrammed_frames": 3105.625413803179
+    },
+    {
+      "index": 2,
+      "center_nm": 1.6,
+      "retained_frames": 23940,
+      "ar1_autocorrelation_time_frames": 7.170787484368198,
+      "effective_histogrammed_frames": 3338.5454599215886
+    },
+    {
+      "index": 3,
+      "center_nm": 1.75,
+      "retained_frames": 23940,
+      "ar1_autocorrelation_time_frames": 7.155606985034674,
+      "effective_histogrammed_frames": 3345.628127714171
+    },
+    {
+      "index": 4,
+      "center_nm": 2.05,
+      "retained_frames": 23940,
+      "ar1_autocorrelation_time_frames": 7.148214660640331,
+      "effective_histogrammed_frames": 3349.0880082014037
+    },
+    {
+      "index": 5,
+      "center_nm": 2.2,
+      "retained_frames": 23940,
+      "ar1_autocorrelation_time_frames": 7.265577784993627,
+      "effective_histogrammed_frames": 3294.9891541242373
+    },
+    {
+      "index": 6,
+      "center_nm": 2.35,
+      "retained_frames": 23940,
+      "ar1_autocorrelation_time_frames": 7.2811808297472105,
+      "effective_histogrammed_frames": 3287.9282302938154
+    },
+    {
+      "index": 7,
+      "center_nm": 2.65,
+      "retained_frames": 23940,
+      "ar1_autocorrelation_time_frames": 7.172542748719281,
+      "effective_histogrammed_frames": 3337.7284512211086
+    },
+    {
+      "index": 8,
+      "center_nm": 2.8,
+      "retained_frames": 23940,
+      "ar1_autocorrelation_time_frames": 7.116081990968617,
+      "effective_histogrammed_frames": 3364.210815780857
+    },
+    {
+      "index": 9,
+      "center_nm": 2.95,
+      "retained_frames": 23940,
+      "ar1_autocorrelation_time_frames": 7.128029041188467,
+      "effective_histogrammed_frames": 3358.572174954053
+    },
+    {
+      "index": 10,
+      "center_nm": 3.25,
+      "retained_frames": 23940,
+      "ar1_autocorrelation_time_frames": 7.292484222531664,
+      "effective_histogrammed_frames": 3282.8319224925212
+    },
+    {
+      "index": 11,
+      "center_nm": 3.4,
+      "retained_frames": 23940,
+      "ar1_autocorrelation_time_frames": 7.28185646207948,
+      "effective_histogrammed_frames": 3287.6231665191945
+    },
+    {
+      "index": 12,
+      "center_nm": 3.55,
+      "retained_frames": 23940,
+      "ar1_autocorrelation_time_frames": 7.293623257626197,
+      "effective_histogrammed_frames": 3282.3192471544767
+    },
+    {
+      "index": 13,
+      "center_nm": 3.85,
+      "retained_frames": 23940,
+      "ar1_autocorrelation_time_frames": 7.316291621760932,
+      "effective_histogrammed_frames": 3272.1495038271814
+    },
+    {
+      "index": 14,
+      "center_nm": 4.0,
+      "retained_frames": 23940,
+      "ar1_autocorrelation_time_frames": 7.3672907265271155,
+      "effective_histogrammed_frames": 3249.4984776154115
+    },
+    {
+      "index": 15,
+      "center_nm": 4.2,
+      "retained_frames": 23940,
+      "ar1_autocorrelation_time_frames": 7.366748439237999,
+      "effective_histogrammed_frames": 3249.737682433514
+    },
+    {
+      "index": 16,
+      "center_nm": 4.6,
+      "retained_frames": 23940,
+      "ar1_autocorrelation_time_frames": 7.341118750175581,
+      "effective_histogrammed_frames": 3261.083332758705
+    },
+    {
+      "index": 17,
+      "center_nm": 4.8,
+      "retained_frames": 23940,
+      "ar1_autocorrelation_time_frames": 7.3525924230820126,
+      "effective_histogrammed_frames": 3255.994433316486
+    },
+    {
+      "index": 18,
+      "center_nm": 5.0,
+      "retained_frames": 23940,
+      "ar1_autocorrelation_time_frames": 7.347310965659393,
+      "effective_histogrammed_frames": 3258.3349353107824
+    },
+    {
+      "index": 19,
+      "center_nm": 5.4,
+      "retained_frames": 23940,
+      "ar1_autocorrelation_time_frames": 7.339682054305391,
+      "effective_histogrammed_frames": 2024.747106215953
+    }
+  ],
+  "effective_histogrammed_frames_total": 61206.635643658636
+}

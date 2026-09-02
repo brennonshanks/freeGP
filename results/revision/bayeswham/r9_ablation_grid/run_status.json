@@ -1,0 +1,3222 @@
+{
+  "w03_f0p04/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 43.30249075000029,
+    "ordinal": 1,
+    "total": 460
+  },
+  "w03_f0p04/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 36.02889366599993,
+    "ordinal": 2,
+    "total": 460
+  },
+  "w03_f0p04/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 34.38824391699745,
+    "ordinal": 3,
+    "total": 460
+  },
+  "w03_f0p04/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 42.8777427909954,
+    "ordinal": 4,
+    "total": 460
+  },
+  "w03_f0p04/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 29.940556957997615,
+    "ordinal": 5,
+    "total": 460
+  },
+  "w03_f0p06/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 51.615839624995715,
+    "ordinal": 6,
+    "total": 460
+  },
+  "w03_f0p06/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 40.74868000000424,
+    "ordinal": 7,
+    "total": 460
+  },
+  "w03_f0p06/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 50.58988725000381,
+    "ordinal": 8,
+    "total": 460
+  },
+  "w03_f0p06/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 44.142359084005875,
+    "ordinal": 9,
+    "total": 460
+  },
+  "w03_f0p06/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 42.812143125003786,
+    "ordinal": 10,
+    "total": 460
+  },
+  "w03_f0p10/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 62.45334683299734,
+    "ordinal": 11,
+    "total": 460
+  },
+  "w03_f0p10/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 42.52516491700226,
+    "ordinal": 12,
+    "total": 460
+  },
+  "w03_f0p10/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 51.63467474999925,
+    "ordinal": 13,
+    "total": 460
+  },
+  "w03_f0p10/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 22.79936504199577,
+    "ordinal": 14,
+    "total": 460
+  },
+  "w03_f0p10/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 47.134318249998614,
+    "ordinal": 15,
+    "total": 460
+  },
+  "w03_f0p16/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 79.8975294579941,
+    "ordinal": 16,
+    "total": 460
+  },
+  "w03_f0p16/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 68.5492521250053,
+    "ordinal": 17,
+    "total": 460
+  },
+  "w03_f0p16/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 21.189554124997812,
+    "ordinal": 18,
+    "total": 460
+  },
+  "w03_f0p16/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 51.24877079099679,
+    "ordinal": 19,
+    "total": 460
+  },
+  "w03_f0p16/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 58.90073625000514,
+    "ordinal": 20,
+    "total": 460
+  },
+  "w03_f0p25/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 127.55841950000467,
+    "ordinal": 21,
+    "total": 460
+  },
+  "w03_f0p25/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 79.03692670800228,
+    "ordinal": 22,
+    "total": 460
+  },
+  "w03_f0p25/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 82.59525791699707,
+    "ordinal": 23,
+    "total": 460
+  },
+  "w03_f0p25/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 67.71130162500049,
+    "ordinal": 24,
+    "total": 460
+  },
+  "w03_f0p25/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 79.59670220800035,
+    "ordinal": 25,
+    "total": 460
+  },
+  "w03_f0p40/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 137.46383216600225,
+    "ordinal": 26,
+    "total": 460
+  },
+  "w03_f0p40/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 84.70551604199864,
+    "ordinal": 27,
+    "total": 460
+  },
+  "w03_f0p40/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 84.95740320800542,
+    "ordinal": 28,
+    "total": 460
+  },
+  "w03_f0p40/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 83.26364699999976,
+    "ordinal": 29,
+    "total": 460
+  },
+  "w03_f0p40/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 65.48221295799885,
+    "ordinal": 30,
+    "total": 460
+  },
+  "w03_f0p60/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 121.19329650000145,
+    "ordinal": 31,
+    "total": 460
+  },
+  "w03_f0p60/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 136.62124329200014,
+    "ordinal": 32,
+    "total": 460
+  },
+  "w03_f0p60/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 89.88235229199927,
+    "ordinal": 33,
+    "total": 460
+  },
+  "w03_f0p60/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 114.76878674999898,
+    "ordinal": 34,
+    "total": 460
+  },
+  "w03_f0p60/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 118.83474233299785,
+    "ordinal": 35,
+    "total": 460
+  },
+  "w03_f0p80/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 133.08893483300199,
+    "ordinal": 36,
+    "total": 460
+  },
+  "w03_f0p80/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 134.8673635419982,
+    "ordinal": 37,
+    "total": 460
+  },
+  "w03_f0p80/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 98.38045054100076,
+    "ordinal": 38,
+    "total": 460
+  },
+  "w03_f0p80/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 101.65458399999625,
+    "ordinal": 39,
+    "total": 460
+  },
+  "w03_f0p80/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 117.24287820800237,
+    "ordinal": 40,
+    "total": 460
+  },
+  "w03_f0p90/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 157.27782945900253,
+    "ordinal": 41,
+    "total": 460
+  },
+  "w03_f0p90/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 93.50771933299984,
+    "ordinal": 42,
+    "total": 460
+  },
+  "w03_f0p90/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 108.02342854199378,
+    "ordinal": 43,
+    "total": 460
+  },
+  "w03_f0p90/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 143.9453041250017,
+    "ordinal": 44,
+    "total": 460
+  },
+  "w03_f0p90/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 153.48274495799706,
+    "ordinal": 45,
+    "total": 460
+  },
+  "w03_f1p00/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 157.45023641699663,
+    "ordinal": 46,
+    "total": 460
+  },
+  "w03_f1p00/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 158.9821157089973,
+    "ordinal": 47,
+    "total": 460
+  },
+  "w03_f1p00/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 149.87568566600385,
+    "ordinal": 48,
+    "total": 460
+  },
+  "w03_f1p00/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 109.08045891700021,
+    "ordinal": 49,
+    "total": 460
+  },
+  "w03_f1p00/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 152.67583283300337,
+    "ordinal": 50,
+    "total": 460
+  },
+  "w04_f0p04/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 41.996904250001535,
+    "ordinal": 51,
+    "total": 460
+  },
+  "w04_f0p04/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 43.1157998330018,
+    "ordinal": 52,
+    "total": 460
+  },
+  "w04_f0p04/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 25.067800500000885,
+    "ordinal": 53,
+    "total": 460
+  },
+  "w04_f0p04/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 36.9061829590064,
+    "ordinal": 54,
+    "total": 460
+  },
+  "w04_f0p04/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 37.11937933399895,
+    "ordinal": 55,
+    "total": 460
+  },
+  "w04_f0p06/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 60.77480254200054,
+    "ordinal": 56,
+    "total": 460
+  },
+  "w04_f0p06/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 54.33867091599677,
+    "ordinal": 57,
+    "total": 460
+  },
+  "w04_f0p06/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 43.38072829200246,
+    "ordinal": 58,
+    "total": 460
+  },
+  "w04_f0p06/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 42.4096669999999,
+    "ordinal": 59,
+    "total": 460
+  },
+  "w04_f0p06/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 19.72184358300001,
+    "ordinal": 60,
+    "total": 460
+  },
+  "w04_f0p10/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 73.80799858299724,
+    "ordinal": 61,
+    "total": 460
+  },
+  "w04_f0p10/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 48.033355917003064,
+    "ordinal": 62,
+    "total": 460
+  },
+  "w04_f0p10/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 50.06204654200701,
+    "ordinal": 63,
+    "total": 460
+  },
+  "w04_f0p10/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 72.97831475000567,
+    "ordinal": 64,
+    "total": 460
+  },
+  "w04_f0p10/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 43.59735245799675,
+    "ordinal": 65,
+    "total": 460
+  },
+  "w04_f0p16/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 80.15072620799765,
+    "ordinal": 66,
+    "total": 460
+  },
+  "w04_f0p16/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 67.70980820899422,
+    "ordinal": 67,
+    "total": 460
+  },
+  "w04_f0p16/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 86.58744879200094,
+    "ordinal": 68,
+    "total": 460
+  },
+  "w04_f0p16/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 65.5075722909969,
+    "ordinal": 69,
+    "total": 460
+  },
+  "w04_f0p16/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 66.59973087499384,
+    "ordinal": 70,
+    "total": 460
+  },
+  "w04_f0p25/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 86.47222870899714,
+    "ordinal": 71,
+    "total": 460
+  },
+  "w04_f0p25/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 93.67577699999674,
+    "ordinal": 72,
+    "total": 460
+  },
+  "w04_f0p25/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 77.6351413750017,
+    "ordinal": 73,
+    "total": 460
+  },
+  "w04_f0p25/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 90.48232241699588,
+    "ordinal": 74,
+    "total": 460
+  },
+  "w04_f0p25/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 81.27638033300173,
+    "ordinal": 75,
+    "total": 460
+  },
+  "w04_f0p40/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 132.36631358299928,
+    "ordinal": 76,
+    "total": 460
+  },
+  "w04_f0p40/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 90.33988179099833,
+    "ordinal": 77,
+    "total": 460
+  },
+  "w04_f0p40/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 84.60231175000081,
+    "ordinal": 78,
+    "total": 460
+  },
+  "w04_f0p40/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 94.31007445900468,
+    "ordinal": 79,
+    "total": 460
+  },
+  "w04_f0p40/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 89.51643008300016,
+    "ordinal": 80,
+    "total": 460
+  },
+  "w04_f0p60/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 147.59219800000574,
+    "ordinal": 81,
+    "total": 460
+  },
+  "w04_f0p60/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 89.45453850000195,
+    "ordinal": 82,
+    "total": 460
+  },
+  "w04_f0p60/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 106.23512391699478,
+    "ordinal": 83,
+    "total": 460
+  },
+  "w04_f0p60/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 138.92066650000197,
+    "ordinal": 84,
+    "total": 460
+  },
+  "w04_f0p60/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 103.10190629200224,
+    "ordinal": 85,
+    "total": 460
+  },
+  "w04_f0p80/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 150.66137204199913,
+    "ordinal": 86,
+    "total": 460
+  },
+  "w04_f0p80/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 75.49311141700309,
+    "ordinal": 87,
+    "total": 460
+  },
+  "w04_f0p80/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 153.29403174999607,
+    "ordinal": 88,
+    "total": 460
+  },
+  "w04_f0p80/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 160.64788508300262,
+    "ordinal": 89,
+    "total": 460
+  },
+  "w04_f0p80/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 97.21647770800337,
+    "ordinal": 90,
+    "total": 460
+  },
+  "w04_f0p90/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 153.42744241699984,
+    "ordinal": 91,
+    "total": 460
+  },
+  "w04_f0p90/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 109.0097003750052,
+    "ordinal": 92,
+    "total": 460
+  },
+  "w04_f0p90/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 110.00729745799617,
+    "ordinal": 93,
+    "total": 460
+  },
+  "w04_f0p90/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 46.81334395900194,
+    "ordinal": 94,
+    "total": 460
+  },
+  "w04_f0p90/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 92.37703604099806,
+    "ordinal": 95,
+    "total": 460
+  },
+  "w04_f1p00/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 157.762902167,
+    "ordinal": 96,
+    "total": 460
+  },
+  "w04_f1p00/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 164.6442157920028,
+    "ordinal": 97,
+    "total": 460
+  },
+  "w04_f1p00/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 125.47497691700119,
+    "ordinal": 98,
+    "total": 460
+  },
+  "w04_f1p00/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 130.56213075000414,
+    "ordinal": 99,
+    "total": 460
+  },
+  "w04_f1p00/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 121.1108365839973,
+    "ordinal": 100,
+    "total": 460
+  },
+  "w06_f0p04/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 42.77769087499473,
+    "ordinal": 101,
+    "total": 460
+  },
+  "w06_f0p04/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 38.09773575000145,
+    "ordinal": 102,
+    "total": 460
+  },
+  "w06_f0p04/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 45.56254975000047,
+    "ordinal": 103,
+    "total": 460
+  },
+  "w06_f0p04/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 43.42762041599781,
+    "ordinal": 104,
+    "total": 460
+  },
+  "w06_f0p04/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 51.68157437500486,
+    "ordinal": 105,
+    "total": 460
+  },
+  "w06_f0p06/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 65.31760120899708,
+    "ordinal": 106,
+    "total": 460
+  },
+  "w06_f0p06/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 67.87827758299682,
+    "ordinal": 107,
+    "total": 460
+  },
+  "w06_f0p06/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 43.78011620899633,
+    "ordinal": 108,
+    "total": 460
+  },
+  "w06_f0p06/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 42.825504291999096,
+    "ordinal": 109,
+    "total": 460
+  },
+  "w06_f0p06/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 57.142240208995645,
+    "ordinal": 110,
+    "total": 460
+  },
+  "w06_f0p10/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 77.89017604199762,
+    "ordinal": 111,
+    "total": 460
+  },
+  "w06_f0p10/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 76.87467004100472,
+    "ordinal": 112,
+    "total": 460
+  },
+  "w06_f0p10/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 51.38478437500453,
+    "ordinal": 113,
+    "total": 460
+  },
+  "w06_f0p10/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 57.9074324999965,
+    "ordinal": 114,
+    "total": 460
+  },
+  "w06_f0p10/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 45.11857675000647,
+    "ordinal": 115,
+    "total": 460
+  },
+  "w06_f0p16/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 85.01846704199852,
+    "ordinal": 116,
+    "total": 460
+  },
+  "w06_f0p16/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 68.38042587499513,
+    "ordinal": 117,
+    "total": 460
+  },
+  "w06_f0p16/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 54.849037499996484,
+    "ordinal": 118,
+    "total": 460
+  },
+  "w06_f0p16/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 74.85389708299772,
+    "ordinal": 119,
+    "total": 460
+  },
+  "w06_f0p16/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 74.64517029199487,
+    "ordinal": 120,
+    "total": 460
+  },
+  "w06_f0p25/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 108.53308545899927,
+    "ordinal": 121,
+    "total": 460
+  },
+  "w06_f0p25/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 89.69749229100125,
+    "ordinal": 122,
+    "total": 460
+  },
+  "w06_f0p25/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 89.0072645830005,
+    "ordinal": 123,
+    "total": 460
+  },
+  "w06_f0p25/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 84.99440624999988,
+    "ordinal": 124,
+    "total": 460
+  },
+  "w06_f0p25/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 137.96175550000044,
+    "ordinal": 125,
+    "total": 460
+  },
+  "w06_f0p40/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 143.47989304200019,
+    "ordinal": 126,
+    "total": 460
+  },
+  "w06_f0p40/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 100.6361202909975,
+    "ordinal": 127,
+    "total": 460
+  },
+  "w06_f0p40/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 78.13191912500042,
+    "ordinal": 128,
+    "total": 460
+  },
+  "w06_f0p40/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 87.63446687499527,
+    "ordinal": 129,
+    "total": 460
+  },
+  "w06_f0p40/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 102.88393712499965,
+    "ordinal": 130,
+    "total": 460
+  },
+  "w06_f0p60/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 165.88310620799894,
+    "ordinal": 131,
+    "total": 460
+  },
+  "w06_f0p60/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 90.59302483299689,
+    "ordinal": 132,
+    "total": 460
+  },
+  "w06_f0p60/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 145.69260141700215,
+    "ordinal": 133,
+    "total": 460
+  },
+  "w06_f0p60/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 86.92757804099529,
+    "ordinal": 134,
+    "total": 460
+  },
+  "w06_f0p60/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 162.84912337500282,
+    "ordinal": 135,
+    "total": 460
+  },
+  "w06_f0p80/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 170.3602095419992,
+    "ordinal": 136,
+    "total": 460
+  },
+  "w06_f0p80/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 112.01964491599938,
+    "ordinal": 137,
+    "total": 460
+  },
+  "w06_f0p80/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 139.45523608399526,
+    "ordinal": 138,
+    "total": 460
+  },
+  "w06_f0p80/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 157.42007783299778,
+    "ordinal": 139,
+    "total": 460
+  },
+  "w06_f0p80/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 131.06175387500116,
+    "ordinal": 140,
+    "total": 460
+  },
+  "w06_f0p90/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 189.83068887500121,
+    "ordinal": 141,
+    "total": 460
+  },
+  "w06_f0p90/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 47.94656075000239,
+    "ordinal": 142,
+    "total": 460
+  },
+  "w06_f0p90/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 104.53414512499876,
+    "ordinal": 143,
+    "total": 460
+  },
+  "w06_f0p90/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 142.86006404200452,
+    "ordinal": 144,
+    "total": 460
+  },
+  "w06_f0p90/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 172.79680295899743,
+    "ordinal": 145,
+    "total": 460
+  },
+  "w06_f1p00/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 175.71493158399971,
+    "ordinal": 146,
+    "total": 460
+  },
+  "w06_f1p00/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 475.4004832089995,
+    "ordinal": 147,
+    "total": 460
+  },
+  "w06_f1p00/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 236.97843100000318,
+    "ordinal": 148,
+    "total": 460
+  },
+  "w06_f1p00/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 150.62169720899692,
+    "ordinal": 149,
+    "total": 460
+  },
+  "w06_f1p00/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 141.83180933399854,
+    "ordinal": 150,
+    "total": 460
+  },
+  "w08_f0p04/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 53.311075375000655,
+    "ordinal": 151,
+    "total": 460
+  },
+  "w08_f0p04/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 47.75639416699414,
+    "ordinal": 152,
+    "total": 460
+  },
+  "w08_f0p04/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 38.51887841599819,
+    "ordinal": 153,
+    "total": 460
+  },
+  "w08_f0p04/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 25.69162475000485,
+    "ordinal": 154,
+    "total": 460
+  },
+  "w08_f0p04/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 41.39929937499983,
+    "ordinal": 155,
+    "total": 460
+  },
+  "w08_f0p06/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 72.17578245900222,
+    "ordinal": 156,
+    "total": 460
+  },
+  "w08_f0p06/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 43.78545424999902,
+    "ordinal": 157,
+    "total": 460
+  },
+  "w08_f0p06/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 43.30677666699921,
+    "ordinal": 158,
+    "total": 460
+  },
+  "w08_f0p06/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 69.67218216600304,
+    "ordinal": 159,
+    "total": 460
+  },
+  "w08_f0p06/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 35.249380458000815,
+    "ordinal": 160,
+    "total": 460
+  },
+  "w08_f0p10/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 79.65444770800241,
+    "ordinal": 161,
+    "total": 460
+  },
+  "w08_f0p10/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 77.31688550000399,
+    "ordinal": 162,
+    "total": 460
+  },
+  "w08_f0p10/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 45.414756833000865,
+    "ordinal": 163,
+    "total": 460
+  },
+  "w08_f0p10/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 56.2867056249961,
+    "ordinal": 164,
+    "total": 460
+  },
+  "w08_f0p10/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 89.72963987499679,
+    "ordinal": 165,
+    "total": 460
+  },
+  "w08_f0p16/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 114.31517662500119,
+    "ordinal": 166,
+    "total": 460
+  },
+  "w08_f0p16/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 92.64563120799721,
+    "ordinal": 167,
+    "total": 460
+  },
+  "w08_f0p16/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 38.58998537500156,
+    "ordinal": 168,
+    "total": 460
+  },
+  "w08_f0p16/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 52.62529933299811,
+    "ordinal": 169,
+    "total": 460
+  },
+  "w08_f0p16/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 67.76484595800139,
+    "ordinal": 170,
+    "total": 460
+  },
+  "w08_f0p25/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 138.45531437500176,
+    "ordinal": 171,
+    "total": 460
+  },
+  "w08_f0p25/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 73.73611091699422,
+    "ordinal": 172,
+    "total": 460
+  },
+  "w08_f0p25/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 26.028481332999945,
+    "ordinal": 173,
+    "total": 460
+  },
+  "w08_f0p25/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 87.99523700000282,
+    "ordinal": 174,
+    "total": 460
+  },
+  "w08_f0p25/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 88.90583799999877,
+    "ordinal": 175,
+    "total": 460
+  },
+  "w08_f0p40/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 141.31459829099913,
+    "ordinal": 176,
+    "total": 460
+  },
+  "w08_f0p40/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 88.54221987500205,
+    "ordinal": 177,
+    "total": 460
+  },
+  "w08_f0p40/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 135.71846762499626,
+    "ordinal": 178,
+    "total": 460
+  },
+  "w08_f0p40/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 107.26586820800003,
+    "ordinal": 179,
+    "total": 460
+  },
+  "w08_f0p40/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 83.60438383300061,
+    "ordinal": 180,
+    "total": 460
+  },
+  "w08_f0p60/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 182.47961983300047,
+    "ordinal": 181,
+    "total": 460
+  },
+  "w08_f0p60/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 91.13834833400324,
+    "ordinal": 182,
+    "total": 460
+  },
+  "w08_f0p60/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 105.8286535829975,
+    "ordinal": 183,
+    "total": 460
+  },
+  "w08_f0p60/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 110.99912004199723,
+    "ordinal": 184,
+    "total": 460
+  },
+  "w08_f0p60/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 88.92740383300406,
+    "ordinal": 185,
+    "total": 460
+  },
+  "w08_f0p80/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 177.05426050000096,
+    "ordinal": 186,
+    "total": 460
+  },
+  "w08_f0p80/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 125.70284608300426,
+    "ordinal": 187,
+    "total": 460
+  },
+  "w08_f0p80/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 121.84622249999666,
+    "ordinal": 188,
+    "total": 460
+  },
+  "w08_f0p80/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 167.67608566700073,
+    "ordinal": 189,
+    "total": 460
+  },
+  "w08_f0p80/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 85.07497083400085,
+    "ordinal": 190,
+    "total": 460
+  },
+  "w08_f0p90/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 205.9201052500066,
+    "ordinal": 191,
+    "total": 460
+  },
+  "w08_f0p90/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 94.17842650000239,
+    "ordinal": 192,
+    "total": 460
+  },
+  "w08_f0p90/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 156.98402979200182,
+    "ordinal": 193,
+    "total": 460
+  },
+  "w08_f0p90/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 130.58875154199632,
+    "ordinal": 194,
+    "total": 460
+  },
+  "w08_f0p90/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 35.69727349999448,
+    "ordinal": 195,
+    "total": 460
+  },
+  "w08_f1p00/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 278.7770650409948,
+    "ordinal": 196,
+    "total": 460
+  },
+  "w08_f1p00/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 151.08235133300332,
+    "ordinal": 197,
+    "total": 460
+  },
+  "w08_f1p00/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 157.18593545800104,
+    "ordinal": 198,
+    "total": 460
+  },
+  "w08_f1p00/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 208.55356216599466,
+    "ordinal": 199,
+    "total": 460
+  },
+  "w08_f1p00/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 149.00595299999986,
+    "ordinal": 200,
+    "total": 460
+  },
+  "w10_f0p04/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 48.17168841700186,
+    "ordinal": 201,
+    "total": 460
+  },
+  "w10_f0p04/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 44.78975079200609,
+    "ordinal": 202,
+    "total": 460
+  },
+  "w10_f0p04/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 41.40147374999651,
+    "ordinal": 203,
+    "total": 460
+  },
+  "w10_f0p04/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 44.186736292002024,
+    "ordinal": 204,
+    "total": 460
+  },
+  "w10_f0p04/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 28.702885333004815,
+    "ordinal": 205,
+    "total": 460
+  },
+  "w10_f0p06/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 59.13251499999751,
+    "ordinal": 206,
+    "total": 460
+  },
+  "w10_f0p06/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 50.04003995799576,
+    "ordinal": 207,
+    "total": 460
+  },
+  "w10_f0p06/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 33.736143499998434,
+    "ordinal": 208,
+    "total": 460
+  },
+  "w10_f0p06/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 36.00381712499802,
+    "ordinal": 209,
+    "total": 460
+  },
+  "w10_f0p06/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 71.54040408400033,
+    "ordinal": 210,
+    "total": 460
+  },
+  "w10_f0p10/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 54.88310570899921,
+    "ordinal": 211,
+    "total": 460
+  },
+  "w10_f0p10/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 71.25730670800112,
+    "ordinal": 212,
+    "total": 460
+  },
+  "w10_f0p10/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 52.376627625002584,
+    "ordinal": 213,
+    "total": 460
+  },
+  "w10_f0p10/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 71.59769041600521,
+    "ordinal": 214,
+    "total": 460
+  },
+  "w10_f0p10/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 48.19264000000112,
+    "ordinal": 215,
+    "total": 460
+  },
+  "w10_f0p16/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 74.83601408400136,
+    "ordinal": 216,
+    "total": 460
+  },
+  "w10_f0p16/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 71.15311654099787,
+    "ordinal": 217,
+    "total": 460
+  },
+  "w10_f0p16/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 64.28559308299737,
+    "ordinal": 218,
+    "total": 460
+  },
+  "w10_f0p16/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 165.3463541250021,
+    "ordinal": 219,
+    "total": 460
+  },
+  "w10_f0p16/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 82.46142937499826,
+    "ordinal": 220,
+    "total": 460
+  },
+  "w10_f0p25/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 84.20114029199613,
+    "ordinal": 221,
+    "total": 460
+  },
+  "w10_f0p25/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 52.526964165997924,
+    "ordinal": 222,
+    "total": 460
+  },
+  "w10_f0p25/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 67.98797699999704,
+    "ordinal": 223,
+    "total": 460
+  },
+  "w10_f0p25/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 82.31004416700307,
+    "ordinal": 224,
+    "total": 460
+  },
+  "w10_f0p25/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 157.1930147919993,
+    "ordinal": 225,
+    "total": 460
+  },
+  "w10_f0p40/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 75.97036020900123,
+    "ordinal": 226,
+    "total": 460
+  },
+  "w10_f0p40/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 145.08801241699257,
+    "ordinal": 227,
+    "total": 460
+  },
+  "w10_f0p40/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 98.51546508299361,
+    "ordinal": 228,
+    "total": 460
+  },
+  "w10_f0p40/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 79.50982575000671,
+    "ordinal": 229,
+    "total": 460
+  },
+  "w10_f0p40/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 78.400778582989,
+    "ordinal": 230,
+    "total": 460
+  },
+  "w10_f0p60/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 95.34780308300105,
+    "ordinal": 231,
+    "total": 460
+  },
+  "w10_f0p60/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 104.40832950000186,
+    "ordinal": 232,
+    "total": 460
+  },
+  "w10_f0p60/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 82.87346533300297,
+    "ordinal": 233,
+    "total": 460
+  },
+  "w10_f0p60/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 152.47621441699448,
+    "ordinal": 234,
+    "total": 460
+  },
+  "w10_f0p60/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 121.251711082994,
+    "ordinal": 235,
+    "total": 460
+  },
+  "w10_f0p80/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 121.78564812500554,
+    "ordinal": 236,
+    "total": 460
+  },
+  "w10_f0p80/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 198.08463795900752,
+    "ordinal": 237,
+    "total": 460
+  },
+  "w10_f0p80/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 142.38508262499818,
+    "ordinal": 238,
+    "total": 460
+  },
+  "w10_f0p80/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 139.8420592080074,
+    "ordinal": 239,
+    "total": 460
+  },
+  "w10_f0p80/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 97.60821150000265,
+    "ordinal": 240,
+    "total": 460
+  },
+  "w10_f0p90/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 151.25849274999928,
+    "ordinal": 241,
+    "total": 460
+  },
+  "w10_f0p90/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 133.43850008299341,
+    "ordinal": 242,
+    "total": 460
+  },
+  "w10_f0p90/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 77.67550162500993,
+    "ordinal": 243,
+    "total": 460
+  },
+  "w10_f0p90/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 109.4077621660108,
+    "ordinal": 244,
+    "total": 460
+  },
+  "w10_f0p90/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 148.06668033299502,
+    "ordinal": 245,
+    "total": 460
+  },
+  "w10_f1p00/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 109.62887254200177,
+    "ordinal": 246,
+    "total": 460
+  },
+  "w10_f1p00/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 141.28974066699448,
+    "ordinal": 247,
+    "total": 460
+  },
+  "w10_f1p00/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 157.80932758300332,
+    "ordinal": 248,
+    "total": 460
+  },
+  "w10_f1p00/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 108.9660979170003,
+    "ordinal": 249,
+    "total": 460
+  },
+  "w10_f1p00/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 99.59700745900045,
+    "ordinal": 250,
+    "total": 460
+  },
+  "w13_f0p04/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 35.92221595799492,
+    "ordinal": 251,
+    "total": 460
+  },
+  "w13_f0p04/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 45.07112679100828,
+    "ordinal": 252,
+    "total": 460
+  },
+  "w13_f0p04/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 40.330556667002384,
+    "ordinal": 253,
+    "total": 460
+  },
+  "w13_f0p04/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 43.17570037499536,
+    "ordinal": 254,
+    "total": 460
+  },
+  "w13_f0p04/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 41.75043679200462,
+    "ordinal": 255,
+    "total": 460
+  },
+  "w13_f0p06/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 36.28876683401177,
+    "ordinal": 256,
+    "total": 460
+  },
+  "w13_f0p06/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 36.42814270898816,
+    "ordinal": 257,
+    "total": 460
+  },
+  "w13_f0p06/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 43.43366695799341,
+    "ordinal": 258,
+    "total": 460
+  },
+  "w13_f0p06/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 26.799922709004022,
+    "ordinal": 259,
+    "total": 460
+  },
+  "w13_f0p06/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 42.17555270800949,
+    "ordinal": 260,
+    "total": 460
+  },
+  "w13_f0p10/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 37.590976792009315,
+    "ordinal": 261,
+    "total": 460
+  },
+  "w13_f0p10/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 40.594470583004295,
+    "ordinal": 262,
+    "total": 460
+  },
+  "w13_f0p10/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 63.61257454199949,
+    "ordinal": 263,
+    "total": 460
+  },
+  "w13_f0p10/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 39.674863374995766,
+    "ordinal": 264,
+    "total": 460
+  },
+  "w13_f0p10/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 31.79703004199837,
+    "ordinal": 265,
+    "total": 460
+  },
+  "w13_f0p16/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 36.72652041699621,
+    "ordinal": 266,
+    "total": 460
+  },
+  "w13_f0p16/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 61.48943962500198,
+    "ordinal": 267,
+    "total": 460
+  },
+  "w13_f0p16/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 49.33688537499984,
+    "ordinal": 268,
+    "total": 460
+  },
+  "w13_f0p16/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 44.830932374999975,
+    "ordinal": 269,
+    "total": 460
+  },
+  "w13_f0p16/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 58.890462250012206,
+    "ordinal": 270,
+    "total": 460
+  },
+  "w13_f0p25/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 39.061683624997386,
+    "ordinal": 271,
+    "total": 460
+  },
+  "w13_f0p25/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 72.60514620901085,
+    "ordinal": 272,
+    "total": 460
+  },
+  "w13_f0p25/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 85.8642615419958,
+    "ordinal": 273,
+    "total": 460
+  },
+  "w13_f0p25/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 47.25420404098986,
+    "ordinal": 274,
+    "total": 460
+  },
+  "w13_f0p25/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 78.79418154200539,
+    "ordinal": 275,
+    "total": 460
+  },
+  "w13_f0p40/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 40.157945208004094,
+    "ordinal": 276,
+    "total": 460
+  },
+  "w13_f0p40/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 92.3844894579961,
+    "ordinal": 277,
+    "total": 460
+  },
+  "w13_f0p40/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 24.539590041997144,
+    "ordinal": 278,
+    "total": 460
+  },
+  "w13_f0p40/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 66.41768937499728,
+    "ordinal": 279,
+    "total": 460
+  },
+  "w13_f0p40/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 128.74107558300602,
+    "ordinal": 280,
+    "total": 460
+  },
+  "w13_f0p60/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 36.3057971669914,
+    "ordinal": 281,
+    "total": 460
+  },
+  "w13_f0p60/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 136.32141795799544,
+    "ordinal": 282,
+    "total": 460
+  },
+  "w13_f0p60/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 165.60359462499036,
+    "ordinal": 283,
+    "total": 460
+  },
+  "w13_f0p60/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 152.19333624999854,
+    "ordinal": 284,
+    "total": 460
+  },
+  "w13_f0p60/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 97.01585933299793,
+    "ordinal": 285,
+    "total": 460
+  },
+  "w13_f0p80/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 84.90242162499635,
+    "ordinal": 286,
+    "total": 460
+  },
+  "w13_f0p80/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 176.28654529199412,
+    "ordinal": 287,
+    "total": 460
+  },
+  "w13_f0p80/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 336.98730058300134,
+    "ordinal": 288,
+    "total": 460
+  },
+  "w13_f0p80/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 231.3212363749917,
+    "ordinal": 289,
+    "total": 460
+  },
+  "w13_f0p80/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 126.47596470800636,
+    "ordinal": 290,
+    "total": 460
+  },
+  "w13_f0p90/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 64.0668873340037,
+    "ordinal": 291,
+    "total": 460
+  },
+  "w13_f0p90/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 163.9611276659998,
+    "ordinal": 292,
+    "total": 460
+  },
+  "w13_f0p90/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 131.17481833399506,
+    "ordinal": 293,
+    "total": 460
+  },
+  "w13_f0p90/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 86.86281183399842,
+    "ordinal": 294,
+    "total": 460
+  },
+  "w13_f0p90/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 17.399762417000602,
+    "ordinal": 295,
+    "total": 460
+  },
+  "w13_f1p00/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 26.37776191699959,
+    "ordinal": 296,
+    "total": 460
+  },
+  "w13_f1p00/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 45.207257916990784,
+    "ordinal": 297,
+    "total": 460
+  },
+  "w13_f1p00/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 71.96153108299768,
+    "ordinal": 298,
+    "total": 460
+  },
+  "w13_f1p00/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 66.25681475001329,
+    "ordinal": 299,
+    "total": 460
+  },
+  "w13_f1p00/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 139.78927520799334,
+    "ordinal": 300,
+    "total": 460
+  },
+  "w16_f0p04/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 20.806679625005927,
+    "ordinal": 301,
+    "total": 460
+  },
+  "w16_f0p04/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 29.718482750002295,
+    "ordinal": 302,
+    "total": 460
+  },
+  "w16_f0p04/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 39.42879762499069,
+    "ordinal": 303,
+    "total": 460
+  },
+  "w16_f0p04/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 29.672275000004447,
+    "ordinal": 304,
+    "total": 460
+  },
+  "w16_f0p04/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 34.377651000002516,
+    "ordinal": 305,
+    "total": 460
+  },
+  "w16_f0p06/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 21.5382711669954,
+    "ordinal": 306,
+    "total": 460
+  },
+  "w16_f0p06/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 29.885882208996918,
+    "ordinal": 307,
+    "total": 460
+  },
+  "w16_f0p06/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 24.018863166988012,
+    "ordinal": 308,
+    "total": 460
+  },
+  "w16_f0p06/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 11.060758791994886,
+    "ordinal": 309,
+    "total": 460
+  },
+  "w16_f0p06/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 25.47565358299471,
+    "ordinal": 310,
+    "total": 460
+  },
+  "w16_f0p10/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 25.45139545800339,
+    "ordinal": 311,
+    "total": 460
+  },
+  "w16_f0p10/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 26.47788712500187,
+    "ordinal": 312,
+    "total": 460
+  },
+  "w16_f0p10/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 51.44947016700462,
+    "ordinal": 313,
+    "total": 460
+  },
+  "w16_f0p10/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 37.4903826249938,
+    "ordinal": 314,
+    "total": 460
+  },
+  "w16_f0p10/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 23.490637833005167,
+    "ordinal": 315,
+    "total": 460
+  },
+  "w16_f0p16/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 28.555181083007483,
+    "ordinal": 316,
+    "total": 460
+  },
+  "w16_f0p16/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 29.44497854200017,
+    "ordinal": 317,
+    "total": 460
+  },
+  "w16_f0p16/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 47.96114170800138,
+    "ordinal": 318,
+    "total": 460
+  },
+  "w16_f0p16/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 30.622497999996995,
+    "ordinal": 319,
+    "total": 460
+  },
+  "w16_f0p16/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 53.40953370799252,
+    "ordinal": 320,
+    "total": 460
+  },
+  "w16_f0p25/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 23.223311875000945,
+    "ordinal": 321,
+    "total": 460
+  },
+  "w16_f0p25/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 27.08139091701014,
+    "ordinal": 322,
+    "total": 460
+  },
+  "w16_f0p25/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 49.33650829200633,
+    "ordinal": 323,
+    "total": 460
+  },
+  "w16_f0p25/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 42.33428483399621,
+    "ordinal": 324,
+    "total": 460
+  },
+  "w16_f0p25/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 27.50805608299561,
+    "ordinal": 325,
+    "total": 460
+  },
+  "w16_f0p40/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 24.909711290994892,
+    "ordinal": 326,
+    "total": 460
+  },
+  "w16_f0p40/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 26.258634040990728,
+    "ordinal": 327,
+    "total": 460
+  },
+  "w16_f0p40/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 23.720335999998497,
+    "ordinal": 328,
+    "total": 460
+  },
+  "w16_f0p40/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 29.597575833002338,
+    "ordinal": 329,
+    "total": 460
+  },
+  "w16_f0p40/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 88.47434112499468,
+    "ordinal": 330,
+    "total": 460
+  },
+  "w16_f0p60/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 24.904077292012516,
+    "ordinal": 331,
+    "total": 460
+  },
+  "w16_f0p60/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 25.27702437499829,
+    "ordinal": 332,
+    "total": 460
+  },
+  "w16_f0p60/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 98.25545141600014,
+    "ordinal": 333,
+    "total": 460
+  },
+  "w16_f0p60/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 25.794440209007007,
+    "ordinal": 334,
+    "total": 460
+  },
+  "w16_f0p60/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 57.313331375000416,
+    "ordinal": 335,
+    "total": 460
+  },
+  "w16_f0p80/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 23.298621624999214,
+    "ordinal": 336,
+    "total": 460
+  },
+  "w16_f0p80/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 79.34649770800024,
+    "ordinal": 337,
+    "total": 460
+  },
+  "w16_f0p80/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 77.11736774999008,
+    "ordinal": 338,
+    "total": 460
+  },
+  "w16_f0p80/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 46.21083137500682,
+    "ordinal": 339,
+    "total": 460
+  },
+  "w16_f0p80/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 151.26113975000044,
+    "ordinal": 340,
+    "total": 460
+  },
+  "w16_f0p90/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 35.61237704200903,
+    "ordinal": 341,
+    "total": 460
+  },
+  "w16_f0p90/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 23.555728833001922,
+    "ordinal": 342,
+    "total": 460
+  },
+  "w16_f0p90/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 130.76179641700583,
+    "ordinal": 343,
+    "total": 460
+  },
+  "w16_f0p90/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 13.105603708987474,
+    "ordinal": 344,
+    "total": 460
+  },
+  "w16_f0p90/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 34.9685184580012,
+    "ordinal": 345,
+    "total": 460
+  },
+  "w16_f1p00/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 33.643843917001504,
+    "ordinal": 346,
+    "total": 460
+  },
+  "w16_f1p00/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 84.09367600000405,
+    "ordinal": 347,
+    "total": 460
+  },
+  "w16_f1p00/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 50.756328125004075,
+    "ordinal": 348,
+    "total": 460
+  },
+  "w16_f1p00/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 80.73343462499906,
+    "ordinal": 349,
+    "total": 460
+  },
+  "w16_f1p00/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 26.678763040996273,
+    "ordinal": 350,
+    "total": 460
+  },
+  "w19_f0p04/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 31.60423445800552,
+    "ordinal": 351,
+    "total": 460
+  },
+  "w19_f0p04/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 17.527673292002873,
+    "ordinal": 352,
+    "total": 460
+  },
+  "w19_f0p04/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 25.752204500007792,
+    "ordinal": 353,
+    "total": 460
+  },
+  "w19_f0p04/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 25.4039316670096,
+    "ordinal": 354,
+    "total": 460
+  },
+  "w19_f0p04/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 33.546920458000386,
+    "ordinal": 355,
+    "total": 460
+  },
+  "w19_f0p06/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 30.38016533400514,
+    "ordinal": 356,
+    "total": 460
+  },
+  "w19_f0p06/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 31.051647583997692,
+    "ordinal": 357,
+    "total": 460
+  },
+  "w19_f0p06/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 48.83117620900157,
+    "ordinal": 358,
+    "total": 460
+  },
+  "w19_f0p06/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 35.62022545900254,
+    "ordinal": 359,
+    "total": 460
+  },
+  "w19_f0p06/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 45.94832470799156,
+    "ordinal": 360,
+    "total": 460
+  },
+  "w19_f0p10/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 34.358422707999125,
+    "ordinal": 361,
+    "total": 460
+  },
+  "w19_f0p10/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 21.212914583011298,
+    "ordinal": 362,
+    "total": 460
+  },
+  "w19_f0p10/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 23.55266433399811,
+    "ordinal": 363,
+    "total": 460
+  },
+  "w19_f0p10/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 19.908209792003618,
+    "ordinal": 364,
+    "total": 460
+  },
+  "w19_f0p10/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 19.89678416599054,
+    "ordinal": 365,
+    "total": 460
+  },
+  "w19_f0p16/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 32.85877824999625,
+    "ordinal": 366,
+    "total": 460
+  },
+  "w19_f0p16/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 37.350557583005866,
+    "ordinal": 367,
+    "total": 460
+  },
+  "w19_f0p16/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 40.238667707992136,
+    "ordinal": 368,
+    "total": 460
+  },
+  "w19_f0p16/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 32.57838470800198,
+    "ordinal": 369,
+    "total": 460
+  },
+  "w19_f0p16/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 32.42417804199795,
+    "ordinal": 370,
+    "total": 460
+  },
+  "w19_f0p25/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 34.68399808400136,
+    "ordinal": 371,
+    "total": 460
+  },
+  "w19_f0p25/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 92.94693020799605,
+    "ordinal": 372,
+    "total": 460
+  },
+  "w19_f0p25/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 24.777157125005033,
+    "ordinal": 373,
+    "total": 460
+  },
+  "w19_f0p25/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 13.98362216600799,
+    "ordinal": 374,
+    "total": 460
+  },
+  "w19_f0p25/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 25.92217629199149,
+    "ordinal": 375,
+    "total": 460
+  },
+  "w19_f0p40/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 23.656263209006283,
+    "ordinal": 376,
+    "total": 460
+  },
+  "w19_f0p40/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 12.787269708991516,
+    "ordinal": 377,
+    "total": 460
+  },
+  "w19_f0p40/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 30.09937929100124,
+    "ordinal": 378,
+    "total": 460
+  },
+  "w19_f0p40/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 41.614781459007645,
+    "ordinal": 379,
+    "total": 460
+  },
+  "w19_f0p40/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 11.304852625005879,
+    "ordinal": 380,
+    "total": 460
+  },
+  "w19_f0p60/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 23.659783292008797,
+    "ordinal": 381,
+    "total": 460
+  },
+  "w19_f0p60/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 14.15032145800069,
+    "ordinal": 382,
+    "total": 460
+  },
+  "w19_f0p60/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 51.09300454199547,
+    "ordinal": 383,
+    "total": 460
+  },
+  "w19_f0p60/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 71.99456858400663,
+    "ordinal": 384,
+    "total": 460
+  },
+  "w19_f0p60/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 50.477530584001215,
+    "ordinal": 385,
+    "total": 460
+  },
+  "w19_f0p80/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 23.37920562499494,
+    "ordinal": 386,
+    "total": 460
+  },
+  "w19_f0p80/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 23.21740774999489,
+    "ordinal": 387,
+    "total": 460
+  },
+  "w19_f0p80/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 92.26815787500527,
+    "ordinal": 388,
+    "total": 460
+  },
+  "w19_f0p80/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 80.9670955830079,
+    "ordinal": 389,
+    "total": 460
+  },
+  "w19_f0p80/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 20.508721667007194,
+    "ordinal": 390,
+    "total": 460
+  },
+  "w19_f0p90/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 18.68236758300918,
+    "ordinal": 391,
+    "total": 460
+  },
+  "w19_f0p90/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 29.890059124998515,
+    "ordinal": 392,
+    "total": 460
+  },
+  "w19_f0p90/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 41.26782925000589,
+    "ordinal": 393,
+    "total": 460
+  },
+  "w19_f0p90/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 12.648952874995302,
+    "ordinal": 394,
+    "total": 460
+  },
+  "w19_f0p90/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 8.30538983400038,
+    "ordinal": 395,
+    "total": 460
+  },
+  "w19_f1p00/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 22.001080624992028,
+    "ordinal": 396,
+    "total": 460
+  },
+  "w19_f1p00/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 23.341043542008265,
+    "ordinal": 397,
+    "total": 460
+  },
+  "w19_f1p00/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 37.90199541699258,
+    "ordinal": 398,
+    "total": 460
+  },
+  "w19_f1p00/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 90.5910514999996,
+    "ordinal": 399,
+    "total": 460
+  },
+  "w19_f1p00/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 12.710680458010756,
+    "ordinal": 400,
+    "total": 460
+  },
+  "w22_f0p04/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 9.557956249991548,
+    "ordinal": 401,
+    "total": 460
+  },
+  "w22_f0p04/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 8.26169470899913,
+    "ordinal": 402,
+    "total": 460
+  },
+  "w22_f0p04/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 9.503708499993081,
+    "ordinal": 403,
+    "total": 460
+  },
+  "w22_f0p04/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 8.58253012500063,
+    "ordinal": 404,
+    "total": 460
+  },
+  "w22_f0p04/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 23.85955483399448,
+    "ordinal": 405,
+    "total": 460
+  },
+  "w22_f0p06/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 10.932403958999203,
+    "ordinal": 406,
+    "total": 460
+  },
+  "w22_f0p06/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 23.329642750002677,
+    "ordinal": 407,
+    "total": 460
+  },
+  "w22_f0p06/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 12.226991999996244,
+    "ordinal": 408,
+    "total": 460
+  },
+  "w22_f0p06/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 13.7046832920023,
+    "ordinal": 409,
+    "total": 460
+  },
+  "w22_f0p06/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 14.345929292001529,
+    "ordinal": 410,
+    "total": 460
+  },
+  "w22_f0p10/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 8.142327708002995,
+    "ordinal": 411,
+    "total": 460
+  },
+  "w22_f0p10/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 8.113554833005765,
+    "ordinal": 412,
+    "total": 460
+  },
+  "w22_f0p10/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 18.11594991700258,
+    "ordinal": 413,
+    "total": 460
+  },
+  "w22_f0p10/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 10.48247716599144,
+    "ordinal": 414,
+    "total": 460
+  },
+  "w22_f0p10/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 14.495112541990238,
+    "ordinal": 415,
+    "total": 460
+  },
+  "w22_f0p16/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 8.51190441599465,
+    "ordinal": 416,
+    "total": 460
+  },
+  "w22_f0p16/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 24.73994058300741,
+    "ordinal": 417,
+    "total": 460
+  },
+  "w22_f0p16/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 13.386434458006988,
+    "ordinal": 418,
+    "total": 460
+  },
+  "w22_f0p16/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 21.61073454200232,
+    "ordinal": 419,
+    "total": 460
+  },
+  "w22_f0p16/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 8.346557833996485,
+    "ordinal": 420,
+    "total": 460
+  },
+  "w22_f0p25/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 7.701539290996152,
+    "ordinal": 421,
+    "total": 460
+  },
+  "w22_f0p25/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 8.45537825000065,
+    "ordinal": 422,
+    "total": 460
+  },
+  "w22_f0p25/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 23.08733145800943,
+    "ordinal": 423,
+    "total": 460
+  },
+  "w22_f0p25/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 24.035399625005084,
+    "ordinal": 424,
+    "total": 460
+  },
+  "w22_f0p25/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 14.532738333000452,
+    "ordinal": 425,
+    "total": 460
+  },
+  "w22_f0p40/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 7.4704932080057915,
+    "ordinal": 426,
+    "total": 460
+  },
+  "w22_f0p40/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 20.97553462498763,
+    "ordinal": 427,
+    "total": 460
+  },
+  "w22_f0p40/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 12.804594124987489,
+    "ordinal": 428,
+    "total": 460
+  },
+  "w22_f0p40/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 12.778377708993503,
+    "ordinal": 429,
+    "total": 460
+  },
+  "w22_f0p40/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 23.956749707998824,
+    "ordinal": 430,
+    "total": 460
+  },
+  "w22_f0p60/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 7.732040500006406,
+    "ordinal": 431,
+    "total": 460
+  },
+  "w22_f0p60/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 83.02862087500398,
+    "ordinal": 432,
+    "total": 460
+  },
+  "w22_f0p60/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 24.306975790997967,
+    "ordinal": 433,
+    "total": 460
+  },
+  "w22_f0p60/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 7.580129250010941,
+    "ordinal": 434,
+    "total": 460
+  },
+  "w22_f0p60/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 8.206646749997162,
+    "ordinal": 435,
+    "total": 460
+  },
+  "w22_f0p80/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 7.620188874992891,
+    "ordinal": 436,
+    "total": 460
+  },
+  "w22_f0p80/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 7.931181665990152,
+    "ordinal": 437,
+    "total": 460
+  },
+  "w22_f0p80/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 20.047363290999783,
+    "ordinal": 438,
+    "total": 460
+  },
+  "w22_f0p80/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 7.708793750003679,
+    "ordinal": 439,
+    "total": 460
+  },
+  "w22_f0p80/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 12.731351750000613,
+    "ordinal": 440,
+    "total": 460
+  },
+  "w22_f0p90/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 7.954254500000388,
+    "ordinal": 441,
+    "total": 460
+  },
+  "w22_f0p90/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 22.24151391700434,
+    "ordinal": 442,
+    "total": 460
+  },
+  "w22_f0p90/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 7.79637554200599,
+    "ordinal": 443,
+    "total": 460
+  },
+  "w22_f0p90/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 7.617106332996627,
+    "ordinal": 444,
+    "total": 460
+  },
+  "w22_f0p90/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 16.312084834004054,
+    "ordinal": 445,
+    "total": 460
+  },
+  "w22_f1p00/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 7.920055875001708,
+    "ordinal": 446,
+    "total": 460
+  },
+  "w22_f1p00/replicate_2": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 22.17390283299028,
+    "ordinal": 447,
+    "total": 460
+  },
+  "w22_f1p00/replicate_3": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 24.46935470799508,
+    "ordinal": 448,
+    "total": 460
+  },
+  "w22_f1p00/replicate_4": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 8.890131583000766,
+    "ordinal": 449,
+    "total": 460
+  },
+  "w22_f1p00/replicate_5": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 20.44020399999863,
+    "ordinal": 450,
+    "total": 460
+  },
+  "w25_f0p04/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 8.543685790995369,
+    "ordinal": 451,
+    "total": 460
+  },
+  "w25_f0p06/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 8.61053816700587,
+    "ordinal": 452,
+    "total": 460
+  },
+  "w25_f0p10/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 8.860380416008411,
+    "ordinal": 453,
+    "total": 460
+  },
+  "w25_f0p16/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 8.370709125010762,
+    "ordinal": 454,
+    "total": 460
+  },
+  "w25_f0p25/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 8.45894258399494,
+    "ordinal": 455,
+    "total": 460
+  },
+  "w25_f0p40/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 8.307970707988716,
+    "ordinal": 456,
+    "total": 460
+  },
+  "w25_f0p60/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 8.452978291999898,
+    "ordinal": 457,
+    "total": 460
+  },
+  "w25_f0p80/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 8.172246082991478,
+    "ordinal": 458,
+    "total": 460
+  },
+  "w25_f0p90/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 8.287142125001992,
+    "ordinal": 459,
+    "total": 460
+  },
+  "w25_f1p00/replicate_1": {
+    "status": "complete",
+    "return_code": 0,
+    "wall_time_seconds": 8.172608291002689,
+    "ordinal": 460,
+    "total": 460
+  }
+}

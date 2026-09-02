@@ -1,0 +1,11 @@
+Loading umbrella windows …
+  25 windows loaded.
+  Test grid: 100 points from 1.4500 to 5.4000 nm
+  Wrote /Users/brennonshanks/freeGP/results/revision/benchmarks/runs/20260830-172854-paper/outputs/sparse/ui/repeat_2/ui/references.csv
+[1/1] cell w03_f0p10 …
+  Wrote /Users/brennonshanks/freeGP/results/revision/benchmarks/runs/20260830-172854-paper/outputs/sparse/ui/repeat_2/ui/ablation_metrics.csv
+  Wrote /Users/brennonshanks/freeGP/results/revision/benchmarks/runs/20260830-172854-paper/outputs/sparse/ui/repeat_2/ui/run_summary.txt
+
+Done. Results written to: /Users/brennonshanks/freeGP/results/revision/benchmarks/runs/20260830-172854-paper/outputs/sparse/ui/repeat_2/ui
+  ablation_metrics.csv : /Users/brennonshanks/freeGP/results/revision/benchmarks/runs/20260830-172854-paper/outputs/sparse/ui/repeat_2/ui/ablation_metrics.csv
+  per-cell curves      : /Users/brennonshanks/freeGP/results/revision/benchmarks/runs/20260830-172854-paper/outputs/sparse/ui/repeat_2/ui/curves

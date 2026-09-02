@@ -1,0 +1,23 @@
+method: nuts
+kernel: stationary
+device: cpu
+objective: loo
+ell: 1.5707963267948966
+w: 13.230969730144501
+window_counts: [25]
+trajectory_fractions: [1.0]
+test_grid_mode: full_dataset
+window_selection_mode: evenly_spaced
+trajectory_selection_mode: contiguous
+random_seed: 42
+default_selection_replicates: 1
+uncertainty_summary: average total standard deviation on the prediction grid
+artifacts_dir: /Users/brennonshanks/freeGP/results/revision/benchmarks/runs/20260830-172854-paper/outputs/full/hierarchical/repeat_3/artifacts
+warmup_steps: 500
+num_samples: 1000
+num_chains: 4
+target_accept_prob: 0.8
+max_tree_depth: 10
+stuck_cells: 0
+worst_cell_max_r_hat: 1.0016133785595245
+worst_cell_min_n_eff: 2571.5359011080423

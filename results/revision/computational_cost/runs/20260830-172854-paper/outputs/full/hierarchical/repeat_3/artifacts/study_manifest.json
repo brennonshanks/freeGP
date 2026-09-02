@@ -1,0 +1,60 @@
+{
+  "model": {
+    "method": "nuts",
+    "kernel": "stationary",
+    "length_model": "exp_linear_bump",
+    "width_model": "tanh_decay",
+    "ell": 1.5707963267948966,
+    "w": 13.230969730144501,
+    "a0": 1.38629436112,
+    "a1": 0.0,
+    "b": 0.0,
+    "c": null,
+    "length_w": 0.5,
+    "s": 1.65,
+    "u": null,
+    "w2": 0.5,
+    "jitter": 1e-06,
+    "objective": "loo",
+    "warmup_steps": 500,
+    "num_samples": 1000,
+    "num_chains": 4,
+    "target_accept_prob": 0.8,
+    "max_tree_depth": 10,
+    "predictive_samples": 100,
+    "barrier_bins": 30,
+    "selection_replicates": 1,
+    "fixed_noise": false,
+    "opt_steps": 250,
+    "opt_restarts": 3,
+    "opt_learning_rate": 0.05
+  },
+  "window_counts": [
+    25
+  ],
+  "trajectory_fractions": [
+    1.0
+  ],
+  "test_grid_mode": "full_dataset",
+  "window_selection_mode": "evenly_spaced",
+  "trajectory_selection_mode": "contiguous",
+  "random_seed": 42,
+  "device": "cpu",
+  "dataset_root": "/Users/brennonshanks/freeGP-datasets/membranes/katka",
+  "reference_barriers": {
+    "wham": 50.24796,
+    "ui": 49.68101
+  },
+  "cells": [
+    {
+      "slug": "w25_f1p00",
+      "window_count": 25,
+      "trajectory_fraction": 1.0,
+      "replicate_count": 1,
+      "has_canonical_replicate": true,
+      "window_selection_mode": "evenly_spaced",
+      "trajectory_selection_mode": "contiguous",
+      "artifact_path": "artifacts/cells/w25_f1p00.pt"
+    }
+  ]
+}

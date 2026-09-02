@@ -1,0 +1,68 @@
+{
+  "archived_cell": "w08_f0p16.pt",
+  "replicate_index": 4,
+  "is_canonical": false,
+  "window_selection_mode": "random_subset",
+  "trajectory_selection_mode": "contiguous",
+  "random_seed": 94344,
+  "count_treatment": "counts divided by archived per-window AR(1) autocorrelation times",
+  "windows": [
+    {
+      "index": 1,
+      "center_nm": 1.6,
+      "retained_frames": 60800,
+      "ar1_autocorrelation_time_frames": 7.154225882409981,
+      "effective_histogrammed_frames": 8498.473629339593
+    },
+    {
+      "index": 2,
+      "center_nm": 2.05,
+      "retained_frames": 60800,
+      "ar1_autocorrelation_time_frames": 7.1904860216782955,
+      "effective_histogrammed_frames": 8455.61757810204
+    },
+    {
+      "index": 3,
+      "center_nm": 2.95,
+      "retained_frames": 60800,
+      "ar1_autocorrelation_time_frames": 7.1328697276985675,
+      "effective_histogrammed_frames": 8523.91846775214
+    },
+    {
+      "index": 4,
+      "center_nm": 3.25,
+      "retained_frames": 60800,
+      "ar1_autocorrelation_time_frames": 7.282342329330671,
+      "effective_histogrammed_frames": 8348.96208533336
+    },
+    {
+      "index": 5,
+      "center_nm": 3.4,
+      "retained_frames": 60800,
+      "ar1_autocorrelation_time_frames": 7.27830268199888,
+      "effective_histogrammed_frames": 8353.595976486948
+    },
+    {
+      "index": 6,
+      "center_nm": 3.55,
+      "retained_frames": 60800,
+      "ar1_autocorrelation_time_frames": 7.289036061959137,
+      "effective_histogrammed_frames": 8341.294991982555
+    },
+    {
+      "index": 7,
+      "center_nm": 4.0,
+      "retained_frames": 60800,
+      "ar1_autocorrelation_time_frames": 7.369322751659124,
+      "effective_histogrammed_frames": 8250.418939286046
+    },
+    {
+      "index": 8,
+      "center_nm": 4.8,
+      "retained_frames": 60800,
+      "ar1_autocorrelation_time_frames": 7.349488831608414,
+      "effective_histogrammed_frames": 8272.684181587374
+    }
+  ],
+  "effective_histogrammed_frames_total": 67044.96584987006
+}

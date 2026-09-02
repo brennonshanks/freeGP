@@ -1,0 +1,38 @@
+{
+  "condition": "sparse_w03_f0p10",
+  "archived_cell": "w03_f0p10.pt",
+  "replicate": "canonical evenly spaced selection (replicate 0)",
+  "trajectory_selection": "first requested fraction after 40000-frame equilibration removal",
+  "count_treatment": "histogram counts divided by per-window AR(1) autocorrelation time",
+  "temperature_k": 303.15,
+  "windows": [
+    {
+      "index": 1,
+      "center_nm": 1.45,
+      "force_constant_kj_mol_nm2": 1000.0,
+      "retained_frames": 38000,
+      "histogrammed_frames": 36285,
+      "ar1_autocorrelation_time_frames": 7.183560559410522,
+      "effective_histogrammed_frames": 5051.116323153476
+    },
+    {
+      "index": 2,
+      "center_nm": 3.25,
+      "force_constant_kj_mol_nm2": 500.0,
+      "retained_frames": 38000,
+      "histogrammed_frames": 38000,
+      "ar1_autocorrelation_time_frames": 7.282401143712974,
+      "effective_histogrammed_frames": 5218.059160721471
+    },
+    {
+      "index": 3,
+      "center_nm": 5.4,
+      "force_constant_kj_mol_nm2": 100.0,
+      "retained_frames": 38000,
+      "histogrammed_frames": 23575,
+      "ar1_autocorrelation_time_frames": 7.3430662458373055,
+      "effective_histogrammed_frames": 3210.511686907956
+    }
+  ],
+  "effective_histogrammed_frames_total": 13479.687170782901
+}

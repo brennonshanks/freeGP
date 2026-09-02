@@ -1,0 +1,4 @@
+Warmup:   0%|          | 0/6 [00:00, ?it/s]Sample: 100%|██████████| 6/6 [00:00, 129.71it/s, step size=8.99e-01, acc. prob=0.000]
+
+figure_dir (loo): /Users/brennonshanks/freeGP/results/revision/benchmarks/runs/20260830-172751-smoke/outputs/sparse/hierarchical/repeat_1
+cells completed (loo): 1

@@ -1,0 +1,27 @@
+{
+  "dataset": "/Users/brennonshanks/freeGP-datasets/membranes/katka",
+  "reference": "/Users/brennonshanks/freeGP-v0.1.0/reference_data/wham.dat",
+  "equilibration_frames_removed": 40000,
+  "autocorrelation_treatment": "segment-specific AR(1) tau; deterministic stride ceil(tau)",
+  "wham_solver": "uniform-prior BayesWHAM MAP fixed-point equations",
+  "blocks": 5,
+  "cumulative_fractions": [
+    0.2,
+    0.4,
+    0.6,
+    0.8,
+    1.0
+  ],
+  "minimum_adjacent_histogram_overlap": 0.09644007494579061,
+  "median_adjacent_histogram_overlap": 0.2395002210479779,
+  "aggregate_histogram_connected": true,
+  "occupied_bins": 80,
+  "total_bins": 80,
+  "block_average_rmse_to_reference_kj_mol": 0.28852213458230985,
+  "mean_between_block_sd_kj_mol": 1.8703602891557765,
+  "maximum_between_block_sd_kj_mol": 4.600517107311193,
+  "overlap_histogram_range_nm": [
+    1.2750000000000001,
+    5.875000000000004
+  ]
+}

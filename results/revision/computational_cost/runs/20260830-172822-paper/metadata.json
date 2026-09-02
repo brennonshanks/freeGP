@@ -1,0 +1,25 @@
+{
+  "created_at": "2026-08-30T17:28:22.482660+02:00",
+  "benchmark_profile": "paper",
+  "platform": "macOS-26.5.2-arm64-arm-64bit",
+  "machine": "arm64",
+  "hardware_description": "Apple MacBook Pro; Apple M3 Pro; 11 CPU cores (5 performance, 6 efficiency); 18 GB unified memory",
+  "threads_per_process": 1,
+  "warmup_runs": 1,
+  "measured_repeats": 3,
+  "software": {
+    "python": "3.11.16",
+    "numpy": "2.4.6",
+    "torch": "2.13.0",
+    "pyro": "1.9.1"
+  },
+  "inference_settings": {
+    "warmup_steps": 500,
+    "num_samples": 1000,
+    "num_chains": 4,
+    "predictive_samples": 100,
+    "opt_steps": 250,
+    "opt_restarts": 3
+  },
+  "timed_scope": "Python interpreter startup, trajectory loading, preprocessing, inference, prediction, and normal result serialization; excludes MD generation"
+}

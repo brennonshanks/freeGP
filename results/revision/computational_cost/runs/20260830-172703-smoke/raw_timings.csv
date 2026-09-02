@@ -1,0 +1,4 @@
+condition,window_count,trajectory_fraction,method,warmup,repeat,wall_seconds,return_code,output_dir
+sparse,3,0.1,map,False,1,16.60351558297407,0,/Users/brennonshanks/freeGP/results/revision/benchmarks/runs/20260830-172703-smoke/outputs/sparse/map/repeat_1
+sparse,3,0.1,fixed,False,1,4.838703541900031,0,/Users/brennonshanks/freeGP/results/revision/benchmarks/runs/20260830-172703-smoke/outputs/sparse/fixed/repeat_1
+sparse,3,0.1,hierarchical,False,1,4.741603083908558,1,/Users/brennonshanks/freeGP/results/revision/benchmarks/runs/20260830-172703-smoke/outputs/sparse/hierarchical/repeat_1

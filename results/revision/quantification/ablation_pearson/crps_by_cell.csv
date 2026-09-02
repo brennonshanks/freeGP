@@ -1,0 +1,401 @@
+method,method_label,window_count,trajectory_fraction,mean_crps_kj_mol
+ui,UI + block averaging,25,1.0,0.35175478124554405
+ui,UI + block averaging,25,0.9,0.36138102729492694
+ui,UI + block averaging,25,0.8,0.6900640718582122
+ui,UI + block averaging,25,0.6,1.0444402978435996
+ui,UI + block averaging,25,0.4,1.128103825540236
+ui,UI + block averaging,25,0.25,1.479555962721741
+ui,UI + block averaging,25,0.16,2.897534518453729
+ui,UI + block averaging,25,0.1,2.4234534019359435
+ui,UI + block averaging,25,0.063,1.9240859910729977
+ui,UI + block averaging,25,0.04,4.420970178528757
+ui,UI + block averaging,22,1.0,0.8586830007994132
+ui,UI + block averaging,22,0.9,0.986974310387462
+ui,UI + block averaging,22,0.8,0.9557437796635132
+ui,UI + block averaging,22,0.6,1.4925227903219476
+ui,UI + block averaging,22,0.4,1.3154809438758468
+ui,UI + block averaging,22,0.25,2.147330810202519
+ui,UI + block averaging,22,0.16,2.684164518543903
+ui,UI + block averaging,22,0.1,4.070467241266048
+ui,UI + block averaging,22,0.063,3.282279126202604
+ui,UI + block averaging,22,0.04,2.126457505837323
+ui,UI + block averaging,19,1.0,0.6474106770203082
+ui,UI + block averaging,19,0.9,2.1936746008893384
+ui,UI + block averaging,19,0.8,1.0128507663981552
+ui,UI + block averaging,19,0.6,1.115392338067671
+ui,UI + block averaging,19,0.4,1.3100117096596469
+ui,UI + block averaging,19,0.25,2.717174619295104
+ui,UI + block averaging,19,0.16,3.676821619627721
+ui,UI + block averaging,19,0.1,2.6450298316781624
+ui,UI + block averaging,19,0.063,4.368851086782485
+ui,UI + block averaging,19,0.04,6.0169783796665675
+ui,UI + block averaging,16,1.0,6.172061087424819
+ui,UI + block averaging,16,0.9,1.8139195709916813
+ui,UI + block averaging,16,0.8,1.3295394257602045
+ui,UI + block averaging,16,0.6,4.482859250578927
+ui,UI + block averaging,16,0.4,1.859758314997004
+ui,UI + block averaging,16,0.25,1.5768129807357694
+ui,UI + block averaging,16,0.16,6.655812115111575
+ui,UI + block averaging,16,0.1,9.688347637426238
+ui,UI + block averaging,16,0.063,11.647755878507134
+ui,UI + block averaging,16,0.04,13.484344915072485
+ui,UI + block averaging,13,1.0,4.413042026057561
+ui,UI + block averaging,13,0.9,1.9063433125070608
+ui,UI + block averaging,13,0.8,7.206531650550493
+ui,UI + block averaging,13,0.6,2.1834861094041442
+ui,UI + block averaging,13,0.4,5.847191433132798
+ui,UI + block averaging,13,0.25,5.497693642883458
+ui,UI + block averaging,13,0.16,8.382860529134456
+ui,UI + block averaging,13,0.1,5.040731914044994
+ui,UI + block averaging,13,0.063,4.348106017308048
+ui,UI + block averaging,13,0.04,17.076941979392156
+ui,UI + block averaging,10,1.0,12.69995756104506
+ui,UI + block averaging,10,0.9,4.279277587832367
+ui,UI + block averaging,10,0.8,7.451662547137102
+ui,UI + block averaging,10,0.6,7.9998431052799654
+ui,UI + block averaging,10,0.4,4.930675940895305
+ui,UI + block averaging,10,0.25,4.468278581704475
+ui,UI + block averaging,10,0.16,7.947500621836359
+ui,UI + block averaging,10,0.1,53.35121268494143
+ui,UI + block averaging,10,0.063,5.036668696017329
+ui,UI + block averaging,10,0.04,20.34619749909392
+ui,UI + block averaging,8,1.0,5.428120177695247
+ui,UI + block averaging,8,0.9,11.445626647148597
+ui,UI + block averaging,8,0.8,6.33098915408055
+ui,UI + block averaging,8,0.6,6.736682864152143
+ui,UI + block averaging,8,0.4,37.755949684029275
+ui,UI + block averaging,8,0.25,8.995869144585143
+ui,UI + block averaging,8,0.16,6.087636907452235
+ui,UI + block averaging,8,0.1,13.569818008308166
+ui,UI + block averaging,8,0.063,27.484146108553883
+ui,UI + block averaging,8,0.04,35.2899098184157
+ui,UI + block averaging,6,1.0,20.525973055849704
+ui,UI + block averaging,6,0.9,8.58581725015427
+ui,UI + block averaging,6,0.8,12.460113739371184
+ui,UI + block averaging,6,0.6,10.011247348039138
+ui,UI + block averaging,6,0.4,17.629596465387877
+ui,UI + block averaging,6,0.25,13.125518857434257
+ui,UI + block averaging,6,0.16,10.241236630463472
+ui,UI + block averaging,6,0.1,54.91630532605092
+ui,UI + block averaging,6,0.063,73.67316014202238
+ui,UI + block averaging,6,0.04,96.20149364004003
+ui,UI + block averaging,4,1.0,32.25772524971806
+ui,UI + block averaging,4,0.9,19.376321472243262
+ui,UI + block averaging,4,0.8,21.480694063860906
+ui,UI + block averaging,4,0.6,27.200604599680734
+ui,UI + block averaging,4,0.4,69.73199905359064
+ui,UI + block averaging,4,0.25,44.09688298015114
+ui,UI + block averaging,4,0.16,35.84585773700213
+ui,UI + block averaging,4,0.1,89.79093160138919
+ui,UI + block averaging,4,0.063,116.48027300768989
+ui,UI + block averaging,4,0.04,106.00550249675852
+ui,UI + block averaging,3,1.0,42.0694396616863
+ui,UI + block averaging,3,0.9,60.922472502128784
+ui,UI + block averaging,3,0.8,38.569162985807644
+ui,UI + block averaging,3,0.6,45.292991664383145
+ui,UI + block averaging,3,0.4,31.11000889345502
+ui,UI + block averaging,3,0.25,46.267525596525104
+ui,UI + block averaging,3,0.16,92.77371670615699
+ui,UI + block averaging,3,0.1,107.45076652294193
+ui,UI + block averaging,3,0.063,95.15778671384105
+ui,UI + block averaging,3,0.04,124.15166046836772
+fixed,Fixed GP,3,0.04,20.42159802522272
+fixed,Fixed GP,3,0.063,6.826452723570095
+fixed,Fixed GP,3,0.1,6.747088504204734
+fixed,Fixed GP,3,0.16,7.381020975607559
+fixed,Fixed GP,3,0.25,4.913427288075954
+fixed,Fixed GP,3,0.4,5.642195252948802
+fixed,Fixed GP,3,0.6,10.195464181433387
+fixed,Fixed GP,3,0.8,18.34701176023997
+fixed,Fixed GP,3,0.9,10.109926274988734
+fixed,Fixed GP,3,1.0,16.827773324252565
+fixed,Fixed GP,4,0.04,9.70183589184214
+fixed,Fixed GP,4,0.063,8.379242592114684
+fixed,Fixed GP,4,0.1,5.198997560668789
+fixed,Fixed GP,4,0.16,5.247442636792789
+fixed,Fixed GP,4,0.25,5.066769179101858
+fixed,Fixed GP,4,0.4,11.219779012781578
+fixed,Fixed GP,4,0.6,7.906419926361934
+fixed,Fixed GP,4,0.8,25.524281952580367
+fixed,Fixed GP,4,0.9,13.949291888035022
+fixed,Fixed GP,4,1.0,8.216574003957708
+fixed,Fixed GP,6,0.04,7.711027197497857
+fixed,Fixed GP,6,0.063,5.259994661603608
+fixed,Fixed GP,6,0.1,10.802788968881623
+fixed,Fixed GP,6,0.16,7.981997850381235
+fixed,Fixed GP,6,0.25,5.617336772200211
+fixed,Fixed GP,6,0.4,14.88850189710124
+fixed,Fixed GP,6,0.6,10.786122466617194
+fixed,Fixed GP,6,0.8,9.085152827983158
+fixed,Fixed GP,6,0.9,8.290001870677507
+fixed,Fixed GP,6,1.0,12.031536269450344
+fixed,Fixed GP,8,0.04,8.138860386959303
+fixed,Fixed GP,8,0.063,9.367421416082593
+fixed,Fixed GP,8,0.1,7.388163215765067
+fixed,Fixed GP,8,0.16,5.5302953866356095
+fixed,Fixed GP,8,0.25,9.64109192390829
+fixed,Fixed GP,8,0.4,8.285253939886438
+fixed,Fixed GP,8,0.6,7.053611056633208
+fixed,Fixed GP,8,0.8,6.716786216407671
+fixed,Fixed GP,8,0.9,12.902992222303594
+fixed,Fixed GP,8,1.0,14.701834312610282
+fixed,Fixed GP,10,0.04,10.502335313970537
+fixed,Fixed GP,10,0.063,10.1063894862414
+fixed,Fixed GP,10,0.1,6.7188894665346535
+fixed,Fixed GP,10,0.16,9.336447461593158
+fixed,Fixed GP,10,0.25,6.188083019204572
+fixed,Fixed GP,10,0.4,4.054096562321018
+fixed,Fixed GP,10,0.6,6.958031663559174
+fixed,Fixed GP,10,0.8,12.567102685915286
+fixed,Fixed GP,10,0.9,5.551854959879169
+fixed,Fixed GP,10,1.0,11.287274866784504
+fixed,Fixed GP,13,0.04,6.872210895538054
+fixed,Fixed GP,13,0.063,6.234986320228553
+fixed,Fixed GP,13,0.1,5.315138827627069
+fixed,Fixed GP,13,0.16,4.1495423720978355
+fixed,Fixed GP,13,0.25,5.278465706045235
+fixed,Fixed GP,13,0.4,5.569152278480534
+fixed,Fixed GP,13,0.6,5.5181817375295505
+fixed,Fixed GP,13,0.8,7.50792203221523
+fixed,Fixed GP,13,0.9,8.596783416605396
+fixed,Fixed GP,13,1.0,10.94443615412289
+fixed,Fixed GP,16,0.04,5.273718723477852
+fixed,Fixed GP,16,0.063,5.717184005241478
+fixed,Fixed GP,16,0.1,4.706358970613431
+fixed,Fixed GP,16,0.16,6.4430347625296225
+fixed,Fixed GP,16,0.25,3.7868163549135847
+fixed,Fixed GP,16,0.4,4.018225530950587
+fixed,Fixed GP,16,0.6,7.646140068148718
+fixed,Fixed GP,16,0.8,7.690793368087026
+fixed,Fixed GP,16,0.9,9.354442830129038
+fixed,Fixed GP,16,1.0,6.706562326669371
+fixed,Fixed GP,19,0.04,7.201366583286861
+fixed,Fixed GP,19,0.063,8.32789523143596
+fixed,Fixed GP,19,0.1,4.99214767608554
+fixed,Fixed GP,19,0.16,4.081682927695669
+fixed,Fixed GP,19,0.25,3.3161503540483896
+fixed,Fixed GP,19,0.4,2.91340220733643
+fixed,Fixed GP,19,0.6,7.980685018593398
+fixed,Fixed GP,19,0.8,5.765354142747339
+fixed,Fixed GP,19,0.9,5.839680829706883
+fixed,Fixed GP,19,1.0,11.427355691976173
+fixed,Fixed GP,22,0.04,5.374406607918262
+fixed,Fixed GP,22,0.063,6.936503970088226
+fixed,Fixed GP,22,0.1,5.263815633866775
+fixed,Fixed GP,22,0.16,3.1115216743957523
+fixed,Fixed GP,22,0.25,4.336631023120903
+fixed,Fixed GP,22,0.4,3.6622769436220763
+fixed,Fixed GP,22,0.6,5.147324350993398
+fixed,Fixed GP,22,0.8,8.412342810660292
+fixed,Fixed GP,22,0.9,7.469995962576534
+fixed,Fixed GP,22,1.0,6.836523485761907
+fixed,Fixed GP,25,0.04,5.12823323287206
+fixed,Fixed GP,25,0.063,6.252499805665121
+fixed,Fixed GP,25,0.1,4.855429293986201
+fixed,Fixed GP,25,0.16,3.2140129193544253
+fixed,Fixed GP,25,0.25,2.5811282937067217
+fixed,Fixed GP,25,0.4,2.366026065315018
+fixed,Fixed GP,25,0.6,2.108260638438169
+fixed,Fixed GP,25,0.8,2.3996531449274388
+fixed,Fixed GP,25,0.9,2.0966181224447205
+fixed,Fixed GP,25,1.0,2.134911348616225
+loo_map,Optimized GP (LOO),3,0.04,16.54253106064238
+loo_map,Optimized GP (LOO),3,0.063,13.530476475118421
+loo_map,Optimized GP (LOO),3,0.1,10.256911940173664
+loo_map,Optimized GP (LOO),3,0.16,14.430903550347898
+loo_map,Optimized GP (LOO),3,0.25,13.777229469545784
+loo_map,Optimized GP (LOO),3,0.4,16.432187501457303
+loo_map,Optimized GP (LOO),3,0.6,15.845298695448182
+loo_map,Optimized GP (LOO),3,0.8,13.399186429678139
+loo_map,Optimized GP (LOO),3,0.9,10.409761150340486
+loo_map,Optimized GP (LOO),3,1.0,8.549990783695025
+loo_map,Optimized GP (LOO),4,0.04,13.497860491856539
+loo_map,Optimized GP (LOO),4,0.063,15.742949345422401
+loo_map,Optimized GP (LOO),4,0.1,13.747952303974795
+loo_map,Optimized GP (LOO),4,0.16,10.038487980264273
+loo_map,Optimized GP (LOO),4,0.25,13.910015482330344
+loo_map,Optimized GP (LOO),4,0.4,15.739027001328227
+loo_map,Optimized GP (LOO),4,0.6,12.398211236963926
+loo_map,Optimized GP (LOO),4,0.8,13.780256963716727
+loo_map,Optimized GP (LOO),4,0.9,15.719226353319819
+loo_map,Optimized GP (LOO),4,1.0,13.069167567161111
+loo_map,Optimized GP (LOO),6,0.04,12.184452397458042
+loo_map,Optimized GP (LOO),6,0.063,8.39292132517428
+loo_map,Optimized GP (LOO),6,0.1,8.656682511059634
+loo_map,Optimized GP (LOO),6,0.16,7.7830456145898355
+loo_map,Optimized GP (LOO),6,0.25,8.845593793508034
+loo_map,Optimized GP (LOO),6,0.4,8.605537478218007
+loo_map,Optimized GP (LOO),6,0.6,5.34285200334851
+loo_map,Optimized GP (LOO),6,0.8,8.56951040244612
+loo_map,Optimized GP (LOO),6,0.9,11.288513883528713
+loo_map,Optimized GP (LOO),6,1.0,12.833557251665527
+loo_map,Optimized GP (LOO),8,0.04,10.443855447304626
+loo_map,Optimized GP (LOO),8,0.063,4.456915720100067
+loo_map,Optimized GP (LOO),8,0.1,6.688578325121094
+loo_map,Optimized GP (LOO),8,0.16,3.7137703805241604
+loo_map,Optimized GP (LOO),8,0.25,7.902383371318711
+loo_map,Optimized GP (LOO),8,0.4,6.800910312126006
+loo_map,Optimized GP (LOO),8,0.6,8.566728830096695
+loo_map,Optimized GP (LOO),8,0.8,6.774858590814927
+loo_map,Optimized GP (LOO),8,0.9,3.9852533391806833
+loo_map,Optimized GP (LOO),8,1.0,4.75143210806687
+loo_map,Optimized GP (LOO),10,0.04,7.173785385593542
+loo_map,Optimized GP (LOO),10,0.063,6.397879303424093
+loo_map,Optimized GP (LOO),10,0.1,4.971811218939169
+loo_map,Optimized GP (LOO),10,0.16,6.525706220544176
+loo_map,Optimized GP (LOO),10,0.25,3.8337809815223043
+loo_map,Optimized GP (LOO),10,0.4,9.710647200666644
+loo_map,Optimized GP (LOO),10,0.6,3.3188885790173064
+loo_map,Optimized GP (LOO),10,0.8,3.727274213384161
+loo_map,Optimized GP (LOO),10,0.9,1.377858161524399
+loo_map,Optimized GP (LOO),10,1.0,4.095146312100395
+loo_map,Optimized GP (LOO),13,0.04,5.928889403900988
+loo_map,Optimized GP (LOO),13,0.063,2.6851278204422555
+loo_map,Optimized GP (LOO),13,0.1,1.8027645076305132
+loo_map,Optimized GP (LOO),13,0.16,1.785111488509566
+loo_map,Optimized GP (LOO),13,0.25,2.0670707272399222
+loo_map,Optimized GP (LOO),13,0.4,1.347552884709714
+loo_map,Optimized GP (LOO),13,0.6,1.1799638025483932
+loo_map,Optimized GP (LOO),13,0.8,2.7080791744239643
+loo_map,Optimized GP (LOO),13,0.9,1.7142191550573105
+loo_map,Optimized GP (LOO),13,1.0,2.323455551628646
+loo_map,Optimized GP (LOO),16,0.04,2.6635927463768003
+loo_map,Optimized GP (LOO),16,0.063,2.55064896053453
+loo_map,Optimized GP (LOO),16,0.1,1.913002141077664
+loo_map,Optimized GP (LOO),16,0.16,2.720217690818426
+loo_map,Optimized GP (LOO),16,0.25,1.688042221088935
+loo_map,Optimized GP (LOO),16,0.4,1.1761776920074332
+loo_map,Optimized GP (LOO),16,0.6,2.1424894265114203
+loo_map,Optimized GP (LOO),16,0.8,2.0800876910807578
+loo_map,Optimized GP (LOO),16,0.9,1.860105112563693
+loo_map,Optimized GP (LOO),16,1.0,1.1843982466608933
+loo_map,Optimized GP (LOO),19,0.04,2.31050056155318
+loo_map,Optimized GP (LOO),19,0.063,2.942390517554097
+loo_map,Optimized GP (LOO),19,0.1,2.2300277112820366
+loo_map,Optimized GP (LOO),19,0.16,1.6648695505530116
+loo_map,Optimized GP (LOO),19,0.25,1.5483737560857476
+loo_map,Optimized GP (LOO),19,0.4,1.6305996827581901
+loo_map,Optimized GP (LOO),19,0.6,1.3915217388175225
+loo_map,Optimized GP (LOO),19,0.8,1.500518015086638
+loo_map,Optimized GP (LOO),19,0.9,1.3459931793437854
+loo_map,Optimized GP (LOO),19,1.0,1.3558337063516888
+loo_map,Optimized GP (LOO),22,0.04,3.287802636170119
+loo_map,Optimized GP (LOO),22,0.063,3.685806734938225
+loo_map,Optimized GP (LOO),22,0.1,2.1930669412695862
+loo_map,Optimized GP (LOO),22,0.16,2.0986948595160313
+loo_map,Optimized GP (LOO),22,0.25,1.8214466902478192
+loo_map,Optimized GP (LOO),22,0.4,0.9303009965491656
+loo_map,Optimized GP (LOO),22,0.6,1.4124023570983224
+loo_map,Optimized GP (LOO),22,0.8,1.557355112668561
+loo_map,Optimized GP (LOO),22,0.9,1.9200733625301853
+loo_map,Optimized GP (LOO),22,1.0,1.507760762738468
+loo_map,Optimized GP (LOO),25,0.04,4.121325198832871
+loo_map,Optimized GP (LOO),25,0.063,2.778755514907308
+loo_map,Optimized GP (LOO),25,0.1,2.133376618290472
+loo_map,Optimized GP (LOO),25,0.16,2.3564266052393488
+loo_map,Optimized GP (LOO),25,0.25,1.7370050843009563
+loo_map,Optimized GP (LOO),25,0.4,0.8552647845294524
+loo_map,Optimized GP (LOO),25,0.6,1.7886185409866067
+loo_map,Optimized GP (LOO),25,0.8,0.8582931937177422
+loo_map,Optimized GP (LOO),25,0.9,1.0165166888115953
+loo_map,Optimized GP (LOO),25,1.0,0.9081404287241588
+loo,Hierarchical GP (LOO),3,0.04,16.17452361456599
+loo,Hierarchical GP (LOO),3,0.063,15.86602693777487
+loo,Hierarchical GP (LOO),3,0.1,14.009380322152287
+loo,Hierarchical GP (LOO),3,0.16,13.161181898662669
+loo,Hierarchical GP (LOO),3,0.25,14.941832329746195
+loo,Hierarchical GP (LOO),3,0.4,15.918938825254875
+loo,Hierarchical GP (LOO),3,0.6,16.259185352817415
+loo,Hierarchical GP (LOO),3,0.8,16.13798452793537
+loo,Hierarchical GP (LOO),3,0.9,13.728003379476139
+loo,Hierarchical GP (LOO),3,1.0,12.974152360839964
+loo,Hierarchical GP (LOO),4,0.04,12.687055034103773
+loo,Hierarchical GP (LOO),4,0.063,15.894533681964676
+loo,Hierarchical GP (LOO),4,0.1,12.947448704367973
+loo,Hierarchical GP (LOO),4,0.16,15.372933196699115
+loo,Hierarchical GP (LOO),4,0.25,14.473027708515744
+loo,Hierarchical GP (LOO),4,0.4,14.73113785347744
+loo,Hierarchical GP (LOO),4,0.6,11.98374239925329
+loo,Hierarchical GP (LOO),4,0.8,13.24305532878683
+loo,Hierarchical GP (LOO),4,0.9,14.732453797655149
+loo,Hierarchical GP (LOO),4,1.0,14.871843668702356
+loo,Hierarchical GP (LOO),6,0.04,12.365842681771172
+loo,Hierarchical GP (LOO),6,0.063,11.374546998986052
+loo,Hierarchical GP (LOO),6,0.1,11.563637897184533
+loo,Hierarchical GP (LOO),6,0.16,9.544202419889857
+loo,Hierarchical GP (LOO),6,0.25,11.811834944958534
+loo,Hierarchical GP (LOO),6,0.4,10.418177930053675
+loo,Hierarchical GP (LOO),6,0.6,5.850166618520479
+loo,Hierarchical GP (LOO),6,0.8,9.209384183043017
+loo,Hierarchical GP (LOO),6,0.9,11.781998652873847
+loo,Hierarchical GP (LOO),6,1.0,12.60635487446356
+loo,Hierarchical GP (LOO),8,0.04,10.190430859319678
+loo,Hierarchical GP (LOO),8,0.063,11.15907135796345
+loo,Hierarchical GP (LOO),8,0.1,11.317933598716392
+loo,Hierarchical GP (LOO),8,0.16,9.156492578014456
+loo,Hierarchical GP (LOO),8,0.25,8.014749746632319
+loo,Hierarchical GP (LOO),8,0.4,7.975233334084639
+loo,Hierarchical GP (LOO),8,0.6,9.929361980332958
+loo,Hierarchical GP (LOO),8,0.8,6.976675219447465
+loo,Hierarchical GP (LOO),8,0.9,4.398312973233666
+loo,Hierarchical GP (LOO),8,1.0,7.833739113373567
+loo,Hierarchical GP (LOO),10,0.04,6.953020146509703
+loo,Hierarchical GP (LOO),10,0.063,6.61582105443635
+loo,Hierarchical GP (LOO),10,0.1,8.437031156590075
+loo,Hierarchical GP (LOO),10,0.16,6.4752497761987025
+loo,Hierarchical GP (LOO),10,0.25,6.112112273487684
+loo,Hierarchical GP (LOO),10,0.4,10.734947736248921
+loo,Hierarchical GP (LOO),10,0.6,3.374064722792354
+loo,Hierarchical GP (LOO),10,0.8,6.069706877565481
+loo,Hierarchical GP (LOO),10,0.9,1.7431939603358748
+loo,Hierarchical GP (LOO),10,1.0,4.690535870885192
+loo,Hierarchical GP (LOO),13,0.04,6.440661987572102
+loo,Hierarchical GP (LOO),13,0.063,3.4401848565122175
+loo,Hierarchical GP (LOO),13,0.1,1.6780004476641854
+loo,Hierarchical GP (LOO),13,0.16,1.734360486453844
+loo,Hierarchical GP (LOO),13,0.25,2.168821062401785
+loo,Hierarchical GP (LOO),13,0.4,1.9149125906151432
+loo,Hierarchical GP (LOO),13,0.6,1.4021011678936668
+loo,Hierarchical GP (LOO),13,0.8,2.602487368258286
+loo,Hierarchical GP (LOO),13,0.9,1.901964435853074
+loo,Hierarchical GP (LOO),13,1.0,4.242220085332031
+loo,Hierarchical GP (LOO),16,0.04,2.7132174586250613
+loo,Hierarchical GP (LOO),16,0.063,2.4808366535270983
+loo,Hierarchical GP (LOO),16,0.1,1.9349997800917078
+loo,Hierarchical GP (LOO),16,0.16,2.439903615173717
+loo,Hierarchical GP (LOO),16,0.25,1.4952284962742264
+loo,Hierarchical GP (LOO),16,0.4,1.3258626015500392
+loo,Hierarchical GP (LOO),16,0.6,1.6806292117419148
+loo,Hierarchical GP (LOO),16,0.8,1.6319144403242043
+loo,Hierarchical GP (LOO),16,0.9,1.3964621656857594
+loo,Hierarchical GP (LOO),16,1.0,1.3754792560038749
+loo,Hierarchical GP (LOO),19,0.04,2.3390395449344914
+loo,Hierarchical GP (LOO),19,0.063,2.9641282543511243
+loo,Hierarchical GP (LOO),19,0.1,2.0575990512957705
+loo,Hierarchical GP (LOO),19,0.16,1.7995795755978252
+loo,Hierarchical GP (LOO),19,0.25,1.385454152630222
+loo,Hierarchical GP (LOO),19,0.4,1.776742264284148
+loo,Hierarchical GP (LOO),19,0.6,1.2239337449242698
+loo,Hierarchical GP (LOO),19,0.8,1.2448359844468742
+loo,Hierarchical GP (LOO),19,0.9,1.6364845281044689
+loo,Hierarchical GP (LOO),19,1.0,1.6166689326669583
+loo,Hierarchical GP (LOO),22,0.04,3.2993079578378115
+loo,Hierarchical GP (LOO),22,0.063,2.4328183037622724
+loo,Hierarchical GP (LOO),22,0.1,2.0936253403901084
+loo,Hierarchical GP (LOO),22,0.16,1.8234100251342904
+loo,Hierarchical GP (LOO),22,0.25,1.499849051634476
+loo,Hierarchical GP (LOO),22,0.4,1.0574722575527369
+loo,Hierarchical GP (LOO),22,0.6,1.1127874316500426
+loo,Hierarchical GP (LOO),22,0.8,1.118756430097088
+loo,Hierarchical GP (LOO),22,0.9,1.1511341787993064
+loo,Hierarchical GP (LOO),22,1.0,1.1295946898096143
+loo,Hierarchical GP (LOO),25,0.04,3.997608131300293
+loo,Hierarchical GP (LOO),25,0.063,2.7572947586052754
+loo,Hierarchical GP (LOO),25,0.1,2.0512688363607325
+loo,Hierarchical GP (LOO),25,0.16,1.828723853689338
+loo,Hierarchical GP (LOO),25,0.25,1.4059356448795413
+loo,Hierarchical GP (LOO),25,0.4,0.9794156421646069
+loo,Hierarchical GP (LOO),25,0.6,0.9917793997193668
+loo,Hierarchical GP (LOO),25,0.8,0.9855246782399106
+loo,Hierarchical GP (LOO),25,0.9,1.1484045312028663
+loo,Hierarchical GP (LOO),25,1.0,1.0144854140132538

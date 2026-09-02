@@ -1,0 +1,40 @@
+{
+  "archived_cell": "w04_f0p90.pt",
+  "replicate_index": 1,
+  "is_canonical": false,
+  "window_selection_mode": "random_subset",
+  "trajectory_selection_mode": "contiguous",
+  "random_seed": 106212,
+  "count_treatment": "counts divided by archived per-window AR(1) autocorrelation times",
+  "windows": [
+    {
+      "index": 1,
+      "center_nm": 3.25,
+      "retained_frames": 342000,
+      "ar1_autocorrelation_time_frames": 7.291135771036775,
+      "effective_histogrammed_frames": 46906.27232022711
+    },
+    {
+      "index": 2,
+      "center_nm": 3.55,
+      "retained_frames": 342000,
+      "ar1_autocorrelation_time_frames": 7.2788463232938945,
+      "effective_histogrammed_frames": 46985.467862609694
+    },
+    {
+      "index": 3,
+      "center_nm": 5.0,
+      "retained_frames": 342000,
+      "ar1_autocorrelation_time_frames": 7.35148386600924,
+      "effective_histogrammed_frames": 46521.22023708596
+    },
+    {
+      "index": 4,
+      "center_nm": 5.2,
+      "retained_frames": 342000,
+      "ar1_autocorrelation_time_frames": 7.351698602675423,
+      "effective_histogrammed_frames": 45823.83177098716
+    }
+  ],
+  "effective_histogrammed_frames_total": 186236.7921909099
+}

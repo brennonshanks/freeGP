@@ -1,0 +1,54 @@
+{
+  "archived_cell": "w06_f1p00.pt",
+  "replicate_index": 4,
+  "is_canonical": false,
+  "window_selection_mode": "random_subset",
+  "trajectory_selection_mode": "contiguous",
+  "random_seed": 132535,
+  "count_treatment": "counts divided by archived per-window AR(1) autocorrelation times",
+  "windows": [
+    {
+      "index": 1,
+      "center_nm": 1.6,
+      "retained_frames": 380001,
+      "ar1_autocorrelation_time_frames": 7.155155819211022,
+      "effective_histogrammed_frames": 53108.6966659381
+    },
+    {
+      "index": 2,
+      "center_nm": 2.65,
+      "retained_frames": 380001,
+      "ar1_autocorrelation_time_frames": 7.175812958736661,
+      "effective_histogrammed_frames": 52955.811722676386
+    },
+    {
+      "index": 3,
+      "center_nm": 3.55,
+      "retained_frames": 380001,
+      "ar1_autocorrelation_time_frames": 7.277551709219022,
+      "effective_histogrammed_frames": 52215.4998251162
+    },
+    {
+      "index": 4,
+      "center_nm": 4.0,
+      "retained_frames": 380001,
+      "ar1_autocorrelation_time_frames": 7.370541619077976,
+      "effective_histogrammed_frames": 51556.726715497
+    },
+    {
+      "index": 5,
+      "center_nm": 4.4,
+      "retained_frames": 380001,
+      "ar1_autocorrelation_time_frames": 7.355376142057566,
+      "effective_histogrammed_frames": 51663.027513600406
+    },
+    {
+      "index": 6,
+      "center_nm": 5.0,
+      "retained_frames": 380001,
+      "ar1_autocorrelation_time_frames": 7.350832072758651,
+      "effective_histogrammed_frames": 51694.9640855272
+    }
+  ],
+  "effective_histogrammed_frames_total": 313194.72652835527
+}

@@ -1,0 +1,33 @@
+{
+  "archived_cell": "w03_f1p00.pt",
+  "replicate_index": 4,
+  "is_canonical": false,
+  "window_selection_mode": "random_subset",
+  "trajectory_selection_mode": "contiguous",
+  "random_seed": 106760,
+  "count_treatment": "counts divided by archived per-window AR(1) autocorrelation times",
+  "windows": [
+    {
+      "index": 1,
+      "center_nm": 1.45,
+      "retained_frames": 380001,
+      "ar1_autocorrelation_time_frames": 7.176967041613534,
+      "effective_histogrammed_frames": 50138.17088939847
+    },
+    {
+      "index": 2,
+      "center_nm": 2.2,
+      "retained_frames": 380001,
+      "ar1_autocorrelation_time_frames": 7.282691286094291,
+      "effective_histogrammed_frames": 52178.650044603855
+    },
+    {
+      "index": 3,
+      "center_nm": 4.8,
+      "retained_frames": 380001,
+      "ar1_autocorrelation_time_frames": 7.353183556895262,
+      "effective_histogrammed_frames": 51678.43248570392
+    }
+  ],
+  "effective_histogrammed_frames_total": 153995.25341970625
+}

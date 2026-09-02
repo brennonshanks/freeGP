@@ -1,0 +1,68 @@
+{
+  "archived_cell": "w08_f0p40.pt",
+  "replicate_index": 0,
+  "is_canonical": true,
+  "window_selection_mode": "evenly_spaced",
+  "trajectory_selection_mode": "contiguous",
+  "random_seed": 112286,
+  "count_treatment": "counts divided by archived per-window AR(1) autocorrelation times",
+  "windows": [
+    {
+      "index": 1,
+      "center_nm": 1.45,
+      "retained_frames": 152000,
+      "ar1_autocorrelation_time_frames": 7.179909780459244,
+      "effective_histogrammed_frames": 20095.65640959505
+    },
+    {
+      "index": 2,
+      "center_nm": 1.9,
+      "retained_frames": 152000,
+      "ar1_autocorrelation_time_frames": 7.171006118526369,
+      "effective_histogrammed_frames": 21196.46776026399
+    },
+    {
+      "index": 3,
+      "center_nm": 2.35,
+      "retained_frames": 152000,
+      "ar1_autocorrelation_time_frames": 7.286353929005509,
+      "effective_histogrammed_frames": 20860.91363129076
+    },
+    {
+      "index": 4,
+      "center_nm": 2.95,
+      "retained_frames": 152000,
+      "ar1_autocorrelation_time_frames": 7.177552239380319,
+      "effective_histogrammed_frames": 21177.136011081555
+    },
+    {
+      "index": 5,
+      "center_nm": 3.4,
+      "retained_frames": 152000,
+      "ar1_autocorrelation_time_frames": 7.288266230639637,
+      "effective_histogrammed_frames": 20855.44012662393
+    },
+    {
+      "index": 6,
+      "center_nm": 4.0,
+      "retained_frames": 152000,
+      "ar1_autocorrelation_time_frames": 7.37045386632266,
+      "effective_histogrammed_frames": 20622.88194958031
+    },
+    {
+      "index": 7,
+      "center_nm": 4.6,
+      "retained_frames": 152000,
+      "ar1_autocorrelation_time_frames": 7.356542441739382,
+      "effective_histogrammed_frames": 20661.88038793685
+    },
+    {
+      "index": 8,
+      "center_nm": 5.4,
+      "retained_frames": 152000,
+      "ar1_autocorrelation_time_frames": 7.34727521956901,
+      "effective_histogrammed_frames": 12930.916177871597
+    }
+  ],
+  "effective_histogrammed_frames_total": 158401.29245424402
+}

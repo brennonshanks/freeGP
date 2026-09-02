@@ -1,0 +1,5 @@
+method,method_label,ablation_cells,wham_inclusion_68_percent,wham_inclusion_95_percent,mean_crps_kj_mol,median_crps_kj_mol
+ui,UI + block averaging,100,72.46,87.54,20.339985932760978,6.493400634596062
+fixed,Fixed GP,100,93.09,99.75,7.521378019728648,6.8314881046660005
+loo_map,Optimized GP (LOO),100,73.27,87.66,5.78947820421417,3.6997885577311926
+loo,Hierarchical GP (LOO),100,71.36999999999999,85.99000000000001,6.427161832182988,4.119914108316162
