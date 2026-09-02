@@ -31,6 +31,7 @@ DEFAULT_FIGURES = ["ablation_heatmaps"]
 AVAILABLE_FIGURES = [
     "ablation_heatmaps",
     "main_text_ablation_grids",
+    "main_text_ablation_with_parity",
     "ablation_parity",
     "metadynamics_convergence",
     "si_lml_loo_ablation",
@@ -183,6 +184,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--std-vmax", type=float, default=None)
     parser.add_argument("--std-power", type=float, default=1.4)
     parser.add_argument("--cmap", default="seismic")
+    parser.add_argument(
+        "--main-text-cmap",
+        default="RdBu_r",
+        help="Colormap for the main-text ablation heatmaps (matches the published Figure 3).",
+    )
     parser.add_argument("--main-text-vmin", type=float, default=0.25)
     parser.add_argument("--main-text-center", type=float, default=5.0)
     parser.add_argument("--main-text-vmax", type=float, default=175.0)
@@ -215,6 +221,12 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         default=Path("results/metadynamics"),
         help="Directory containing metadynamics convergence_data.csv.",
+    )
+    parser.add_argument(
+        "--probabilistic-summary",
+        type=Path,
+        default=Path("results/revision/coverage/ablation_pearson/probabilistic_method_summary.csv"),
+        help="Method-level CRPS summary used to annotate the optional main-text parity row.",
     )
     return parser
 
@@ -704,7 +716,7 @@ def _plot_main_text_combined_preview(
                 ax,
                 grids[spec.key],
                 norm=norm,
-                cmap=args.cmap,
+                cmap=args.main_text_cmap,
                 show_xlabels=row == 1,
                 show_ylabels=col == 0,
             )
@@ -715,7 +727,7 @@ def _plot_main_text_combined_preview(
         fig,
         fig.add_subplot(gs[0, -1]),
         norm=rmse_norm,
-        cmap=args.cmap,
+        cmap=args.main_text_cmap,
         ticks=[0.25, 0.75, 2.0, 5.0, 15.0, 50.0, 175.0],
         label="RMSE [kJ/mol]",
         label_x=3.6,
@@ -724,7 +736,7 @@ def _plot_main_text_combined_preview(
         fig,
         fig.add_subplot(gs[1, -1]),
         norm=std_norm,
-        cmap=args.cmap,
+        cmap=args.main_text_cmap,
         ticks=[0.3, 0.75, 2.0, 5.0, 10.0, 25.0, 50.0],
         label="Standard Deviation [kJ/mol]",
         label_x=3.6,
@@ -1454,6 +1466,260 @@ def plot_main_text_ablation_grids(args: argparse.Namespace) -> None:
         output_dir=output_dir,
         args=args,
     )
+
+
+def _load_crps_by_method(path: Path) -> dict[str, float]:
+    if not path.is_file():
+        raise FileNotFoundError(
+            f"Probabilistic summary not found: {path}. Run "
+            "scripts/analyze_ablation_correlations.py first."
+        )
+    values: dict[str, float] = {}
+    for row in _read_csv_rows(path):
+        values[row["method"]] = float(row["mean_crps_kj_mol"])
+    return values
+
+
+def plot_main_text_ablation_with_parity(args: argparse.Namespace) -> None:
+    """Add a compact parity row beneath the unchanged main-text heatmaps."""
+    results_dir = args.results_dir.resolve()
+    output_dir = figure_output_dir(args, "main_text_ablation_with_parity")
+    configure_main_text_matplotlib()
+
+    methods = _main_text_methods(results_dir)
+    rmse_grids = _load_main_text_metric_grids(methods, metric="rmse_wham")
+    std_grids = _load_main_text_metric_grids(methods, metric="avg_total_std")
+    rmse_norm = _main_text_norm(
+        rmse_grids,
+        center=args.main_text_center,
+        vmin=args.main_text_vmin,
+        vmax=args.main_text_vmax,
+        power=args.main_text_color_power,
+    )
+    std_norm = _main_text_norm(
+        std_grids,
+        center=args.std_center,
+        vmin=args.main_text_std_vmin,
+        vmax=args.main_text_std_vmax,
+        power=args.main_text_color_power,
+    )
+    crps = _load_crps_by_method(args.probabilistic_summary.expanduser().resolve())
+    metric_rows = {spec.key: _read_csv_rows(csv_path) for spec, csv_path in methods}
+
+    parity_values = np.asarray(
+        [
+            value
+            for spec, _csv_path in methods
+            for row in metric_rows[spec.key]
+            for value in (_metric_value(row, "rmse_wham"), _metric_value(row, "avg_total_std"))
+            if np.isfinite(value) and value > 0.0
+        ],
+        dtype=float,
+    )
+    parity_min = 0.8 * float(np.min(parity_values))
+    parity_max = 1.25 * float(np.max(parity_values))
+    threshold = 5.0
+    window_norm = mcolors.Normalize(
+        vmin=min(DEFAULT_WINDOW_COUNTS), vmax=max(DEFAULT_WINDOW_COUNTS)
+    )
+
+    fig = plt.figure(figsize=(JCTC_DOUBLE_COLUMN_WIDTH_IN, 5.15), constrained_layout=False)
+    gs = fig.add_gridspec(
+        4,
+        len(methods) + 1,
+        height_ratios=[1.0, 1.0, 0.20, 1.0],
+        width_ratios=[1.0] * len(methods) + [0.055],
+        wspace=0.08,
+        hspace=0.08,
+    )
+    heatmap_axes = np.empty((2, len(methods)), dtype=object)
+
+    for row_index in range(2):
+        for col, (spec, _csv_path) in enumerate(methods):
+            ax = fig.add_subplot(gs[row_index, col])
+            heatmap_axes[row_index, col] = ax
+            grids = rmse_grids if row_index == 0 else std_grids
+            norm = rmse_norm if row_index == 0 else std_norm
+            _draw_preview_heatmap(
+                ax,
+                grids[spec.key],
+                norm=norm,
+                cmap=args.main_text_cmap,
+                show_xlabels=row_index == 1,
+                show_ylabels=col == 0,
+            )
+            if row_index == 0:
+                ax.set_title(f"({PANEL_LETTERS[col]}) {spec.label}", pad=6)
+
+    _add_vertical_colorbar(
+        fig,
+        fig.add_subplot(gs[0, -1]),
+        norm=rmse_norm,
+        cmap=args.main_text_cmap,
+        ticks=[0.25, 0.75, 2.0, 5.0, 15.0, 50.0, 175.0],
+        label="RMSE [kJ/mol]",
+        label_x=3.6,
+    )
+    _add_vertical_colorbar(
+        fig,
+        fig.add_subplot(gs[1, -1]),
+        norm=std_norm,
+        cmap=args.main_text_cmap,
+        ticks=[0.3, 0.75, 2.0, 5.0, 10.0, 25.0, 50.0],
+        label="Standard Deviation [kJ/mol]",
+        label_x=3.6,
+    )
+
+    parity_axes = np.empty(len(methods), dtype=object)
+    for col, (spec, _csv_path) in enumerate(methods):
+        ax = fig.add_subplot(gs[3, col])
+        parity_axes[col] = ax
+        rows = metric_rows[spec.key]
+        rmse = np.asarray([_metric_value(row, "rmse_wham") for row in rows])
+        avg_std = np.asarray([_metric_value(row, "avg_total_std") for row in rows])
+        windows = np.asarray([float(row["window_count"]) for row in rows])
+        finite = np.isfinite(rmse) & np.isfinite(avg_std) & (rmse > 0.0) & (avg_std > 0.0)
+        rmse = rmse[finite]
+        avg_std = avg_std[finite]
+        windows = windows[finite]
+        correlation = float(np.corrcoef(rmse, avg_std)[0, 1])
+        under = int(np.sum((rmse <= threshold) & (avg_std > threshold)))
+        over = int(np.sum((rmse > threshold) & (avg_std <= threshold)))
+
+        ax.fill_between(
+            [parity_min, threshold],
+            threshold,
+            parity_max,
+            color="#E69F00",
+            alpha=0.07,
+            zorder=0,
+        )
+        ax.fill_between(
+            [threshold, parity_max],
+            parity_min,
+            threshold,
+            color="#D55E00",
+            alpha=0.07,
+            zorder=0,
+        )
+        ax.scatter(
+            rmse,
+            avg_std,
+            c=windows,
+            cmap="viridis",
+            norm=window_norm,
+            s=5.5,
+            alpha=0.78,
+            linewidths=0.15,
+            edgecolors="white",
+            rasterized=True,
+        )
+        ax.plot(
+            [parity_min, parity_max],
+            [parity_min, parity_max],
+            color="black",
+            linestyle="--",
+            linewidth=0.55,
+        )
+        ax.axvline(threshold, color="#666666", linestyle=":", linewidth=0.5)
+        ax.axhline(threshold, color="#666666", linestyle=":", linewidth=0.5)
+        ax.set_xscale("log")
+        ax.set_yscale("log")
+        ax.set_xlim(parity_min, parity_max)
+        ax.set_ylim(parity_min, parity_max)
+        ax.set_box_aspect(1)
+        ax.tick_params(axis="both", which="both", direction="in", pad=1)
+        if col > 0:
+            ax.tick_params(labelleft=False)
+        ax.text(
+            0.04,
+            0.96,
+            rf"$r={correlation:.2f}$" + "\n" + rf"CRPS$={crps[spec.key]:.1f}$",
+            transform=ax.transAxes,
+            ha="left",
+            va="top",
+            fontsize=PAPER_TICK_SIZE,
+        )
+        ax.text(
+            0.96,
+            0.04,
+            rf"$U={under},\ O={over}$",
+            transform=ax.transAxes,
+            ha="right",
+            va="bottom",
+            fontsize=PAPER_TICK_SIZE,
+        )
+
+    parity_cax = fig.add_subplot(gs[3, -1])
+    window_map = plt.cm.ScalarMappable(norm=window_norm, cmap="viridis")
+    window_map.set_array([])
+    parity_cbar = fig.colorbar(
+        window_map,
+        cax=parity_cax,
+        orientation="vertical",
+        ticks=DEFAULT_WINDOW_COUNTS,
+    )
+    parity_cbar.set_label("Umbrella windows", labelpad=8)
+    parity_cbar.ax.yaxis.set_label_coords(3.6, 0.5)
+    parity_cbar.ax.tick_params(length=2.4, width=PAPER_LINE_WIDTH, pad=1)
+    parity_cbar.outline.set_linewidth(PAPER_LINE_WIDTH)
+
+    fig.subplots_adjust(left=0.058, right=0.935, bottom=0.075, top=0.965)
+    x_label_offset = 0.050
+    y_label_offset = 0.044
+    heatmap_left = heatmap_axes[0, 0].get_position().x0
+    parity_left = parity_axes[0].get_position().x0
+    heatmap_x_center = 0.5 * (
+        heatmap_axes[1, 0].get_position().x0 + heatmap_axes[1, -1].get_position().x1
+    )
+    parity_x_center = 0.5 * (
+        parity_axes[0].get_position().x0 + parity_axes[-1].get_position().x1
+    )
+    fig.text(
+        heatmap_x_center,
+        heatmap_axes[1, 0].get_position().y0 - x_label_offset,
+        "Number of umbrella windows",
+        ha="center",
+        fontsize=PAPER_LABEL_SIZE,
+    )
+    fig.text(
+        heatmap_left - y_label_offset,
+        0.5
+        * (
+            heatmap_axes[0, 0].get_position().y1
+            + heatmap_axes[1, 0].get_position().y0
+        ),
+        "Trajectory length [%]",
+        ha="center",
+        va="center",
+        rotation="vertical",
+        fontsize=PAPER_LABEL_SIZE,
+    )
+    fig.text(
+        parity_x_center,
+        parity_axes[0].get_position().y0 - x_label_offset,
+        "RMSE [kJ/mol]",
+        ha="center",
+        fontsize=PAPER_LABEL_SIZE,
+    )
+    fig.text(
+        parity_left - y_label_offset,
+        0.5 * (parity_axes[0].get_position().y0 + parity_axes[0].get_position().y1),
+        "Standard Deviation [kJ/mol]",
+        ha="center",
+        va="center",
+        rotation="vertical",
+        fontsize=PAPER_LABEL_SIZE,
+    )
+    _save_figure(
+        fig,
+        output_dir,
+        "main_text_ablation_with_parity_preview",
+        args.formats,
+        args.dpi,
+        tight=False,
+    )
+    plt.close(fig)
 
 
 def plot_si_lml_loo_ablation(args: argparse.Namespace) -> None:
@@ -2388,6 +2654,7 @@ def plot_metadynamics_convergence(args: argparse.Namespace) -> None:
 FIGURE_MODULES = {
     "ablation_heatmaps": plot_ablation_heatmaps,
     "main_text_ablation_grids": plot_main_text_ablation_grids,
+    "main_text_ablation_with_parity": plot_main_text_ablation_with_parity,
     "ablation_parity": plot_ablation_parity,
     "metadynamics_convergence": plot_metadynamics_convergence,
     "si_lml_loo_ablation": plot_si_lml_loo_ablation,
