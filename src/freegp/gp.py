@@ -349,8 +349,9 @@ def _finalize_joint_posterior(
     jitter: float,
     kernel_name: str,
     kernel_params: dict[str, torch.Tensor],
+    n_der_rows: int | None = None,
 ) -> JointGPPosterior:
-    n_d = x_der.shape[0]
+    n_d = n_der_rows if n_der_rows is not None else x_der.shape[0]
     p = H_func.shape[1]
     H_zeros_for_der = torch.zeros((n_d, p), dtype=H_func.dtype, device=H_func.device)
     H_full = torch.cat([H_func, H_zeros_for_der], dim=0)
@@ -528,6 +529,172 @@ def build_joint_gp_gibbs(
     )
 
 
+# ---------------------------------------------------------------------------
+# Multidimensional (ND) stationary joint GP with full-gradient observations
+#
+# Locations are (n, D) tensors. Each row of ``x_der`` contributes a full
+# D-dimensional gradient observation (all partial derivatives at that point),
+# rather than the single scalar derivative used in the 1D kernels above.
+# ---------------------------------------------------------------------------
+
+
+def pairwise_diff_nd(x1: torch.Tensor, x2: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+    """Per-dimension differences and squared Euclidean distances for ND inputs.
+
+    x1: (n1, D), x2: (n2, D) -> diff: (n1, n2, D), sqdist: (n1, n2).
+    """
+    diff = x1.unsqueeze(1) - x2.unsqueeze(0)
+    sqdist = (diff**2).sum(dim=-1)
+    return diff, sqdist
+
+
+def fdse_kernel_nd(diff: torch.Tensor, sqdist: torch.Tensor, ell: torch.Tensor, w: torch.Tensor) -> torch.Tensor:
+    """Cross-covariance between f(x1) and each partial derivative df/dx2_d.
+
+    Returns shape (n1, n2, D).
+    """
+    exp_term = torch.exp(-sqdist / (2 * ell**2))
+    return (w**2 / ell**2) * exp_term.unsqueeze(-1) * diff
+
+
+def ddse_kernel_nd(diff: torch.Tensor, sqdist: torch.Tensor, ell: torch.Tensor, w: torch.Tensor) -> torch.Tensor:
+    """Covariance between partial derivatives df/dx1_i and df/dx2_j.
+
+    Returns shape (n1, n2, D, D).
+    """
+    D = diff.shape[-1]
+    eye = torch.eye(D, dtype=diff.dtype, device=diff.device)
+    outer = diff.unsqueeze(-1) * diff.unsqueeze(-2)
+    exp_term = torch.exp(-sqdist / (2 * ell**2))
+    return (w**2 / ell**2) * exp_term[..., None, None] * (eye - outer / ell**2)
+
+
+def _flatten_function_derivative_block(block: torch.Tensor) -> torch.Tensor:
+    """(n1, n2, D) -> (n1, D * n2), columns grouped dimension-major (all n2 for d=0, then d=1, ...)."""
+    n1, n2, D = block.shape
+    return block.permute(0, 2, 1).reshape(n1, D * n2)
+
+
+def _flatten_derivative_block(block: torch.Tensor) -> torch.Tensor:
+    """(n_w, n_w, D, D) -> (D * n_w, D * n_w), both axes grouped dimension-major."""
+    n_w, _, D, _ = block.shape
+    return block.permute(2, 0, 3, 1).reshape(D * n_w, D * n_w)
+
+
+def _assemble_block_diagonal_noise_nd(noise_deriv_cov: torch.Tensor) -> torch.Tensor:
+    """Per-window (D, D) gradient-noise covariances -> (D * n_windows, D * n_windows).
+
+    Windows are independent trajectories, so cross-window blocks are zero; the D
+    gradient components estimated from the same window may be correlated.
+    """
+    n_windows, D, _ = noise_deriv_cov.shape
+    out = torch.zeros(
+        (D * n_windows, D * n_windows), dtype=noise_deriv_cov.dtype, device=noise_deriv_cov.device
+    )
+    for i in range(D):
+        for j in range(D):
+            out[i * n_windows : (i + 1) * n_windows, j * n_windows : (j + 1) * n_windows] = torch.diag(
+                noise_deriv_cov[:, i, j]
+            )
+    return out
+
+
+def build_joint_gp_nd(
+    *,
+    x_func: torch.Tensor,
+    y_func: torch.Tensor,
+    x_der: torch.Tensor,
+    dy_der: torch.Tensor,
+    ell: torch.Tensor,
+    w: torch.Tensor,
+    noise_func_cov: torch.Tensor,
+    noise_deriv_cov: torch.Tensor,
+    H_func: torch.Tensor,
+    jitter: float = 1e-8,
+) -> JointGPPosterior:
+    """Build the profiled joint stationary GP posterior for ND data.
+
+    ``x_func``/``x_der`` are (n, D) location tensors. Each row of ``x_der`` (and
+    the matching row of ``dy_der``) is a full D-dimensional gradient observation,
+    and ``noise_deriv_cov`` holds one (D, D) noise-covariance block per row of
+    ``x_der``. This generalizes ``build_joint_gp`` (D=1) to isotropic-lengthscale
+    SE kernels over multidimensional inputs.
+    """
+    n_f, D = x_func.shape
+    n_w = x_der.shape[0]
+
+    diff_ff, sqdist_ff = pairwise_diff_nd(x_func, x_func)
+    K_ff = se_kernel(sqdist_ff, ell, w) + noise_func_cov
+
+    diff_dd, sqdist_dd = pairwise_diff_nd(x_der, x_der)
+    K_dd = _flatten_derivative_block(ddse_kernel_nd(diff_dd, sqdist_dd, ell, w))
+    K_dd = K_dd + _assemble_block_diagonal_noise_nd(noise_deriv_cov)
+
+    diff_fd, sqdist_fd = pairwise_diff_nd(x_func, x_der)
+    K_fd = _flatten_function_derivative_block(fdse_kernel_nd(diff_fd, sqdist_fd, ell, w))
+    K_df = K_fd.T
+
+    top = torch.cat([K_ff, K_fd], dim=1)
+    bot = torch.cat([K_df, K_dd], dim=1)
+    K_joint = torch.cat([top, bot], dim=0)
+    K_joint = 0.5 * (K_joint + K_joint.T)
+    n_d = n_w * D
+    K_joint = K_joint + jitter * torch.eye(n_f + n_d, dtype=K_joint.dtype, device=K_joint.device)
+
+    y_der_flat = dy_der.T.reshape(-1)
+    y_joint_col = torch.cat([y_func.reshape(-1, 1), y_der_flat.reshape(-1, 1)], dim=0)
+    return _finalize_joint_posterior(
+        x_func=x_func,
+        y_func=y_func,
+        x_der=x_der,
+        dy_der=dy_der,
+        noise_func_cov=noise_func_cov,
+        noise_deriv_diag=noise_deriv_cov,
+        H_func=H_func,
+        K_joint=K_joint,
+        y_joint_col=y_joint_col,
+        jitter=jitter,
+        kernel_name="stationary_se_nd",
+        kernel_params={"ell": ell, "w": w, "n_dim": D},
+        n_der_rows=n_d,
+    )
+
+
+def _predict_stationary_nd(
+    posterior: JointGPPosterior,
+    x_test: torch.Tensor,
+    *,
+    H_test: torch.Tensor | None = None,
+) -> tuple[torch.Tensor, torch.Tensor]:
+    H_test = _default_H_test(posterior, x_test, H_test)
+    ell = posterior.kernel_params["ell"]
+    w = posterior.kernel_params["w"]
+
+    diff_xf, sqdist_xf = pairwise_diff_nd(x_test, posterior.x_func)
+    K_xf = se_kernel(sqdist_xf, ell, w)
+
+    diff_xd, sqdist_xd = pairwise_diff_nd(x_test, posterior.x_der)
+    K_xd = _flatten_function_derivative_block(fdse_kernel_nd(diff_xd, sqdist_xd, ell, w))
+
+    K_xY = torch.cat([K_xf, K_xd], dim=1)
+    pred_mean = (K_xY @ posterior.alpha.reshape(-1, 1)).squeeze(-1)
+    pred_mean = pred_mean + (H_test @ posterior.beta_hat.reshape(-1, 1)).squeeze(-1)
+
+    v = torch.linalg.solve_triangular(posterior.L, K_xY.T, upper=False)
+    _, sqdist_xx = pairwise_diff_nd(x_test, x_test)
+    K_xx = se_kernel(sqdist_xx, ell, w)
+
+    term1 = K_xx - v.T @ v
+    M = K_xY @ posterior.Kinv_H
+    Dmat = H_test - M
+    S = 0.5 * ((posterior.H_full.T @ posterior.Kinv_H) + (posterior.H_full.T @ posterior.Kinv_H).T)
+    S_inv = torch.linalg.inv(S)
+    term2 = Dmat @ (S_inv @ Dmat.T)
+    pred_cov = term1 + term2
+    pred_cov = 0.5 * (pred_cov + pred_cov.T)
+    return pred_mean, pred_cov
+
+
 def _default_H_test(posterior: JointGPPosterior, x_test: torch.Tensor, H_test: torch.Tensor | None) -> torch.Tensor:
     if H_test is not None:
         return H_test
@@ -646,6 +813,8 @@ def predict_function(
     """Predict latent function values at x_test from the joint posterior."""
     if posterior.kernel_name == "stationary_se":
         return _predict_stationary(posterior, x_test, H_test=H_test)
+    if posterior.kernel_name == "stationary_se_nd":
+        return _predict_stationary_nd(posterior, x_test, H_test=H_test)
     if posterior.kernel_name == "gibbs":
         return _predict_gibbs(posterior, x_test, H_test=H_test)
     raise ValueError(f"Unsupported posterior kernel: {posterior.kernel_name}")
@@ -666,6 +835,13 @@ def predict_function_mean(
         K_xf = se_kernel(xdd_xf, ell, w)
         xd_xd, xdd_xd = pairwise_differences(x_test, posterior.x_der)
         K_xd = fdse_kernel(xd_xd, xdd_xd, ell, w)
+    elif posterior.kernel_name == "stationary_se_nd":
+        ell = posterior.kernel_params["ell"]
+        w = posterior.kernel_params["w"]
+        _, sqdist_xf = pairwise_diff_nd(x_test, posterior.x_func)
+        K_xf = se_kernel(sqdist_xf, ell, w)
+        diff_xd, sqdist_xd = pairwise_diff_nd(x_test, posterior.x_der)
+        K_xd = _flatten_function_derivative_block(fdse_kernel_nd(diff_xd, sqdist_xd, ell, w))
     elif posterior.kernel_name == "gibbs":
         params = posterior.kernel_params
         config = GibbsKernelConfig(

@@ -13,11 +13,12 @@ from .gp import (
     GibbsKernelConfig,
     build_joint_gp,
     build_joint_gp_gibbs,
+    build_joint_gp_nd,
     joint_log_marginal_likelihood,
     joint_loo_loglik,
     predict_function,
 )
-from .preprocess import JointObservations
+from .preprocess import JointObservations, JointObservationsND
 
 
 @dataclass(frozen=True)
@@ -449,12 +450,37 @@ def _state_to_parameters_and_log_prior(
 
 def _posterior_for_parameters(
     params: dict[str, torch.Tensor],
-    observations: JointObservations,
+    observations: JointObservations | JointObservationsND,
     *,
     config: NUTSConfig,
 ):
     dtype = observations.x_obs.dtype
     device = observations.x_obs.device
+
+    if isinstance(observations, JointObservationsND):
+        if config.kernel != "stationary":
+            raise ValueError("Multidimensional (ND) observations only support the stationary kernel.")
+        n_obs = observations.x_obs.shape[0]
+        n_windows, n_dim = observations.x_der.shape
+        if config.fixed_noise:
+            function_noise_nd = observations.noise_func_cov
+            derivative_noise_nd = observations.noise_deriv_cov
+        else:
+            function_noise_nd = (params["sigma_f"] ** 2) * torch.eye(n_obs, dtype=dtype, device=device)
+            eye_d = torch.eye(n_dim, dtype=dtype, device=device)
+            derivative_noise_nd = (params["sigma_d"] ** 2) * eye_d.unsqueeze(0).expand(n_windows, n_dim, n_dim)
+        return build_joint_gp_nd(
+            x_func=observations.x_obs,
+            y_func=observations.y_obs,
+            x_der=observations.x_der,
+            dy_der=observations.dy_der,
+            ell=params["ell"],
+            w=params["w"],
+            noise_func_cov=function_noise_nd,
+            noise_deriv_cov=derivative_noise_nd,
+            H_func=observations.H_obs,
+            jitter=config.jitter,
+        )
 
     if config.fixed_noise:
         function_noise = observations.noise_func_cov
@@ -586,8 +612,20 @@ def run_hmc_nuts(
     *,
     priors: HyperPriorConfig | None = None,
     config: NUTSConfig | None = None,
+    init_params: dict[str, torch.Tensor] | None = None,
 ):
-    """Run Pyro NUTS and return the fitted MCMC object and samples."""
+    """Run Pyro NUTS and return the fitted MCMC object and samples.
+
+    ``init_params`` optionally warm-starts every chain at a fixed point in the
+    unconstrained (log-)parameter space -- keyed by the sample-site names from
+    :func:`_sample_site_names` (e.g. ``{"theta_ell": ..., "theta_w": ...}``).
+    This is useful for hierarchical GP hyperparameters, whose marginal
+    likelihood can have a spurious short-lengthscale/high-noise local mode:
+    a short warmup budget may not have time to escape it from an arbitrary
+    starting point, whereas seeding at a known-good estimate (e.g. the MAP
+    fit) reliably avoids it. Left unset, Pyro's default initialization is
+    used, matching prior behavior.
+    """
     config = config or NUTSConfig()
 
     import pyro
@@ -602,13 +640,17 @@ def run_hmc_nuts(
         pyro.set_rng_seed(seed)
     pyro.clear_param_store()
     model = make_pyro_model(observations, priors=priors, config=config)
-    nuts_kernel = NUTS(
-        model,
+    nuts_kwargs = dict(
         adapt_step_size=True,
         adapt_mass_matrix=True,
         target_accept_prob=config.target_accept_prob,
         max_tree_depth=config.max_tree_depth,
     )
+    if init_params is not None:
+        from pyro.infer.autoguide.initialization import init_to_value
+
+        nuts_kwargs["init_strategy"] = init_to_value(values=init_params)
+    nuts_kernel = NUTS(model, **nuts_kwargs)
     mcmc = MCMC(
         nuts_kernel,
         num_samples=config.num_samples,

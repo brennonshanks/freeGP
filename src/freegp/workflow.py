@@ -11,16 +11,24 @@ from .data import (
     ReferenceCurves,
     load_reference_curves,
     load_umbrella_windows,
+    load_umbrella_windows_nd,
     resolve_dataset_root,
 )
 from .preprocess import (
     JointObservations,
+    JointObservationsND,
     ProcessedUmbrellaData,
+    ProcessedUmbrellaDataND,
     build_joint_observations,
+    build_joint_observations_nd,
     build_test_grid,
+    build_test_grid_nd,
     move_joint_observations,
+    move_joint_observations_nd,
     move_processed_umbrella_data,
+    move_processed_umbrella_data_nd,
     process_umbrella_windows,
+    process_umbrella_windows_nd,
 )
 
 
@@ -114,5 +122,69 @@ def prepare_gprhd_hmc_inputs(
         observations=observations,
         x_test=x_test,
         references=references,
+        dataset_root=dataset_root_path,
+    )
+
+
+@dataclass(frozen=True)
+class WorkflowBundleND:
+    processed: ProcessedUmbrellaDataND
+    observations: JointObservationsND
+    x_test: torch.Tensor
+    dataset_root: Path
+
+
+def move_workflow_bundle_nd(
+    bundle: WorkflowBundleND,
+    *,
+    device: torch.device | str,
+) -> WorkflowBundleND:
+    """Return a copy of ``bundle`` with tensor-valued fields moved onto ``device``."""
+    return replace(
+        bundle,
+        processed=move_processed_umbrella_data_nd(bundle.processed, device=device),
+        observations=move_joint_observations_nd(bundle.observations, device=device),
+        x_test=bundle.x_test.to(device=device),
+    )
+
+
+def prepare_gprhd_inputs_nd(
+    *,
+    n_dim: int,
+    dataset_root: str | None = None,
+    file_suffix: str = "-xyplane.xvg",
+    n_equilibration: int = 0,
+    num_bins: int = 6,
+    num_test_points_per_dim: int = 30,
+    x_min: list[float] | None = None,
+    x_max: list[float] | None = None,
+    test_grid_source: str = "histogram_support",
+) -> WorkflowBundleND:
+    """Load, preprocess, and build the GP inputs for a multidimensional dataset.
+
+    ND generalization of :func:`prepare_gprhd_hmc_inputs`, for datasets biased by
+    an isotropic harmonic restraint in D collective variables (see
+    :func:`freegp.data.load_umbrella_windows_nd`).
+    """
+    dataset_root_path = _resolve_dataset_root_path(dataset_root)
+    windows = load_umbrella_windows_nd(dataset_root_path, n_dim, file_suffix=file_suffix)
+    processed = process_umbrella_windows_nd(
+        windows,
+        n_dim=n_dim,
+        n_equilibration=n_equilibration,
+        num_bins=num_bins,
+    )
+    observations = build_joint_observations_nd(processed)
+    x_test = build_test_grid_nd(
+        processed,
+        num_points_per_dim=num_test_points_per_dim,
+        x_min=x_min,
+        x_max=x_max,
+        source=test_grid_source,
+    )
+    return WorkflowBundleND(
+        processed=processed,
+        observations=observations,
+        x_test=x_test,
         dataset_root=dataset_root_path,
     )

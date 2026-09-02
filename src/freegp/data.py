@@ -25,6 +25,22 @@ class UmbrellaWindow:
 
 
 @dataclass(frozen=True)
+class UmbrellaWindowND:
+    """A single umbrella-sampling trajectory in D collective variables.
+
+    Mirrors :class:`UmbrellaWindow` but for multidimensional (isotropic-restraint)
+    umbrella sampling: ``center`` and ``force_constant`` describe a harmonic bias
+    ``0.5 * force_constant * ||x - center||^2`` shared across all D dimensions.
+    """
+
+    folder: str
+    center: torch.Tensor
+    force_constant: float
+    time: torch.Tensor
+    position: torch.Tensor
+
+
+@dataclass(frozen=True)
 class ReferenceCurves:
     umbrella_x: np.ndarray | None = None
     umbrella_f: np.ndarray | None = None
@@ -207,6 +223,72 @@ def load_umbrella_windows(
     windows = _load_umbrella_windows_denis(root) if _is_denis_format(root) else _load_umbrella_windows_katka(root)
     if not windows:
         raise FileNotFoundError(f"No umbrella windows were found under {root}")
+    return windows
+
+
+def load_pullx_nd(file_path: Path, n_dim: int) -> tuple[torch.Tensor, torch.Tensor]:
+    """Load a whitespace-delimited trajectory file with columns time, x1, ..., xD."""
+    time, position = [], []
+    with file_path.open("r") as handle:
+        for line in handle:
+            if line.startswith(("#", "@")):
+                continue
+            parts = line.strip().split()
+            if len(parts) >= n_dim + 1:
+                time.append(float(parts[0]))
+                position.append([float(v) for v in parts[1 : n_dim + 1]])
+    return torch.tensor(time, dtype=torch.float64), torch.tensor(position, dtype=torch.float64)
+
+
+def _parse_nd_readme(root: Path, n_dim: int) -> dict[str, tuple[torch.Tensor, float]]:
+    """Parse a ``window_id x1 ... xD force_constant`` README into per-window metadata."""
+    result: dict[str, tuple[torch.Tensor, float]] = {}
+    with (root / "README").open() as fh:
+        for line in fh:
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            parts = line.split()
+            if len(parts) >= n_dim + 2:
+                center = torch.tensor([float(v) for v in parts[1 : n_dim + 1]], dtype=torch.float64)
+                force_constant = float(parts[n_dim + 1])
+                result[parts[0]] = (center, force_constant)
+    return result
+
+
+def load_umbrella_windows_nd(
+    base_path: str | os.PathLike[str] | None,
+    n_dim: int,
+    *,
+    file_suffix: str = "-xyplane.xvg",
+) -> list[UmbrellaWindowND]:
+    """Load a flat-directory multidimensional umbrella-sampling dataset.
+
+    Expects a ``README`` table with columns ``window_id x1 ... xD force_constant``
+    (one isotropic force constant per window) and one ``{window_id}{file_suffix}``
+    trajectory file per window with columns ``time x1 ... xD``. This is the ND
+    generalization of the flat "Denis format" 1D loader.
+    """
+    root = resolve_dataset_root(base_path)
+    params = _parse_nd_readme(root, n_dim)
+    windows: list[UmbrellaWindowND] = []
+    for traj_file in sorted(root.glob(f"*{file_suffix}"), key=lambda p: natural_key(p.name)):
+        window_id = traj_file.name[: -len(file_suffix)]
+        if window_id not in params:
+            continue
+        center, force_constant = params[window_id]
+        time, position = load_pullx_nd(traj_file, n_dim)
+        windows.append(
+            UmbrellaWindowND(
+                folder=window_id,
+                center=center,
+                force_constant=force_constant,
+                time=time,
+                position=position,
+            )
+        )
+    if not windows:
+        raise FileNotFoundError(f"No {n_dim}-D umbrella windows were found under {root}")
     return windows
 
 

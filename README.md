@@ -191,6 +191,12 @@ python run_reconstruction.py
 The tutorial creates pseudo-umbrella trajectories from a known synthetic
 surface and reconstructs them with fixed, MAP, and short HMC-NUTS GP models.
 
+A two-dimensional analogue lives in `tutorials/synthetic_2D` (run the same way,
+via `make_dataset.py` then `run_2D_reconstruction.py`), reconstructing a 2D
+free-energy surface with `freegp.gp.build_joint_gp_nd`'s multidimensional
+joint GP, with fixed, MAP, and short HMC-NUTS GP models (the nonstationary
+Gibbs kernel is not extended to ND).
+
 ### Single GP/HMC Run
 
 ```bash
