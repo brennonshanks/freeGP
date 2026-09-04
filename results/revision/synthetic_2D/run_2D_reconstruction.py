@@ -11,6 +11,7 @@ window. See ``freegp.gp.build_joint_gp_nd`` for the multidimensional kernel.
 from __future__ import annotations
 
 import argparse
+from dataclasses import replace
 from pathlib import Path
 import sys
 
@@ -29,9 +30,11 @@ from freegp.gp import build_joint_gp_nd, predict_function
 from freegp.hmc import HyperPriorConfig, NUTSConfig, run_hmc_nuts
 from freegp.hyperopt import optimize_stationary_hyperparameters_nd
 from freegp.posterior import summarize_hyperposterior_predictive
+from freegp.preprocess import build_joint_observations_nd
 from freegp.workflow import prepare_gprhd_inputs_nd
 
 N_DIM = 2
+KT_KJ_MOL = 0.0083144621 * 303.15
 
 
 def load_2d_reference(path: Path) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -79,7 +82,10 @@ def main() -> None:
     parser.add_argument("--opt-steps", type=int, default=40)
     parser.add_argument("--opt-restarts", type=int, default=2)
     parser.add_argument("--objective", choices=("lml", "loo"), default="loo")
-    parser.add_argument("--vmax", type=float, default=350.0, help="Max color scale for plots.")
+    parser.add_argument(
+        "--vmax", type=float, default=350.0 * KT_KJ_MOL,
+        help="Maximum physical-energy color scale (default equals 350 reduced-energy units).",
+    )
     parser.add_argument("--skip-hmc", action="store_true", help="Skip the short HMC-NUTS tutorial run.")
     parser.add_argument("--warmup-steps", type=int, default=10)
     parser.add_argument("--num-samples", type=int, default=10)
@@ -111,7 +117,16 @@ def main() -> None:
         num_test_points_per_dim=args.num_test_points,
         test_grid_source="histogram_support",
     )
-    obs = bundle.observations
+    # The bundled toy trajectories were generated with kT=1, so their numeric
+    # potential and umbrella energies are dimensionless. Convert both to the
+    # physical kJ/mol convention used internally by freeGP at 303.15 K. The
+    # sampled coordinates themselves do not change under this unit conversion.
+    processed = replace(
+        bundle.processed,
+        force_constants=bundle.processed.force_constants * KT_KJ_MOL,
+        restoring_forces=bundle.processed.restoring_forces * KT_KJ_MOL,
+    )
+    obs = build_joint_observations_nd(processed)
     x_test = bundle.x_test
 
     fixed = build_joint_gp_nd(
@@ -182,7 +197,7 @@ def main() -> None:
     has_reference = reference_path.exists()
     if has_reference:
         x_axis, y_axis, ref_grid = load_2d_reference(reference_path)
-        ref = bilinear_interpolate(x_axis, y_axis, ref_grid, x, y)
+        ref = KT_KJ_MOL * bilinear_interpolate(x_axis, y_axis, ref_grid, x, y)
         ref = ref - ref.min()
     else:
         ref = np.zeros_like(x)

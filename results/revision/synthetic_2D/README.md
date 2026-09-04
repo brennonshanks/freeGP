@@ -23,6 +23,11 @@ $
 using a random-walk Metropolis-Hastings sampler (no molecular dynamics
 software required). The generated files use a flat 2D dataset format:
 
+The synthetic sampler uses reduced units with $kT=1$. During reconstruction,
+the analytic reference energies and umbrella force constants are both
+multiplied by $k_BT$ at 303.15 K so that they follow freeGP's internal kJ/mol
+energy convention. The sampled coordinates are unchanged by this conversion.
+
 ```text
 example_data/
   README                 # window_id, x0, y0, isotropic force constant
