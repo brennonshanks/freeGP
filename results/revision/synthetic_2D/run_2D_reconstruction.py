@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 from dataclasses import replace
+import json
 from pathlib import Path
 import sys
 
@@ -26,12 +27,16 @@ SRC = REPO_ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
+from freegp.data import load_umbrella_windows_nd
 from freegp.gp import build_joint_gp_nd, predict_function
 from freegp.hmc import HyperPriorConfig, NUTSConfig, run_hmc_nuts
 from freegp.hyperopt import optimize_stationary_hyperparameters_nd
 from freegp.posterior import summarize_hyperposterior_predictive
-from freegp.preprocess import build_joint_observations_nd
-from freegp.workflow import prepare_gprhd_inputs_nd
+from freegp.preprocess import (
+    build_joint_observations_nd,
+    build_test_grid_nd,
+    process_umbrella_windows_nd,
+)
 
 N_DIM = 2
 KT_KJ_MOL = 0.0083144621 * 303.15
@@ -70,6 +75,26 @@ def rmse(pred: np.ndarray, ref: np.ndarray) -> float:
     return float(np.sqrt(np.mean((pred - ref) ** 2)))
 
 
+def select_regular_window_grid(windows, grid_size: int):
+    """Select an evenly spaced grid from a complete Cartesian window grid."""
+    centers = torch.stack([window.center for window in windows])
+    targets = []
+    for dimension in range(N_DIM):
+        unique = torch.unique(centers[:, dimension], sorted=True)
+        if grid_size > len(unique):
+            raise ValueError(f"Requested {grid_size} windows along an axis with only {len(unique)}.")
+        indices = np.rint(np.linspace(0, len(unique) - 1, grid_size)).astype(int)
+        targets.append(unique[indices])
+    selected = [
+        window for window in windows
+        if all(torch.any(torch.isclose(window.center[d], targets[d])) for d in range(N_DIM))
+    ]
+    expected = grid_size**N_DIM
+    if len(selected) != expected:
+        raise ValueError(f"Expected {expected} selected windows, found {len(selected)}.")
+    return selected
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dataset-root", default="example_data")
@@ -77,24 +102,25 @@ def main() -> None:
     parser.add_argument("--results-dir", default="tutorial_results")
     parser.add_argument("--num-bins", type=int, default=5, help="Histogram bins per dimension, per window.")
     parser.add_argument("--num-test-points", type=int, default=25, help="Test-grid points per dimension.")
+    parser.add_argument("--window-grid", type=int, default=5, help="Windows retained per dimension.")
     parser.add_argument("--fixed-ell", type=float, default=1.5)
     parser.add_argument("--fixed-w", type=float, default=50.0)
-    parser.add_argument("--opt-steps", type=int, default=40)
-    parser.add_argument("--opt-restarts", type=int, default=2)
+    parser.add_argument("--opt-steps", type=int, default=250)
+    parser.add_argument("--opt-restarts", type=int, default=3)
     parser.add_argument("--objective", choices=("lml", "loo"), default="loo")
     parser.add_argument(
         "--vmax", type=float, default=350.0 * KT_KJ_MOL,
         help="Maximum physical-energy color scale (default equals 350 reduced-energy units).",
     )
     parser.add_argument("--skip-hmc", action="store_true", help="Skip the short HMC-NUTS tutorial run.")
-    parser.add_argument("--warmup-steps", type=int, default=10)
-    parser.add_argument("--num-samples", type=int, default=10)
-    parser.add_argument("--num-chains", type=int, default=1)
-    parser.add_argument("--predictive-samples", type=int, default=10)
+    parser.add_argument("--warmup-steps", type=int, default=500)
+    parser.add_argument("--num-samples", type=int, default=1000)
+    parser.add_argument("--num-chains", type=int, default=4)
+    parser.add_argument("--predictive-samples", type=int, default=100)
     parser.add_argument(
         "--max-tree-depth",
         type=int,
-        default=5,
+        default=10,
         help="NUTS max tree depth (caps leapfrog steps/iteration at 2**depth). Each step is a full "
         "Cholesky factorization of the joint covariance, so deep trees are the dominant cost; the "
         "default here trades some sampling efficiency for a bounded per-iteration runtime.",
@@ -110,24 +136,27 @@ def main() -> None:
     out = Path(args.results_dir)
     out.mkdir(parents=True, exist_ok=True)
 
-    bundle = prepare_gprhd_inputs_nd(
+    windows = select_regular_window_grid(
+        load_umbrella_windows_nd(dataset_root, N_DIM), args.window_grid,
+    )
+    processed_raw = process_umbrella_windows_nd(
+        windows,
         n_dim=N_DIM,
-        dataset_root=str(dataset_root),
         num_bins=args.num_bins,
-        num_test_points_per_dim=args.num_test_points,
-        test_grid_source="histogram_support",
     )
     # The bundled toy trajectories were generated with kT=1, so their numeric
     # potential and umbrella energies are dimensionless. Convert both to the
     # physical kJ/mol convention used internally by freeGP at 303.15 K. The
     # sampled coordinates themselves do not change under this unit conversion.
     processed = replace(
-        bundle.processed,
-        force_constants=bundle.processed.force_constants * KT_KJ_MOL,
-        restoring_forces=bundle.processed.restoring_forces * KT_KJ_MOL,
+        processed_raw,
+        force_constants=processed_raw.force_constants * KT_KJ_MOL,
+        restoring_forces=processed_raw.restoring_forces * KT_KJ_MOL,
     )
     obs = build_joint_observations_nd(processed)
-    x_test = bundle.x_test
+    x_test = build_test_grid_nd(
+        processed, num_points_per_dim=args.num_test_points, source="histogram_support",
+    )
 
     fixed = build_joint_gp_nd(
         x_func=obs.x_obs,
@@ -175,7 +204,30 @@ def main() -> None:
             "theta_sf": torch.log(opt.params["sigma_f"]).detach(),
             "theta_sd": torch.log(opt.params["sigma_d"]).detach(),
         }
-        _, samples = run_hmc_nuts(obs, priors=HyperPriorConfig(), config=config, init_params=init_params)
+        mcmc, samples = run_hmc_nuts(obs, priors=HyperPriorConfig(), config=config, init_params=init_params)
+        grouped = mcmc.get_samples(group_by_chain=True)
+        from pyro.ops.stats import effective_sample_size, split_gelman_rubin
+        raw_diagnostics = mcmc.diagnostics()
+        divergence_count = sum(
+            len(values) for values in raw_diagnostics.get("divergences", {}).values()
+        )
+        hmc_diagnostics = {
+            "window_grid": [args.window_grid] * N_DIM,
+            "window_count": len(windows),
+            "warmup_steps_per_chain": args.warmup_steps,
+            "samples_per_chain": args.num_samples,
+            "num_chains": args.num_chains,
+            "max_tree_depth": args.max_tree_depth,
+            "divergences": divergence_count,
+            "sites": {
+                name: {
+                    "r_hat": float(split_gelman_rubin(values)),
+                    "effective_sample_size": float(effective_sample_size(values)),
+                }
+                for name, values in grouped.items()
+            },
+        }
+        (out / "hmc_diagnostics.json").write_text(json.dumps(hmc_diagnostics, indent=2) + "\n")
         hmc = summarize_hyperposterior_predictive(
             obs,
             samples,
