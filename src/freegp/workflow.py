@@ -159,12 +159,20 @@ def prepare_gprhd_inputs_nd(
     x_min: list[float] | None = None,
     x_max: list[float] | None = None,
     test_grid_source: str = "histogram_support",
+    period: float | list[float | None] | None = None,
+    beta: float | None = None,
 ) -> WorkflowBundleND:
     """Load, preprocess, and build the GP inputs for a multidimensional dataset.
 
     ND generalization of :func:`prepare_gprhd_hmc_inputs`, for datasets biased by
     an isotropic harmonic restraint in D collective variables (see
-    :func:`freegp.data.load_umbrella_windows_nd`).
+    :func:`freegp.data.load_umbrella_windows_nd`). ``period`` is forwarded to
+    :func:`freegp.preprocess.process_umbrella_windows_nd` to minimal-image wrap
+    periodic dimensions (e.g. dihedral angles) around each window's own center.
+    ``beta`` is forwarded to :func:`freegp.preprocess.build_joint_observations_nd`
+    to convert histogram counts into free energies at the dataset's own
+    temperature/units (see that function's docstring); it defaults to the
+    physical kJ/mol, T=303.15 K convention used by real MD datasets.
     """
     dataset_root_path = _resolve_dataset_root_path(dataset_root)
     windows = load_umbrella_windows_nd(dataset_root_path, n_dim, file_suffix=file_suffix)
@@ -173,8 +181,9 @@ def prepare_gprhd_inputs_nd(
         n_dim=n_dim,
         n_equilibration=n_equilibration,
         num_bins=num_bins,
+        period=period,
     )
-    observations = build_joint_observations_nd(processed)
+    observations = build_joint_observations_nd(processed, beta=beta)
     x_test = build_test_grid_nd(
         processed,
         num_points_per_dim=num_test_points_per_dim,

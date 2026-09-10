@@ -23,11 +23,6 @@ $
 using a random-walk Metropolis-Hastings sampler (no molecular dynamics
 software required). The generated files use a flat 2D dataset format:
 
-The synthetic sampler uses reduced units with $kT=1$. During reconstruction,
-the analytic reference energies and umbrella force constants are both
-multiplied by $k_BT$ at 303.15 K so that they follow freeGP's internal kJ/mol
-energy convention. The sampled coordinates are unchanged by this conversion.
-
 ```text
 example_data/
   README                 # window_id, x0, y0, isotropic force constant
@@ -61,10 +56,6 @@ The default run compares:
 - a MAP hierarchical GP using the LOO objective and default hyperpriors
 - a HMC-NUTS hyperposterior-propagated GP
 
-The reconstruction retains an evenly spaced $5\times5$ subset of the generated
-$10\times10$ umbrella grid. This keeps the joint covariance small enough for a
-four-chain HMC calculation while retaining coverage of the complete domain.
-
 Each umbrella window contributes histogram-derived free-energy estimates
 (function observations) plus one 2D gradient ("restoring force") estimate at
 its center (derivative observations), exactly as in the 1D tutorial, but with
@@ -81,12 +72,13 @@ python run_2D_reconstruction.py --skip-hmc
 
 Every HMC-NUTS leapfrog step needs a fresh Cholesky factorization (and its
 gradient) of the joint covariance matrix, whose size scales with
-`n_windows * num_bins**2 + n_windows * 2`. The default HMC settings match the
-manuscript calculations: 500 warmup steps and 1000 retained samples for each
-of four chains, with maximum tree depth 10. Diagnostics are written to
-`tutorial_results/hmc_diagnostics.json`; the result should only be interpreted
-when the chains have acceptable R-hat, effective sample size, and divergence
-diagnostics.
+`n_windows * num_bins**2 + n_windows * 2`. That is far more expensive per
+iteration than the single-Cholesky-per-optimizer-step MAP fit above, so the
+script's HMC defaults (`--warmup-steps 10 --num-samples 10
+--predictive-samples 10 --num-chains 1 --max-tree-depth 5`) are deliberately
+small -- enough to get a real (if noisy) hyperposterior spread, not
+publication-quality uncertainties. On the bundled `example_data`, the full
+default run (fixed + MAP + HMC) takes about 4 minutes.
 
 Hierarchical GP hyperparameter posteriors like this one can have a spurious
 short-lengthscale/high-noise local mode: once the kernel's length scale drops

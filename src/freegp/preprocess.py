@@ -11,6 +11,37 @@ from .data import UmbrellaWindow, UmbrellaWindowND
 k_B = 8.3144621e-3
 T = 303.15
 beta = 1 / (k_B * T)
+_DEFAULT_BETA = beta
+
+
+def _normalize_periods(period: float | list[float | None] | None, n_dim: int) -> list[float | None] | None:
+    """Broadcast a scalar/list ``period`` spec to one entry per dimension."""
+    if period is None:
+        return None
+    if isinstance(period, (int, float)):
+        return [float(period)] * n_dim
+    periods = list(period)
+    if len(periods) != n_dim:
+        raise ValueError(f"period has {len(periods)} entries but n_dim={n_dim}")
+    return [None if p is None else float(p) for p in periods]
+
+
+def _wrap_to_window_center(
+    position: torch.Tensor, center: torch.Tensor, periods: list[float | None]
+) -> torch.Tensor:
+    """Minimal-image wrap each periodic column of ``position`` into the branch
+    ``(center - period/2, center + period/2]`` centered on the window's own
+    restraint center. Without this, samples from a window restrained near a
+    periodic boundary (e.g. a dihedral angle near +-pi) can straddle the branch
+    cut, which corrupts per-window histogramming, covariance, autocorrelation,
+    and the harmonic-bias offset with jumps of a full period."""
+    wrapped = position.clone()
+    for d, p in enumerate(periods):
+        if p is None:
+            continue
+        half = p / 2
+        wrapped[:, d] = center[d] + ((wrapped[:, d] - center[d] + half) % p) - half
+    return wrapped
 
 
 @dataclass(frozen=True)
@@ -365,6 +396,7 @@ def process_umbrella_windows_nd(
     n_dim: int,
     n_equilibration: int = 0,
     num_bins: int = 6,
+    period: float | list[float | None] | None = None,
 ) -> ProcessedUmbrellaDataND:
     """Turn raw ND umbrella windows into per-window summary statistics.
 
@@ -372,7 +404,16 @@ def process_umbrella_windows_nd(
     dimension). The bin with peak density approximates the window's mean
     position (as in the 1D pipeline), from which the D-component restoring
     force -- and hence an estimate of the free-energy gradient -- is derived.
+
+    ``period`` marks periodic dimensions (e.g. dihedral angles in radians use
+    ``2*pi``): a scalar applies to every dimension, a per-dimension list may mix
+    periodic and non-periodic axes (``None`` entries), and the default ``None``
+    disables wrapping entirely. When set, each window's samples are minimal-image
+    wrapped around its own restraint center before histogramming so that a window
+    straddling the periodic boundary doesn't get binned as if its samples were
+    spread across the full domain.
     """
+    periods = _normalize_periods(period, n_dim)
     folder_numbers = []
     force_constants = []
     modes = []
@@ -389,6 +430,8 @@ def process_umbrella_windows_nd(
         position_eq = position[n_equilibration:] if position.shape[0] > n_equilibration else position
         if position_eq.shape[0] == 0:
             raise ValueError(f"Window {window.folder} has no usable samples after equilibration.")
+        if periods is not None:
+            position_eq = _wrap_to_window_center(position_eq, window.center, periods)
 
         counts, edges = torch.histogramdd(position_eq, bins=num_bins)
         counts = counts.to(torch.float64)
@@ -460,13 +503,26 @@ def build_joint_observations_nd(
     *,
     probability_floor: float = 1e-12,
     covariance_regularization: float = 1e-8,
+    beta: float | None = None,
 ) -> JointObservationsND:
-    """Build the flattened ND GP inputs analogous to ``build_joint_observations``."""
+    """Build the flattened ND GP inputs analogous to ``build_joint_observations``.
+
+    ``beta`` (thermodynamic 1/(k_B*T)) converts histogram probabilities into
+    free-energy values and their noise covariance; it must match whatever
+    units/temperature the input samples were actually drawn at. Defaults to
+    the module-level physical-units beta (k_B in kJ/(mol*K), T=303.15 K),
+    appropriate for real MD data in kJ/mol. The restoring-force (derivative)
+    observations never go through beta, so passing the wrong value here only
+    distorts the *magnitude* of the reconstructed surface, not its shape --
+    pass an explicit ``beta`` for datasets sampled in different units (e.g. a
+    dimensionless synthetic potential sampled at kT=1, i.e. ``beta=1.0``).
+    """
+    beta_eff = beta if beta is not None else _DEFAULT_BETA
     n_dim = processed.n_dim
     F_list: list[torch.Tensor] = []
     for i in range(len(processed.histogram_probs)):
         probs = torch.clamp(processed.histogram_probs[i], min=probability_floor)
-        y = -(1 / beta) * torch.log(probs)
+        y = -(1 / beta_eff) * torch.log(probs)
         offset = processed.bin_centers_list[i] - processed.folder_numbers[i]
         w = 0.5 * processed.force_constants[i] * (offset**2).sum(dim=-1)
         F_list.append(y - w)
@@ -490,7 +546,7 @@ def build_joint_observations_nd(
     obs_start_idx = 0
     for window_i, n_bins_i in enumerate(bin_counts):
         probs_i = torch.clamp(processed.histogram_probs[window_i], min=probability_floor)
-        base_cov = 1.0 / (beta**2 * n_eff[window_i].item())
+        base_cov = 1.0 / (beta_eff**2 * n_eff[window_i].item())
         obs_end_idx = obs_start_idx + n_bins_i
         # Multinomial log-probability covariance: diag = base_cov*(1/p_i - 1),
         # off-diag = -base_cov (independent of the pair of bins).
