@@ -20,7 +20,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+HERE = Path(__file__).resolve().parent
+REPO_ROOT = HERE.parents[2]
 SRC = REPO_ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
@@ -72,9 +73,9 @@ def rmse(pred: np.ndarray, ref: np.ndarray) -> float:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--dataset-root", default="xvg_data_64th")
+    parser.add_argument("--dataset-root", default=str(HERE / "umbrella_data/xvg_data"))
     parser.add_argument("--reference-path", default=None)
-    parser.add_argument("--results-dir", default="tutorial_results_64th")
+    parser.add_argument("--results-dir", default=None, help="Output directory; defaults to data_ablation_results/<window count>_windows beside this script.")
     parser.add_argument("--num-bins", type=int, default=5, help="Histogram bins per dimension, per window.")
     parser.add_argument(
         "--period",
@@ -112,7 +113,10 @@ def main() -> None:
         if args.reference_path
         else dataset_root / "wham_reference.csv"
     )
-    out = Path(args.results_dir)
+    window_count = len(list(dataset_root.glob("*_xyplane.xvg")))
+    if window_count == 0:
+        raise ValueError(f"No umbrella windows in {dataset_root}")
+    out = Path(args.results_dir) if args.results_dir else HERE / "data_ablation_results" / f"{window_count}_windows"
     out.mkdir(parents=True, exist_ok=True)
 
     bundle = prepare_gprhd_inputs_nd(

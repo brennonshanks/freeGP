@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Reconstruct the 2D (phi, psi) free-energy surface of alanine dipeptide with WHAM.
 
-Loads umbrella-sampling trajectories from ``xvg_data_2_rad/`` (one ``w###_xyplane.xvg``
+Loads umbrella-sampling trajectories from ``umbrella_data/xvg_data/`` (one ``w###_xyplane.xvg``
 file per window, each biased by an isotropic harmonic restraint centered at (x0, y0) with
-the given force constant -- see ``xvg_data_2_rad/README``), bins the combined (phi, psi)
+the given force constant -- see ``umbrella_data/xvg_data/README``), bins the combined (phi, psi)
 samples on a periodic grid, and solves the self-consistent 2D WHAM equations (Kumar et al.
 1992) to recover the unbiased free-energy surface. Both collective variables are dihedral
 angles, so all differences are taken with the periodic minimum-image convention on
@@ -139,14 +139,17 @@ def run_wham_2d(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--dataset-root", default="xvg_data_2_rad")
-    parser.add_argument("--results-dir", default="tutorial_results")
+    parser.add_argument("--dataset-root", default="umbrella_data/xvg_data")
+    parser.add_argument("--results-dir", default=None, help="Output directory; defaults to data_ablation_results/<window count>_windows beside this script.")
     parser.add_argument("--num-bins", type=int, default=36, help="Histogram bins per dimension.")
     parser.add_argument("--vmax", type=float, default=None, help="Max color scale (kcal/mol) for the heatmap.")
     args = parser.parse_args()
 
     dataset_root = (HERE / args.dataset_root).resolve()
-    out = (HERE / args.results_dir).resolve()
+    window_count = len(list(dataset_root.glob("*_xyplane.xvg")))
+    if window_count == 0:
+        raise ValueError(f"No umbrella windows in {dataset_root}")
+    out = (HERE / args.results_dir).resolve() if args.results_dir else HERE / "data_ablation_results" / f"{window_count}_windows"
     out.mkdir(parents=True, exist_ok=True)
 
     print(f"Loading umbrella windows from {dataset_root} ...")
