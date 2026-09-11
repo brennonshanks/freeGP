@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import csv
+import argparse
 import json
 import math
 from pathlib import Path
@@ -22,6 +23,8 @@ EQUILIBRATION_FRAMES = 40_000
 N_BLOCKS = 5
 CUMULATIVE_FRACTIONS = (0.2, 0.4, 0.6, 0.8, 1.0)
 WINDOW_PATTERN = re.compile(r"d_([0-9]+\.[0-9]+)$")
+SELECTED_GYRATION_WINDOWS = (0, 8, 16, 24)
+TRAPPED_CV_EQUILIBRATION_NS = 10.0
 
 
 def read_mdp(path: Path) -> dict[str, str]:
@@ -100,12 +103,213 @@ def align_rmse(surface: np.ndarray, reference: np.ndarray) -> float:
     return float(np.sqrt(np.mean((surface[mask] - reference[mask]) ** 2)))
 
 
-def main() -> None:
-    here = Path(__file__).resolve().parent
+def write_csv(path: Path, rows: list[dict[str, object]]) -> None:
+    with path.open("w", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=rows[0].keys())
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+def read_csv(path: Path) -> list[dict[str, str]]:
+    with path.open(newline="") as handle:
+        return list(csv.DictReader(handle))
+
+
+def load_plot_data(output: Path) -> dict[str, object]:
+    required = [
+        output / "wham_profiles.csv",
+        output / "overlap_histogram_profiles.csv",
+        output / "summary.json",
+    ]
+    missing = [path.name for path in required if not path.exists()]
+    if missing:
+        raise FileNotFoundError(
+            "Missing plot-only input(s): "
+            + ", ".join(missing)
+            + ". Run once without --plot-only to write derived plotting outputs."
+        )
+    profile_rows = read_csv(output / "wham_profiles.csv")
+    overlap_rows = read_csv(output / "overlap_histogram_profiles.csv")
+    summary = json.loads((output / "summary.json").read_text())
+    if "reference_free_energy_kj_mol" not in summary:
+        raise ValueError(
+            "summary.json predates plot-only support. Run once without --plot-only "
+            "to write the reference profile into saved outputs."
+        )
+
+    surfaces: dict[str, np.ndarray] = {}
+    block_sd = None
+    x = None
+    for analysis in ("block", "cumulative", "block_average"):
+        rows = [row for row in profile_rows if row["analysis"] == analysis]
+        indices = sorted({int(row["index"]) for row in rows})
+        for index in indices:
+            selected = [row for row in rows if int(row["index"]) == index]
+            selected.sort(key=lambda row: float(row["coordinate_nm"]))
+            if x is None:
+                x = np.asarray([float(row["coordinate_nm"]) for row in selected])
+            values = np.asarray([float(row["free_energy_kj_mol"]) for row in selected])
+            if analysis == "block_average":
+                surfaces["block_average"] = values
+                block_sd = np.asarray([float(row["between_block_sd_kj_mol"]) for row in selected])
+            else:
+                surfaces[f"{analysis}_{index}"] = values
+
+    centers = np.asarray(sorted({float(row["window_center_nm"]) for row in overlap_rows}))
+    overlap_x = np.asarray(sorted({float(row["coordinate_nm"]) for row in overlap_rows}))
+    probabilities = []
+    for center in centers:
+        selected = [row for row in overlap_rows if float(row["window_center_nm"]) == center]
+        selected.sort(key=lambda row: float(row["coordinate_nm"]))
+        probabilities.append([float(row["probability"]) for row in selected])
+
+    if x is None or block_sd is None:
+        raise ValueError("Missing block-average plotting data")
+    return {
+        "x": x,
+        "reference": np.asarray(summary["reference_free_energy_kj_mol"]),
+        "surfaces": surfaces,
+        "block_mean": surfaces["block_average"],
+        "block_sd": block_sd,
+        "centers": centers,
+        "overlap_x": overlap_x,
+        "probabilities": np.asarray(probabilities),
+        "summary": summary,
+    }
+
+
+def load_gyration_traces(share_dir: Path) -> dict[int, np.ndarray]:
+    traces = {}
+    for index in SELECTED_GYRATION_WINDOWS:
+        path = share_dir / f"s{index}" / "gyration.dat"
+        values = np.loadtxt(path)
+        values = values[values[:, 0] >= TRAPPED_CV_EQUILIBRATION_NS]
+        tau = float(bayes_autocorrelation_time(torch.as_tensor(values[:, 2], dtype=torch.float64)))
+        stride = max(1, int(math.ceil(tau)))
+        traces[index] = values[::stride]
+    return traces
+
+
+def plot_outputs(output: Path, plot_data: dict[str, object]) -> None:
+    x = plot_data["x"]
+    reference = plot_data["reference"]
+    surfaces = plot_data["surfaces"]
+    block_mean = plot_data["block_mean"]
+    block_sd = plot_data["block_sd"]
+    centers = plot_data["centers"]
+    overlap_x = plot_data["overlap_x"]
+    probabilities = plot_data["probabilities"]
+    share_dir = Path(__file__).resolve().parent / "share"
+    gyration_traces = load_gyration_traces(share_dir)
+
+    plt.rcParams.update({"font.size": 8.5, "axes.labelsize": 9.5, "legend.fontsize": 7.2})
+    fig, axes = plt.subplots(1, 2, figsize=(7.2, 3.0), sharey=True, constrained_layout=True)
+    colors = plt.cm.viridis(np.linspace(0.1, 0.9, 5))
+    for i, color in enumerate(colors, start=1):
+        axes[0].plot(x, surfaces[f"block_{i}"], color=color, linewidth=0.9, alpha=0.65, label=f"Block {i}")
+    axes[0].fill_between(x, block_mean - block_sd, block_mean + block_sd,
+                         color="#0072B2", alpha=0.18, linewidth=0,
+                         label=r"Block mean $\pm$ SD")
+    axes[0].plot(x, block_mean, color="#0072B2", linewidth=1.6, label="Block mean")
+    axes[0].plot(x, reference, color="black", linewidth=1.6, linestyle="--", label="Published reference")
+    axes[0].set_title("Five contiguous trajectory blocks")
+    for i, (fraction, color) in enumerate(zip(CUMULATIVE_FRACTIONS, colors), start=1):
+        axes[1].plot(x, surfaces[f"cumulative_{i}"], color=color, linewidth=1.1,
+                     label=f"{int(100*fraction)}%")
+    axes[1].plot(x, reference, color="black", linewidth=1.6, linestyle="--", label="Published reference")
+    axes[1].set_title("Cumulative trajectory convergence")
+    for ax in axes:
+        ax.set_xlabel("Membrane--peptide distance [nm]")
+        ax.set_ylabel("Free Energy [kJ/mol]")
+        ax.legend(frameon=False, ncol=2)
+        ax.spines[["top", "right"]].set_visible(False)
+    fig.savefig(output / "wham_reference_convergence.pdf")
+    fig.savefig(output / "wham_reference_convergence.png", dpi=300)
+    plt.close(fig)
+
+    fig, ax = plt.subplots(figsize=(6.3, 5.1), constrained_layout=True)
+    cmap = plt.cm.viridis
+    scale = 0.8
+    for i, (center, probability) in enumerate(zip(centers, probabilities)):
+        normalized = probability / max(probability.max(), 1e-15)
+        baseline = float(i)
+        ax.fill_between(overlap_x, baseline, baseline + scale * normalized,
+                        color=cmap(i / (centers.size - 1)), alpha=0.65, linewidth=0)
+        ax.plot(overlap_x, baseline + scale * normalized,
+                color=cmap(i / (centers.size - 1)), linewidth=0.7)
+    ax.set_yticks(np.arange(centers.size)[::2], [f"{v:.2f}" for v in centers[::2]])
+    ax.set_xlabel("Membrane--peptide distance [nm]")
+    ax.set_ylabel("Umbrella center [nm]")
+    ax.set_title("AR(1)-thinned full-data window histograms")
+    ax.spines[["top", "right"]].set_visible(False)
+    fig.savefig(output / "autocorrelation_thinned_histogram_overlap.pdf")
+    fig.savefig(output / "autocorrelation_thinned_histogram_overlap.png", dpi=300)
+    plt.close(fig)
+
+    fig = plt.figure(figsize=(3.33, 4.75), constrained_layout=False)
+    gs = fig.add_gridspec(
+        5, 1, height_ratios=[0.72, 0.16, 0.92, 0.32, 0.72], hspace=0.0
+    )
+    overlap_ax = fig.add_subplot(gs[0])
+    cumulative_ax = fig.add_subplot(gs[2], sharex=overlap_ax)
+    gyration_ax = fig.add_subplot(gs[4])
+    axes = (overlap_ax, cumulative_ax, gyration_ax)
+    for i, (center, probability) in enumerate(zip(centers, probabilities)):
+        color = cmap(i / (centers.size - 1))
+        overlap_ax.plot(
+            overlap_x, probability, color=color, linewidth=0.55, alpha=0.85,
+        )
+    overlap_ax.set_ylim(bottom=0.0)
+    overlap_ax.set_ylabel(r"Histogram $p(x)$")
+    overlap_ax.set_title("(a) Window histograms", loc="left", pad=5, fontsize=7.5)
+
+    for i, (fraction, color) in enumerate(zip(CUMULATIVE_FRACTIONS, colors), start=1):
+        cumulative_ax.plot(
+            x, surfaces[f"cumulative_{i}"], color=color, linewidth=0.9,
+            label=f"{int(100 * fraction)}%",
+        )
+    cumulative_ax.plot(x, reference, color="black", linewidth=1.25,
+                       linestyle="--", label="Reference")
+    cumulative_ax.set_ylabel("Free Energy [kJ/mol]")
+    cumulative_ax.set_title("(b) Cumulative convergence", loc="left", pad=5, fontsize=7.5)
+    cumulative_ax.legend(frameon=False, ncol=3, fontsize=6.2, handlelength=1.5,
+                         columnspacing=0.8, labelspacing=0.25)
+
+    for index, values in gyration_traces.items():
+        color = cmap(index / 24)
+        gyration_ax.plot(
+            values[:, 0], values[:, 2], color=color, linewidth=0.65,
+            alpha=0.9, label=f"{index + 1}",
+        )
+    gyration_ax.set_ylabel("Radius of gyration [nm]")
+    gyration_ax.set_title("(c) Gyration trajectories", loc="left", pad=5, fontsize=7.5)
+    gyration_ax.set_xlabel("Time [ns]")
+    gyration_ax.set_ylim(0.62, 1.14)
+    gyration_ax.legend(frameon=False, ncol=4, fontsize=6.2, handlelength=1.3,
+                       columnspacing=0.7, loc="upper right",
+                       bbox_to_anchor=(1.0, 1.07), title="Window",
+                       title_fontsize=6.2)
+
+    for ax in axes:
+        ax.yaxis.set_label_coords(-0.105, 0.5)
+        ax.tick_params(direction="in", labelsize=6.5)
+        ax.xaxis.label.set_size(7.5)
+        ax.yaxis.label.set_size(7.5)
+        ax.spines[["top", "right"]].set_visible(False)
+    overlap_ax.tick_params(labelbottom=False)
+    cumulative_ax.set_xlabel("Position [nm]", labelpad=2)
+    fig.subplots_adjust(left=0.155, right=0.985, bottom=0.09, top=0.95)
+    for extension in ("pdf", "png"):
+        fig.savefig(
+            output / f"convergence.{extension}",
+            dpi=600 if extension == "png" else None,
+        )
+    plt.close(fig)
+
+
+def run_analysis(output: Path) -> dict[str, object]:
     dataset = Path.home() / "freeGP-datasets/membranes/katka"
-    reference_path = Path.home() / "freeGP-v0.1.0/reference_data/wham.dat"
-    output = here / "outputs"
-    output.mkdir(parents=True, exist_ok=True)
+    reference_path = Path(__file__).resolve().parents[3] / "reference_data/wham.dat"
 
     reference_data = np.loadtxt(reference_path)
     x = reference_data[:, 0]
@@ -198,11 +402,12 @@ def main() -> None:
         raise RuntimeError("Full-data histogram was not generated")
     overlap_min = min(float(values.min()) for values in full_thinned_samples)
     overlap_max = max(float(values.max()) for values in full_thinned_samples)
-    overlap_first_center = step * math.floor(overlap_min / step)
-    overlap_last_center = step * math.ceil(overlap_max / step)
-    overlap_x = np.arange(overlap_first_center, overlap_last_center + step / 2, step)
+    overlap_step = step / 2
+    overlap_first_center = overlap_step * math.floor(overlap_min / overlap_step)
+    overlap_last_center = overlap_step * math.ceil(overlap_max / overlap_step)
+    overlap_x = np.arange(overlap_first_center, overlap_last_center + overlap_step / 2, overlap_step)
     overlap_edges = np.concatenate(
-        ([overlap_x[0] - step / 2], overlap_x + step / 2)
+        ([overlap_x[0] - overlap_step / 2], overlap_x + overlap_step / 2)
     )
     overlap_counts = np.asarray(
         [np.histogram(values, bins=overlap_edges)[0] for values in full_thinned_samples],
@@ -245,21 +450,31 @@ def main() -> None:
         }
         for i in range(centers.size - 1)
     ]
+    overlap_profile_rows = []
+    for center, probability in zip(centers, probabilities):
+        for coordinate, value in zip(overlap_x, probability):
+            overlap_profile_rows.append(
+                {
+                    "window_center_nm": center,
+                    "coordinate_nm": coordinate,
+                    "probability": value,
+                }
+            )
 
     for filename, rows in (
         ("wham_profiles.csv", profile_rows),
         ("wham_metrics.csv", metric_rows),
         ("autocorrelation_thinning.csv", thinning_rows),
         ("adjacent_histogram_overlap.csv", overlap_rows),
+        ("overlap_histogram_profiles.csv", overlap_profile_rows),
     ):
-        with (output / filename).open("w", newline="") as handle:
-            writer = csv.DictWriter(handle, fieldnames=rows[0].keys())
-            writer.writeheader()
-            writer.writerows(rows)
+        write_csv(output / filename, rows)
 
     summary = {
         "dataset": str(dataset),
         "reference": str(reference_path),
+        "reference_coordinate_nm": [float(value) for value in x],
+        "reference_free_energy_kj_mol": [float(value) for value in reference],
         "equilibration_frames_removed": EQUILIBRATION_FRAMES,
         "autocorrelation_treatment": "segment-specific AR(1) tau; deterministic stride ceil(tau)",
         "wham_solver": "uniform-prior BayesWHAM MAP fixed-point equations",
@@ -276,121 +491,41 @@ def main() -> None:
         "overlap_histogram_range_nm": [float(overlap_edges[0]), float(overlap_edges[-1])],
     }
     (output / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
+    return {
+        "x": x,
+        "reference": reference,
+        "surfaces": surfaces,
+        "block_mean": block_mean,
+        "block_sd": block_sd,
+        "centers": centers,
+        "overlap_x": overlap_x,
+        "probabilities": probabilities,
+        "summary": summary,
+    }
 
-    plt.rcParams.update({"font.size": 8.5, "axes.labelsize": 9.5, "legend.fontsize": 7.2})
-    fig, axes = plt.subplots(1, 2, figsize=(7.2, 3.0), sharey=True, constrained_layout=True)
-    colors = plt.cm.viridis(np.linspace(0.1, 0.9, 5))
-    for i, color in enumerate(colors, start=1):
-        axes[0].plot(x, surfaces[f"block_{i}"], color=color, linewidth=0.9, alpha=0.65, label=f"Block {i}")
-    axes[0].fill_between(x, block_mean - block_sd, block_mean + block_sd,
-                         color="#0072B2", alpha=0.18, linewidth=0,
-                         label=r"Block mean $\pm$ SD")
-    axes[0].plot(x, block_mean, color="#0072B2", linewidth=1.6, label="Block mean")
-    axes[0].plot(x, reference, color="black", linewidth=1.6, linestyle="--", label="Published reference")
-    axes[0].set_title("Five contiguous trajectory blocks")
-    for i, (fraction, color) in enumerate(zip(CUMULATIVE_FRACTIONS, colors), start=1):
-        axes[1].plot(x, surfaces[f"cumulative_{i}"], color=color, linewidth=1.1,
-                     label=f"{int(100*fraction)}%")
-    axes[1].plot(x, reference, color="black", linewidth=1.6, linestyle="--", label="Published reference")
-    axes[1].set_title("Cumulative trajectory convergence")
-    for ax in axes:
-        ax.set_xlabel("Membrane--peptide distance [nm]")
-        ax.set_ylabel("Free Energy [kJ/mol]")
-        ax.legend(frameon=False, ncol=2)
-        ax.spines[["top", "right"]].set_visible(False)
-    fig.savefig(output / "wham_reference_convergence.pdf")
-    fig.savefig(output / "wham_reference_convergence.png", dpi=300)
-    plt.close(fig)
 
-    fig, ax = plt.subplots(figsize=(6.3, 5.1), constrained_layout=True)
-    cmap = plt.cm.viridis
-    scale = 0.8
-    for i, (center, probability) in enumerate(zip(centers, probabilities)):
-        normalized = probability / max(probability.max(), 1e-15)
-        baseline = float(i)
-        ax.fill_between(overlap_x, baseline, baseline + scale * normalized,
-                        color=cmap(i / (centers.size - 1)), alpha=0.65, linewidth=0)
-        ax.plot(overlap_x, baseline + scale * normalized,
-                color=cmap(i / (centers.size - 1)), linewidth=0.7)
-    ax.set_yticks(np.arange(centers.size)[::2], [f"{v:.2f}" for v in centers[::2]])
-    ax.set_xlabel("Membrane--peptide distance [nm]")
-    ax.set_ylabel("Umbrella center [nm]")
-    ax.set_title("AR(1)-thinned full-data window histograms")
-    ax.spines[["top", "right"]].set_visible(False)
-    fig.savefig(output / "autocorrelation_thinned_histogram_overlap.pdf")
-    fig.savefig(output / "autocorrelation_thinned_histogram_overlap.png", dpi=300)
-    plt.close(fig)
-
-    # Single-column SI figure combining overlap and both convergence checks.
-    fig, axes = plt.subplots(
-        3, 1, figsize=(3.33, 7.25),
-        gridspec_kw={"height_ratios": [1.25, 1.0, 1.0]},
-        constrained_layout=True,
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--plot-only",
+        action="store_true",
+        help="Regenerate plots from saved CSV/JSON outputs without rerunning WHAM.",
     )
-    overlap_ax, block_ax, cumulative_ax = axes
-    ridge_scale = 0.8
-    for i, (center, probability) in enumerate(zip(centers, probabilities)):
-        normalized = probability / max(probability.max(), 1e-15)
-        baseline = float(i)
-        color = cmap(i / (centers.size - 1))
-        overlap_ax.fill_between(
-            overlap_x, baseline, baseline + ridge_scale * normalized,
-            color=color, alpha=0.65, linewidth=0,
-        )
-        overlap_ax.plot(
-            overlap_x, baseline + ridge_scale * normalized,
-            color=color, linewidth=0.55,
-        )
-    overlap_ax.set_yticks(
-        np.arange(centers.size)[::4],
-        [f"{value:.2f}" for value in centers[::4]],
-    )
-    overlap_ax.set_ylabel("Umbrella center [nm]")
-    overlap_ax.set_title("AR(1)-thinned window histograms", pad=3)
+    return parser.parse_args()
 
-    for i, color in enumerate(colors, start=1):
-        block_ax.plot(
-            x, surfaces[f"block_{i}"], color=color, linewidth=0.75,
-            alpha=0.65, label=f"Block {i}",
-        )
-    block_ax.fill_between(
-        x, block_mean - block_sd, block_mean + block_sd,
-        color="#0072B2", alpha=0.18, linewidth=0,
-    )
-    block_ax.plot(x, block_mean, color="#0072B2", linewidth=1.25, label="Block mean")
-    block_ax.plot(x, reference, color="black", linewidth=1.25, linestyle="--",
-                  label="Reference")
-    block_ax.set_ylabel("Free Energy [kJ/mol]")
-    block_ax.set_title("Five contiguous trajectory blocks", pad=3)
-    block_ax.legend(frameon=False, ncol=2, fontsize=6.2, handlelength=1.5,
-                    columnspacing=0.8, labelspacing=0.25)
 
-    for i, (fraction, color) in enumerate(zip(CUMULATIVE_FRACTIONS, colors), start=1):
-        cumulative_ax.plot(
-            x, surfaces[f"cumulative_{i}"], color=color, linewidth=0.9,
-            label=f"{int(100 * fraction)}%",
-        )
-    cumulative_ax.plot(x, reference, color="black", linewidth=1.25,
-                       linestyle="--", label="Reference")
-    cumulative_ax.set_ylabel("Free Energy [kJ/mol]")
-    cumulative_ax.set_title("Cumulative trajectory convergence", pad=3)
-    cumulative_ax.legend(frameon=False, ncol=3, fontsize=6.2, handlelength=1.5,
-                         columnspacing=0.8, labelspacing=0.25)
+def main() -> None:
+    args = parse_args()
+    here = Path(__file__).resolve().parent
+    output = here / "outputs"
+    output.mkdir(parents=True, exist_ok=True)
 
-    for panel, ax in zip("abc", axes):
-        ax.set_xlabel("Membrane--peptide distance [nm]")
-        ax.spines[["top", "right"]].set_visible(False)
-        ax.tick_params(direction="in")
-        ax.text(-0.16, 1.04, rf"$\mathbf{{{panel}}}$", transform=ax.transAxes,
-                ha="left", va="bottom", fontsize=9.5)
-    for extension in ("pdf", "png"):
-        fig.savefig(
-            output / f"reference_convergence_column.{extension}",
-            dpi=600 if extension == "png" else None,
-        )
-    plt.close(fig)
+    plot_data = load_plot_data(output) if args.plot_only else run_analysis(output)
+    plot_outputs(output, plot_data)
+    summary = plot_data["summary"]
     print(json.dumps(summary, indent=2))
-    print(f"Wrote reference-convergence analysis to {output}")
+    action = "Regenerated plots from saved outputs" if args.plot_only else "Wrote reference-convergence analysis"
+    print(f"{action} to {output}")
 
 
 if __name__ == "__main__":

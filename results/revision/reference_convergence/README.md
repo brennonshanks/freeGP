@@ -31,3 +31,10 @@ Run from the repository root:
 source .venv/bin/activate
 MPLBACKEND=Agg python results/revision/reference_convergence/run_reference_convergence.py
 ```
+
+After a full run has written the derived CSV/JSON outputs, regenerate only the
+figures without rerunning WHAM or trajectory processing:
+
+```bash
+MPLBACKEND=Agg python results/revision/reference_convergence/run_reference_convergence.py --plot-only
+```
