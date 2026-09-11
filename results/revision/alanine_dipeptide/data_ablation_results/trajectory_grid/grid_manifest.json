@@ -1,0 +1,602 @@
+[
+  {
+    "windows": 18,
+    "fraction": 1.0,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data_32",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/18_windows/fraction_1",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  },
+  {
+    "windows": 18,
+    "fraction": 0.9,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data_32",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/18_windows/fraction_0.9",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  },
+  {
+    "windows": 18,
+    "fraction": 0.8,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data_32",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/18_windows/fraction_0.8",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  },
+  {
+    "windows": 18,
+    "fraction": 0.6,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data_32",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/18_windows/fraction_0.6",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  },
+  {
+    "windows": 18,
+    "fraction": 0.4,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data_32",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/18_windows/fraction_0.4",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  },
+  {
+    "windows": 18,
+    "fraction": 0.25,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data_32",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/18_windows/fraction_0.25",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  },
+  {
+    "windows": 18,
+    "fraction": 0.16,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data_32",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/18_windows/fraction_0.16",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  },
+  {
+    "windows": 18,
+    "fraction": 0.1,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data_32",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/18_windows/fraction_0.1",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  },
+  {
+    "windows": 18,
+    "fraction": 0.063,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data_32",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/18_windows/fraction_0.063",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  },
+  {
+    "windows": 18,
+    "fraction": 0.04,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data_32",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/18_windows/fraction_0.04",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  },
+  {
+    "windows": 36,
+    "fraction": 1.0,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data_16",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/36_windows/fraction_1",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  },
+  {
+    "windows": 36,
+    "fraction": 0.9,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data_16",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/36_windows/fraction_0.9",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  },
+  {
+    "windows": 36,
+    "fraction": 0.8,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data_16",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/36_windows/fraction_0.8",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  },
+  {
+    "windows": 36,
+    "fraction": 0.6,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data_16",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/36_windows/fraction_0.6",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  },
+  {
+    "windows": 36,
+    "fraction": 0.4,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data_16",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/36_windows/fraction_0.4",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  },
+  {
+    "windows": 36,
+    "fraction": 0.25,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data_16",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/36_windows/fraction_0.25",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  },
+  {
+    "windows": 36,
+    "fraction": 0.16,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data_16",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/36_windows/fraction_0.16",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  },
+  {
+    "windows": 36,
+    "fraction": 0.1,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data_16",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/36_windows/fraction_0.1",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  },
+  {
+    "windows": 36,
+    "fraction": 0.063,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data_16",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/36_windows/fraction_0.063",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  },
+  {
+    "windows": 36,
+    "fraction": 0.04,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data_16",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/36_windows/fraction_0.04",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  },
+  {
+    "windows": 72,
+    "fraction": 1.0,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data_8",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/72_windows/fraction_1",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  },
+  {
+    "windows": 72,
+    "fraction": 0.9,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data_8",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/72_windows/fraction_0.9",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  },
+  {
+    "windows": 72,
+    "fraction": 0.8,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data_8",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/72_windows/fraction_0.8",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  },
+  {
+    "windows": 72,
+    "fraction": 0.6,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data_8",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/72_windows/fraction_0.6",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  },
+  {
+    "windows": 72,
+    "fraction": 0.4,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data_8",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/72_windows/fraction_0.4",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  },
+  {
+    "windows": 72,
+    "fraction": 0.25,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data_8",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/72_windows/fraction_0.25",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  },
+  {
+    "windows": 72,
+    "fraction": 0.16,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data_8",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/72_windows/fraction_0.16",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  },
+  {
+    "windows": 72,
+    "fraction": 0.1,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data_8",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/72_windows/fraction_0.1",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  },
+  {
+    "windows": 72,
+    "fraction": 0.063,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data_8",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/72_windows/fraction_0.063",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  },
+  {
+    "windows": 72,
+    "fraction": 0.04,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data_8",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/72_windows/fraction_0.04",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  },
+  {
+    "windows": 144,
+    "fraction": 1.0,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data_quarter",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/144_windows/fraction_1",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  },
+  {
+    "windows": 144,
+    "fraction": 0.9,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data_quarter",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/144_windows/fraction_0.9",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  },
+  {
+    "windows": 144,
+    "fraction": 0.8,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data_quarter",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/144_windows/fraction_0.8",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  },
+  {
+    "windows": 144,
+    "fraction": 0.6,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data_quarter",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/144_windows/fraction_0.6",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  },
+  {
+    "windows": 144,
+    "fraction": 0.4,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data_quarter",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/144_windows/fraction_0.4",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  },
+  {
+    "windows": 144,
+    "fraction": 0.25,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data_quarter",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/144_windows/fraction_0.25",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  },
+  {
+    "windows": 144,
+    "fraction": 0.16,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data_quarter",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/144_windows/fraction_0.16",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  },
+  {
+    "windows": 144,
+    "fraction": 0.1,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data_quarter",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/144_windows/fraction_0.1",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  },
+  {
+    "windows": 144,
+    "fraction": 0.063,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data_quarter",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/144_windows/fraction_0.063",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  },
+  {
+    "windows": 144,
+    "fraction": 0.04,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data_quarter",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/144_windows/fraction_0.04",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  },
+  {
+    "windows": 288,
+    "fraction": 1.0,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data_half",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/288_windows/fraction_1",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  },
+  {
+    "windows": 288,
+    "fraction": 0.9,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data_half",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/288_windows/fraction_0.9",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  },
+  {
+    "windows": 288,
+    "fraction": 0.8,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data_half",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/288_windows/fraction_0.8",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  },
+  {
+    "windows": 288,
+    "fraction": 0.6,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data_half",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/288_windows/fraction_0.6",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  },
+  {
+    "windows": 288,
+    "fraction": 0.4,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data_half",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/288_windows/fraction_0.4",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  },
+  {
+    "windows": 288,
+    "fraction": 0.25,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data_half",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/288_windows/fraction_0.25",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  },
+  {
+    "windows": 288,
+    "fraction": 0.16,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data_half",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/288_windows/fraction_0.16",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  },
+  {
+    "windows": 288,
+    "fraction": 0.1,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data_half",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/288_windows/fraction_0.1",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  },
+  {
+    "windows": 288,
+    "fraction": 0.063,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data_half",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/288_windows/fraction_0.063",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  },
+  {
+    "windows": 288,
+    "fraction": 0.04,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data_half",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/288_windows/fraction_0.04",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  },
+  {
+    "windows": 576,
+    "fraction": 1.0,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/576_windows/fraction_1",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  },
+  {
+    "windows": 576,
+    "fraction": 0.9,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/576_windows/fraction_0.9",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  },
+  {
+    "windows": 576,
+    "fraction": 0.8,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/576_windows/fraction_0.8",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  },
+  {
+    "windows": 576,
+    "fraction": 0.6,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/576_windows/fraction_0.6",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  },
+  {
+    "windows": 576,
+    "fraction": 0.4,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/576_windows/fraction_0.4",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  },
+  {
+    "windows": 576,
+    "fraction": 0.25,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/576_windows/fraction_0.25",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  },
+  {
+    "windows": 576,
+    "fraction": 0.16,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/576_windows/fraction_0.16",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  },
+  {
+    "windows": 576,
+    "fraction": 0.1,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/576_windows/fraction_0.1",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  },
+  {
+    "windows": 576,
+    "fraction": 0.063,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/576_windows/fraction_0.063",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  },
+  {
+    "windows": 576,
+    "fraction": 0.04,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/576_windows/fraction_0.04",
+    "warmup_steps": 10,
+    "num_samples": 10,
+    "num_chains": 1,
+    "skip_hmc": false
+  }
+]

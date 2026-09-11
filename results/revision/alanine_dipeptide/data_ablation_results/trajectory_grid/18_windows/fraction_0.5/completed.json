@@ -1,0 +1,14 @@
+{
+  "configuration": {
+    "windows": 18,
+    "fraction": 0.5,
+    "source": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/umbrella_data/xvg_data_32",
+    "output": "/Users/brennonshanks/freeGP/results/revision/alanine_dipeptide/data_ablation_results/trajectory_grid/18_windows/fraction_0.5",
+    "warmup_steps": 500,
+    "num_samples": 250,
+    "num_chains": 4,
+    "max_tree_depth": 4,
+    "skip_hmc": false
+  },
+  "elapsed_seconds": 977.8527186249848
+}

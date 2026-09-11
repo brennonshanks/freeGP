@@ -1,0 +1,17 @@
+{
+  "step_size": 0.03125,
+  "mean_accept_prob": 0.0,
+  "accept_count": 0,
+  "divergence_count": 0,
+  "sample_std_by_name": {
+    "ell": 0.021417151960022005,
+    "w": 15.090154232750162,
+    "sigma_f": 0.4892389113181763,
+    "sigma_d": 2.316735444865305
+  },
+  "mean_sample_std": 4.479386435223416,
+  "max_sample_std": 15.090154232750162,
+  "min_sample_std": 0.021417151960022005,
+  "poor_acceptance": true,
+  "looks_stuck": false
+}

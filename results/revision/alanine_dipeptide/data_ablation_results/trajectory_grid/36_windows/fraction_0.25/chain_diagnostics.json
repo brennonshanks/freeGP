@@ -1,0 +1,40 @@
+{
+  "raw": {
+    "theta_ell": {
+      "n_eff": 551.5160090047181,
+      "r_hat": 1.0082437552193577
+    },
+    "theta_sd": {
+      "n_eff": 630.7166963831218,
+      "r_hat": 0.9978336434025562
+    },
+    "theta_sf": {
+      "n_eff": 529.7815558248575,
+      "r_hat": 1.0010525178793104
+    },
+    "theta_w": {
+      "n_eff": 596.7510609046273,
+      "r_hat": 1.006258109264662
+    },
+    "divergences": {
+      "chain 0": [],
+      "chain 1": [],
+      "chain 2": [],
+      "chain 3": []
+    },
+    "acceptance rate": {
+      "chain 0": 1.0,
+      "chain 1": 0.988,
+      "chain 2": 0.996,
+      "chain 3": 0.98
+    }
+  },
+  "summary": {
+    "max_r_hat": 1.0082437552193577,
+    "min_r_hat": 0.9978336434025562,
+    "min_n_eff": 529.7815558248575,
+    "max_n_eff": 630.7166963831218,
+    "divergence_total": 0,
+    "num_diagnostic_parameters": 4
+  }
+}

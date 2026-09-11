@@ -1,0 +1,4 @@
+method,n_datasets,pearson_r,mean_crps_kj_mol,threshold_kj_mol,underconfident_count,overconfident_count
+Fixed GP,6,-0.3620577910965575,10.456795472796374,5,1,0
+MAP GP,6,0.9718393986472799,8.33819131493787,5,0,1
+HMC GP,6,0.9744568333195207,7.524652713383556,5,1,0
