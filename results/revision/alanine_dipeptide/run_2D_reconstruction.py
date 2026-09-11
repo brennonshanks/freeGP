@@ -11,6 +11,7 @@ window. See ``freegp.gp.build_joint_gp_nd`` for the multidimensional kernel.
 from __future__ import annotations
 
 import argparse
+import json
 from pathlib import Path
 import sys
 
@@ -27,9 +28,10 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 from freegp.gp import build_joint_gp_nd, predict_function
-from freegp.hmc import HyperPriorConfig, NUTSConfig, run_hmc_nuts
+from freegp.hmc import HyperPriorConfig, NUTSConfig, run_hmc_nuts, summarize_chain_diagnostics
 from freegp.hyperopt import optimize_stationary_hyperparameters_nd
 from freegp.posterior import summarize_hyperposterior_predictive
+from freegp.run_gprhd_hmc import extract_multi_chain_diagnostics, write_chain_diagnostics
 from freegp.workflow import prepare_gprhd_inputs_nd
 
 N_DIM = 2
@@ -93,10 +95,10 @@ def main() -> None:
     parser.add_argument("--objective", choices=("lml", "loo"), default="loo")
     parser.add_argument("--vmax", type=float, default=None, help="Max color scale for plots.")
     parser.add_argument("--skip-hmc", action="store_true", help="Skip the short HMC-NUTS tutorial run.")
-    parser.add_argument("--warmup-steps", type=int, default=10)
-    parser.add_argument("--num-samples", type=int, default=10)
-    parser.add_argument("--num-chains", type=int, default=1)
-    parser.add_argument("--predictive-samples", type=int, default=10)
+    parser.add_argument("--warmup-steps", type=int, default=500)
+    parser.add_argument("--num-samples", type=int, default=1000)
+    parser.add_argument("--num-chains", type=int, default=4)
+    parser.add_argument("--predictive-samples", type=int, default=100)
     parser.add_argument(
         "--max-tree-depth",
         type=int,
@@ -177,7 +179,43 @@ def main() -> None:
             "theta_sf": torch.log(opt.params["sigma_f"]).detach(),
             "theta_sd": torch.log(opt.params["sigma_d"]).detach(),
         }
-        _, samples = run_hmc_nuts(obs, priors=HyperPriorConfig(), config=config, init_params=init_params)
+        mcmc, samples = run_hmc_nuts(obs, priors=HyperPriorConfig(), config=config, init_params=init_params)
+        chain_diagnostics = extract_multi_chain_diagnostics(mcmc)
+        write_chain_diagnostics(out, chain_diagnostics)
+        single_chain_diagnostics = summarize_chain_diagnostics(mcmc, samples, config=config)
+        (out / "single_chain_diagnostics.json").write_text(
+            json.dumps(
+                {
+                    "step_size": single_chain_diagnostics.step_size,
+                    "mean_accept_prob": single_chain_diagnostics.mean_accept_prob,
+                    "accept_count": single_chain_diagnostics.accept_count,
+                    "divergence_count": single_chain_diagnostics.divergence_count,
+                    "sample_std_by_name": single_chain_diagnostics.sample_std_by_name,
+                    "mean_sample_std": single_chain_diagnostics.mean_sample_std,
+                    "max_sample_std": single_chain_diagnostics.max_sample_std,
+                    "min_sample_std": single_chain_diagnostics.min_sample_std,
+                    "poor_acceptance": single_chain_diagnostics.poor_acceptance,
+                    "looks_stuck": single_chain_diagnostics.looks_stuck,
+                },
+                indent=2,
+            )
+            + "\n"
+        )
+        hyper_names = list(samples.keys())
+        hyper_rows = np.column_stack([samples[name].detach().cpu().numpy().reshape(-1) for name in hyper_names])
+        np.savetxt(
+            out / "hmc_hyperparameter_samples.csv",
+            hyper_rows,
+            delimiter=",",
+            header=",".join(hyper_names),
+            comments="",
+        )
+        print(
+            "HMC diagnostics: max r_hat "
+            f"{chain_diagnostics['summary']['max_r_hat']}, min n_eff "
+            f"{chain_diagnostics['summary']['min_n_eff']}, divergences "
+            f"{chain_diagnostics['summary']['divergence_total']}"
+        )
         hmc = summarize_hyperposterior_predictive(
             obs,
             samples,
